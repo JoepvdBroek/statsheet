@@ -1,0 +1,3 @@
+# AI proposes, the owner accepts
+
+AI features in Statsheet (built on `laravel/ai`, with OpenAI as provider) never write to Routines, Workouts, Sets or Goals. Agents get read-only tools only. Whatever an AI feature produces is either plain text (the Weekly Review) or a proposal that enters the domain only when the owner accepts it. We chose this over letting individual features write directly (for example natural-language logging adding Sets straight away, with undo), because Volume, Goals and Personal Records are computed from the log. An unnoticed AI mistake would silently skew every statistic, and a trustworthy history is worth an extra tap in the gym. Future AI features (natural-language logging, coach chat, AI pre-fill) inherit this rule.
