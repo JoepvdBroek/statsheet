@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 /**
  * @property int $id
  * @property int $user_id
+ * @property int|null $routine_id The Routine the Workout was started from; empty when started empty
  * @property CarbonImmutable $started_at
  * @property CarbonImmutable|null $finished_at Empty while the Workout is in progress
  * @property string|null $bodyweight The owner's Bodyweight in kg when the Workout started
@@ -23,7 +24,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
-#[Fillable(['started_at', 'bodyweight', 'note'])]
+#[Fillable(['routine_id', 'started_at', 'bodyweight', 'note'])]
 class Workout extends Model
 {
     /** @use HasFactory<WorkoutFactory> */
@@ -49,6 +50,16 @@ class Workout extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * The Routine the Workout was started from. Its plan was copied in at the start and is never read through this link.
+     *
+     * @return BelongsTo<Routine, $this>
+     */
+    public function routine(): BelongsTo
+    {
+        return $this->belongsTo(Routine::class);
     }
 
     /**

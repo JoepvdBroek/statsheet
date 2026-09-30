@@ -88,6 +88,25 @@ class WorkoutSet extends Model
     }
 
     /**
+     * The Target this Set hands to the same Set the next time its Exercise is trained (Pre-fill):
+     * its Actual if it met its Target or had none, otherwise its Target. Empty when it has neither.
+     *
+     * @return array{reps: int, weight: string}|null
+     */
+    public function carriedOverTarget(): ?array
+    {
+        if ($this->meetsTarget()) {
+            return ['reps' => $this->actual_reps, 'weight' => $this->actual_weight];
+        }
+
+        if ($this->target_reps !== null) {
+            return ['reps' => $this->target_reps, 'weight' => $this->target_weight];
+        }
+
+        return null;
+    }
+
+    /**
      * The Actual that marking the Set done logs: what was typed, falling back to the Target's values.
      * A Bodyweight Exercise with no weight typed or planned logs no added load. Empty values are left for the caller to reject.
      *

@@ -103,6 +103,11 @@ export default function RoutinesIndex({
                                 )}
                                 muscles={primaryMuscles(routine)}
                                 archived={routine.archived}
+                                onStart={() =>
+                                    router.visit(
+                                        RoutineController.start(routine.id),
+                                    )
+                                }
                                 onEdit={() =>
                                     router.visit(
                                         RoutineController.edit(routine.id),

@@ -27,6 +27,7 @@ class RoutineOwnershipTest extends TestCase
             'update' => ['put', 'routines.update'],
             'archive' => ['post', 'routines.archive'],
             'restore' => ['post', 'routines.restore'],
+            'start' => ['post', 'routines.start'],
         ];
     }
 
@@ -48,5 +49,6 @@ class RoutineOwnershipTest extends TestCase
         $this->assertSame('Push day', $routine->name);
         $this->assertNotNull($routine->archived_at);
         $this->assertDatabaseCount('routine_sets', 2);
+        $this->assertDatabaseEmpty('workouts');
     }
 }

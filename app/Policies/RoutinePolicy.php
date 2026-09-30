@@ -33,6 +33,22 @@ class RoutinePolicy
     }
 
     /**
+     * Determine whether the user can start a Workout from the Routine. Archived Routines can't be started.
+     */
+    public function start(User $user, Routine $routine): Response
+    {
+        $ownership = $this->owns($user, $routine);
+
+        if ($ownership->denied()) {
+            return $ownership;
+        }
+
+        return $routine->archived_at === null
+            ? Response::allow()
+            : Response::deny(__('Archived Routines can\'t be started.'));
+    }
+
+    /**
      * Another user's Routine is answered as if it doesn't exist.
      */
     private function owns(User $user, Routine $routine): Response

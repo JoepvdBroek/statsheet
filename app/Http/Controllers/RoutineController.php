@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\StartWorkout;
 use App\Http\Requests\RoutineRequest;
 use App\Http\Resources\ExerciseResource;
 use App\Http\Resources\RoutineResource;
@@ -115,6 +116,21 @@ class RoutineController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Routine restored.')]);
 
         return to_route('routines.index', ['archived' => 1]);
+    }
+
+    /**
+     * Start a Workout from the Routine, or go to the one already in progress.
+     */
+    #[Authorize('start', 'routine')]
+    public function start(Request $request, Routine $routine, StartWorkout $startWorkout): RedirectResponse
+    {
+        $workout = $startWorkout->fromRoutine($request->user(), $routine);
+
+        if (! $workout->wasRecentlyCreated) {
+            Inertia::flash('toast', ['type' => 'info', 'message' => __('You already have a Workout in progress.')]);
+        }
+
+        return to_route('workouts.show', $workout);
     }
 
     /**

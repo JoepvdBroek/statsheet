@@ -19,6 +19,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('routines', RoutineController::class)->except(['show', 'destroy']);
     Route::post('routines/{routine}/archive', [RoutineController::class, 'archive'])->name('routines.archive');
     Route::post('routines/{routine}/restore', [RoutineController::class, 'restore'])->name('routines.restore');
+    Route::post('routines/{routine}/start', [RoutineController::class, 'start'])->name('routines.start');
 
     Route::resource('workouts', WorkoutController::class)->only(['store', 'show', 'update']);
     Route::post('workouts/{workout}/finish', [WorkoutController::class, 'finish'])->name('workouts.finish');

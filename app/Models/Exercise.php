@@ -94,6 +94,21 @@ class Exercise extends Model
     }
 
     /**
+     * Its first occurrence in the most recent Workout containing it, with its Sets. Empty when it was never trained.
+     */
+    public function lastPerformance(): ?WorkoutExercise
+    {
+        return $this->workoutExercises()
+            ->select('workout_exercises.*')
+            ->join('workouts', 'workouts.id', '=', 'workout_exercises.workout_id')
+            ->orderByDesc('workouts.started_at')
+            ->orderByDesc('workouts.id')
+            ->orderBy('workout_exercises.position')
+            ->with('sets')
+            ->first();
+    }
+
+    /**
      * Exercises in use, which pickers offer.
      *
      * @param  Builder<Exercise>  $query
