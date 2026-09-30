@@ -47,6 +47,16 @@ class UserFactory extends Factory
     }
 
     /**
+     * Indicate that the user has set their current Bodyweight in kg.
+     */
+    public function withBodyweight(string $kilograms): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'bodyweight' => $kilograms,
+        ]);
+    }
+
+    /**
      * Indicate that the model has two-factor authentication configured.
      */
     public function withTwoFactor(): static
