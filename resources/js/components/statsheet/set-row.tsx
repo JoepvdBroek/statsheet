@@ -64,6 +64,7 @@ function SetField({
     readOnly,
     done,
     step,
+    invalid = false,
 }: {
     value: number | null;
     onValue: (v: number | null) => void;
@@ -72,6 +73,7 @@ function SetField({
     readOnly?: boolean;
     done: boolean;
     step: string;
+    invalid?: boolean;
 }) {
     return (
         <input
@@ -82,6 +84,7 @@ function SetField({
             min={0}
             readOnly={readOnly}
             placeholder={placeholder}
+            aria-invalid={invalid || undefined}
             value={value ?? ''}
             onChange={(e) =>
                 onValue(e.target.value === '' ? null : Number(e.target.value))
@@ -89,6 +92,7 @@ function SetField({
             className={cn(
                 'h-10 w-full min-w-0 [appearance:textfield] rounded-md border bg-transparent px-1 text-center text-base tabular-nums transition-[color,box-shadow,border-color] outline-none placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
                 done || readOnly ? 'border-transparent' : 'border-input',
+                'aria-invalid:border-destructive',
             )}
         />
     );
@@ -253,5 +257,147 @@ function SetRowHeader({
     );
 }
 
-export { SetRow, SetRowHeader, meetsTarget };
-export type { SetRowProps, SetValues };
+const plannedGrid =
+    'grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2.5rem] items-center gap-2 px-1';
+
+type PlannedSetRowProps = Omit<React.ComponentProps<'div'>, 'onChange'> & {
+    /** 1-based position among the exercise's working sets. Ignored for warm-ups (shown as W). */
+    index: number;
+    /** The planned reps × weight. */
+    target: SetValues;
+    onTargetChange: (target: SetValues) => void;
+    /** Warm-up sets are planned too, but never count toward Volume, Goals or PRs. */
+    warmup?: boolean;
+    onWarmupChange: (warmup: boolean) => void;
+    /** Bodyweight Exercise: the weight field is the added load. */
+    bodyweight?: boolean;
+    /** Marks the fields that failed validation. */
+    invalid?: { reps?: boolean; weight?: boolean };
+    /** Trailing slot, e.g. a menu to move or remove the set. */
+    actions?: React.ReactNode;
+};
+
+/** A Set in a Routine: an editable Target and Warm-up flag, with no Actual. */
+function PlannedSetRow({
+    index,
+    target,
+    onTargetChange,
+    warmup = false,
+    onWarmupChange,
+    bodyweight = false,
+    invalid = {},
+    actions,
+    className,
+    ...props
+}: PlannedSetRowProps) {
+    return (
+        <div
+            role="row"
+            data-slot="planned-set-row"
+            data-warmup={warmup}
+            className={cn(
+                plannedGrid,
+                'h-12',
+                warmup && 'text-muted-foreground',
+                className,
+            )}
+            {...props}
+        >
+            <span
+                role="cell"
+                className="text-center text-sm tabular-nums"
+                aria-label={warmup ? 'Warm-up set' : `Set ${index}`}
+            >
+                {warmup ? 'W' : index}
+            </span>
+            <span role="cell">
+                <SetField
+                    label={
+                        bodyweight
+                            ? 'Target added weight (kg)'
+                            : 'Target weight (kg)'
+                    }
+                    placeholder={bodyweight ? '+0' : 'kg'}
+                    value={target.weight}
+                    onValue={(weight) => onTargetChange({ ...target, weight })}
+                    done={false}
+                    step="0.01"
+                    invalid={invalid.weight}
+                />
+            </span>
+            <span role="cell">
+                <SetField
+                    label="Target reps"
+                    placeholder="reps"
+                    value={target.reps}
+                    onValue={(reps) => onTargetChange({ ...target, reps })}
+                    done={false}
+                    step="1"
+                    invalid={invalid.reps}
+                />
+            </span>
+            <button
+                type="button"
+                role="cell"
+                aria-pressed={warmup}
+                aria-label="Warm-up set"
+                onClick={() => onWarmupChange(!warmup)}
+                className={cn(
+                    'flex size-10 items-center justify-center rounded-full border-[1.5px] text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                    warmup
+                        ? 'border-secondary bg-secondary text-secondary-foreground'
+                        : 'border-input text-muted-foreground hover:bg-accent',
+                )}
+            >
+                W
+            </button>
+            <span role="cell" className="flex justify-center">
+                {actions}
+            </span>
+        </div>
+    );
+}
+
+function PlannedSetRowHeader({
+    bodyweight = false,
+    className,
+    ...props
+}: React.ComponentProps<'div'> & { bodyweight?: boolean }) {
+    return (
+        <div
+            role="row"
+            data-slot="planned-set-row-header"
+            className={cn(
+                plannedGrid,
+                'text-[11px] leading-4 tracking-[0.05em] text-muted-foreground uppercase',
+                className,
+            )}
+            {...props}
+        >
+            <span role="columnheader" className="text-center">
+                Set
+            </span>
+            <span role="columnheader" className="text-center">
+                {bodyweight ? '+kg' : 'kg'}
+            </span>
+            <span role="columnheader" className="text-center">
+                Reps
+            </span>
+            <span role="columnheader" className="text-center">
+                Warm
+            </span>
+            <span role="columnheader" className="sr-only">
+                Actions
+            </span>
+        </div>
+    );
+}
+
+export {
+    PlannedSetRow,
+    PlannedSetRowHeader,
+    SetRow,
+    SetRowHeader,
+    meetsTarget,
+};
+export type { PlannedSetRowProps, SetRowProps, SetValues };

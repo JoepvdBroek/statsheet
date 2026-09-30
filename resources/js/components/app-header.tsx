@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     BookOpen,
+    ClipboardList,
     Dumbbell,
     Folder,
     LayoutGrid,
@@ -41,6 +42,7 @@ import { useInitials } from '@/hooks/use-initials';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as exercises } from '@/routes/exercises';
+import { index as routines } from '@/routes/routines';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 type Props = {
@@ -52,6 +54,11 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Routines',
+        href: routines(),
+        icon: ClipboardList,
     },
     {
         title: 'Exercises',

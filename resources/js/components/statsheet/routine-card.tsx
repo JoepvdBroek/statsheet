@@ -14,6 +14,7 @@ type RoutineCardProps = React.ComponentProps<'article'> & {
     /** Pre-formatted ("Monday", "12 days ago", "Never"). */
     lastPerformed?: string;
     archived?: boolean;
+    /** Start workout is shown only when onStart or startHref is given. */
     onStart?: () => void;
     /** Render Start workout as a link instead of a button. */
     startHref?: string;
@@ -92,11 +93,11 @@ function RoutineCard({
                             >
                                 Start workout
                             </a>
-                        ) : (
+                        ) : onStart ? (
                             <Button size="sm" onClick={onStart}>
                                 Start workout
                             </Button>
-                        )}
+                        ) : null}
                         {editHref ? (
                             <a
                                 href={editHref}

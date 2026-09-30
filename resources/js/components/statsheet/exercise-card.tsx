@@ -3,7 +3,10 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
-import { SetRowHeader } from '@/components/statsheet/set-row';
+import {
+    PlannedSetRowHeader,
+    SetRowHeader,
+} from '@/components/statsheet/set-row';
 
 type ExerciseCardProps = React.ComponentProps<'section'> & {
     /** Exercise name, variation included ("Barbell bench press"). */
@@ -20,6 +23,10 @@ type ExerciseCardProps = React.ComponentProps<'section'> & {
     hint?: React.ReactNode;
     onAddSet?: () => void;
     onMore?: () => void;
+    /** Header slot for actions, e.g. a menu to move or remove the Exercise. Replaces the More button. */
+    actions?: React.ReactNode;
+    /** Planning view (a Routine): the sets are PlannedSetRows with Targets only. */
+    planning?: boolean;
     /** Hide the Add set button (read-only views). */
     readOnly?: boolean;
 };
@@ -34,6 +41,8 @@ function ExerciseCard({
     hint,
     onAddSet,
     onMore,
+    actions,
+    planning = false,
     readOnly = false,
     className,
     children,
@@ -88,16 +97,17 @@ function ExerciseCard({
                         {doneCount ?? 0}/{setCount}
                     </span>
                 ) : null}
-                {onMore ? (
-                    <button
-                        type="button"
-                        aria-label={`More actions for ${name}`}
-                        onClick={onMore}
-                        className="-mt-1 -mr-1 flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 [&>svg]:size-4"
-                    >
-                        <MoreHorizontalIcon aria-hidden="true" />
-                    </button>
-                ) : null}
+                {actions ??
+                    (onMore ? (
+                        <button
+                            type="button"
+                            aria-label={`More actions for ${name}`}
+                            onClick={onMore}
+                            className="-mt-1 -mr-1 flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 [&>svg]:size-4"
+                        >
+                            <MoreHorizontalIcon aria-hidden="true" />
+                        </button>
+                    ) : null)}
             </header>
             {hint ? (
                 <p className="px-1 text-sm text-muted-foreground tabular-nums">
@@ -109,7 +119,11 @@ function ExerciseCard({
                 aria-label={`${name} sets`}
                 className="flex flex-col gap-1"
             >
-                <SetRowHeader bodyweight={bodyweight} />
+                {planning ? (
+                    <PlannedSetRowHeader bodyweight={bodyweight} />
+                ) : (
+                    <SetRowHeader bodyweight={bodyweight} />
+                )}
                 {children}
             </div>
             {!readOnly && onAddSet ? (

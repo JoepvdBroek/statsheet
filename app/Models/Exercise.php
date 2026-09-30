@@ -74,6 +74,16 @@ class Exercise extends Model
     }
 
     /**
+     * The places Routines plan this Exercise.
+     *
+     * @return HasMany<RoutineExercise, $this>
+     */
+    public function routineExercises(): HasMany
+    {
+        return $this->hasMany(RoutineExercise::class);
+    }
+
+    /**
      * Exercises in use, which pickers offer.
      *
      * @param  Builder<Exercise>  $query
@@ -109,11 +119,11 @@ class Exercise extends Model
     /**
      * Whether a Routine or Workout uses this Exercise, so deleting it must archive it instead.
      *
-     * Routines (ticket 04) and Workouts (ticket 05) add their usages here.
+     * An archived Routine still counts, because it can be restored. Workouts (ticket 05) add their usages here.
      */
     public function isInUse(): bool
     {
-        return false;
+        return $this->routineExercises()->exists();
     }
 
     /**
