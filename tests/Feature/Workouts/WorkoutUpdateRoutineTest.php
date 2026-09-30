@@ -7,26 +7,26 @@ use App\Models\Routine;
 use App\Models\RoutineExercise;
 use App\Models\RoutineSet;
 use App\Models\Workout;
-use App\Models\WorkoutExercise;
 use App\Models\WorkoutSet;
 use Database\Factories\WorkoutSetFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\Concerns\PerformsExercises;
 use Tests\TestCase;
 
 class WorkoutUpdateRoutineTest extends TestCase
 {
-    use RefreshDatabase;
+    use PerformsExercises, RefreshDatabase;
 
     public function test_updating_the_routine_replaces_its_exercises_order_and_sets_with_the_workouts()
     {
         $routine = Routine::factory()->withExercises(2, 3)->create(['name' => 'Push day']);
         $workout = Workout::factory()->for($routine->user)->finished()->create(['routine_id' => $routine->id]);
-        $press = $this->perform($workout, [
+        $press = $this->performNewExercise($workout, [
             WorkoutSet::factory()->state(['target_reps' => 8, 'target_weight' => '40.00'])->done(),
             WorkoutSet::factory()->state(['target_reps' => 6, 'target_weight' => '42.50'])->missed(),
         ]);
-        $squat = $this->perform($workout, [
+        $squat = $this->performNewExercise($workout, [
             WorkoutSet::factory()->state(['target_reps' => 5, 'target_weight' => '100.00'])->warmUp()->done(),
         ]);
 
@@ -51,7 +51,7 @@ class WorkoutUpdateRoutineTest extends TestCase
     public function test_a_set_without_a_target_takes_its_actual()
     {
         $workout = $this->workoutFromRoutine();
-        $curl = $this->perform($workout, [
+        $curl = $this->performNewExercise($workout, [
             WorkoutSet::factory()->withoutTarget()->state(['actual_reps' => 12, 'actual_weight' => '15.00']),
             WorkoutSet::factory()->withoutTarget()->warmUp()->state(['actual_reps' => 15, 'actual_weight' => '7.50']),
         ]);
@@ -64,12 +64,12 @@ class WorkoutUpdateRoutineTest extends TestCase
     public function test_sets_with_neither_a_target_nor_an_actual_are_dropped_with_an_exercise_left_without_sets()
     {
         $workout = $this->workoutFromRoutine();
-        $rowing = $this->perform($workout, [
+        $rowing = $this->performNewExercise($workout, [
             WorkoutSet::factory()->withoutTarget()->notDone(),
             WorkoutSet::factory()->state(['target_reps' => 10, 'target_weight' => '60.00'])->notDone(),
             WorkoutSet::factory()->withoutTarget()->notDone(),
         ]);
-        $this->perform($workout, [
+        $this->performNewExercise($workout, [
             WorkoutSet::factory()->withoutTarget()->notDone(),
         ]);
 
@@ -114,7 +114,7 @@ class WorkoutUpdateRoutineTest extends TestCase
             'started_at' => now()->subWeek(),
         ]);
         $before = $earlier->sets()->orderBy('workout_sets.id')->get(['workout_sets.*'])->toArray();
-        $this->perform($workout, [WorkoutSet::factory()->done()]);
+        $this->performNewExercise($workout, [WorkoutSet::factory()->done()]);
 
         $this->actingAs($workout->user)->put(route('workouts.routine.update', $workout));
 
@@ -126,7 +126,7 @@ class WorkoutUpdateRoutineTest extends TestCase
     {
         $workout = $this->workoutFromRoutine();
         $planBefore = $this->plan($workout->routine);
-        $this->perform($workout, [WorkoutSet::factory()->withoutTarget()]);
+        $this->performNewExercise($workout, [WorkoutSet::factory()->withoutTarget()]);
         $set = $workout->sets()->sole();
 
         $this->actingAs($workout->user)->put(route('workouts.sets.done', [$workout, $set]), ['actual_reps' => 8, 'actual_weight' => 50]);
@@ -146,22 +146,15 @@ class WorkoutUpdateRoutineTest extends TestCase
     }
 
     /**
-     * Add an Exercise of the owner after the Workout's others, performed with the given Sets in order.
+     * Add a new Exercise of the owner after the Workout's others, performed with the given Sets in order.
      *
      * @param  list<WorkoutSetFactory>  $sets
      */
-    private function perform(Workout $workout, array $sets): Exercise
+    private function performNewExercise(Workout $workout, array $sets): Exercise
     {
         $exercise = Exercise::factory()->for($workout->user)->create();
 
-        $performed = WorkoutExercise::factory()
-            ->for($workout)
-            ->for($exercise)
-            ->create(['position' => $workout->exercises()->count()]);
-
-        foreach ($sets as $position => $set) {
-            $set->for($performed)->create(['position' => $position]);
-        }
+        $this->perform($workout, $exercise, $sets);
 
         return $exercise;
     }

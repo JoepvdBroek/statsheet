@@ -6,17 +6,16 @@ use App\Enums\Muscle;
 use App\Models\Exercise;
 use App\Models\User;
 use App\Models\Workout;
-use App\Models\WorkoutExercise;
 use App\Models\WorkoutSet;
 use Carbon\CarbonImmutable;
-use Database\Factories\WorkoutSetFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\Concerns\PerformsExercises;
 use Tests\TestCase;
 
 class ThisWeeksVolumeTest extends TestCase
 {
-    use RefreshDatabase;
+    use PerformsExercises, RefreshDatabase;
 
     public function test_a_done_set_counts_in_full_to_primary_muscles_and_half_to_secondary_muscles()
     {
@@ -190,27 +189,5 @@ class ThisWeeksVolumeTest extends TestCase
         $response = $this->actingAs($owner)->get(route('dashboard'));
 
         $response->assertInertia(fn (Assert $page) => $page->where('thisWeek.muscles', []));
-    }
-
-    /**
-     * Add an Exercise after the Workout's others, performed with the given Sets in order.
-     *
-     * @param  list<WorkoutSetFactory>  $sets
-     */
-    private function perform(Workout $workout, Exercise $exercise, array $sets): void
-    {
-        $performed = WorkoutExercise::factory()
-            ->for($workout)
-            ->for($exercise)
-            ->create(['position' => $workout->exercises()->count()]);
-
-        foreach ($sets as $position => $set) {
-            $set->for($performed)->create(['position' => $position]);
-        }
-    }
-
-    private function doneSet(int $reps, string $weight): WorkoutSetFactory
-    {
-        return WorkoutSet::factory()->state(['target_reps' => $reps, 'target_weight' => $weight])->done();
     }
 }

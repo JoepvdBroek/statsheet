@@ -10,15 +10,15 @@ use App\Models\User;
 use App\Models\Workout;
 use App\Models\WorkoutExercise;
 use App\Models\WorkoutSet;
-use Database\Factories\WorkoutSetFactory;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Concerns\PerformsExercises;
 use Tests\TestCase;
 
 class WorkoutStartFromRoutineTest extends TestCase
 {
-    use RefreshDatabase;
+    use PerformsExercises, RefreshDatabase;
 
     public function test_starting_from_a_routine_copies_its_exercises_in_order_with_its_targets_when_there_is_no_history()
     {
@@ -295,23 +295,6 @@ class WorkoutStartFromRoutineTest extends TestCase
             'routine_id' => $routine?->id,
             'started_at' => now()->modify($startedAgo),
         ]);
-    }
-
-    /**
-     * Add an Exercise after the Workout's others, performed with the given Sets in order.
-     *
-     * @param  list<WorkoutSetFactory>  $sets
-     */
-    private function perform(Workout $workout, Exercise $exercise, array $sets): void
-    {
-        $performed = WorkoutExercise::factory()
-            ->for($workout)
-            ->for($exercise)
-            ->create(['position' => $workout->exercises()->count()]);
-
-        foreach ($sets as $position => $set) {
-            $set->for($performed)->create(['position' => $position]);
-        }
     }
 
     private function workoutInProgress(User $owner): Workout

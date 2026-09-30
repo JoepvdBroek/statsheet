@@ -6,16 +6,15 @@ use App\Models\Exercise;
 use App\Models\Routine;
 use App\Models\User;
 use App\Models\Workout;
-use App\Models\WorkoutExercise;
 use App\Models\WorkoutSet;
-use Database\Factories\WorkoutSetFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\Concerns\PerformsExercises;
 use Tests\TestCase;
 
 class ExerciseProgressTest extends TestCase
 {
-    use RefreshDatabase;
+    use PerformsExercises, RefreshDatabase;
 
     public function test_the_heaviest_weight_and_estimated_1rm_leave_out_warm_up_and_not_done_sets()
     {
@@ -269,27 +268,5 @@ class ExerciseProgressTest extends TestCase
     private function workout(User $owner, string $startedAgo, array $attributes = []): Workout
     {
         return Workout::factory()->for($owner)->finished()->create(['started_at' => now()->modify($startedAgo), ...$attributes]);
-    }
-
-    /**
-     * Add the Exercise after the Workout's others, performed with the given Sets in order.
-     *
-     * @param  list<WorkoutSetFactory>  $sets
-     */
-    private function perform(Workout $workout, Exercise $exercise, array $sets): void
-    {
-        $performed = WorkoutExercise::factory()
-            ->for($workout)
-            ->for($exercise)
-            ->create(['position' => $workout->exercises()->count()]);
-
-        foreach ($sets as $position => $set) {
-            $set->for($performed)->create(['position' => $position]);
-        }
-    }
-
-    private function doneSet(int $reps, string $weight): WorkoutSetFactory
-    {
-        return WorkoutSet::factory()->state(['target_reps' => $reps, 'target_weight' => $weight])->done();
     }
 }
