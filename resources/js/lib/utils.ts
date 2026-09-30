@@ -27,3 +27,12 @@ export function formatDateTime(iso: string, timeZone: string): string {
         timeZone,
     }).format(new Date(iso));
 }
+
+/** Formats a plain date such as a Week's Monday ("2026-09-28") as a short day and month, e.g. "28 Sep". */
+export function formatDate(date: string): string {
+    return new Intl.DateTimeFormat(undefined, {
+        day: 'numeric',
+        month: 'short',
+        timeZone: 'UTC',
+    }).format(new Date(date));
+}

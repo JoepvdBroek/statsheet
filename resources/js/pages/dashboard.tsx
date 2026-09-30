@@ -1,17 +1,36 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
-import { PlayIcon, PlusIcon } from 'lucide-react';
+import { PlayIcon, PlusIcon, ScaleIcon } from 'lucide-react';
 import WorkoutController from '@/actions/App/Http/Controllers/WorkoutController';
+import { StatBlock } from '@/components/statsheet/stat-block';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
-import { formatDateTime } from '@/lib/utils';
+import { capitalize, formatDate, formatDateTime } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { edit as editProfile } from '@/routes/profile';
 import { show } from '@/routes/workouts';
+
+type ThisWeek = {
+    /** The Week's Monday, as a date. */
+    starts_on: string;
+    /** Volume in kg per Muscle, most first; Muscles without Volume are left out. */
+    muscles: { muscle: string; volume: number }[];
+};
+
+const volumeFormat = new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 1,
+});
 
 export default function Dashboard({
     workoutInProgress,
+    thisWeek,
+    bodyweightNudge,
 }: {
     /** The owner's one Workout in progress, if any. */
     workoutInProgress: { id: number; started_at: string } | null;
+    /** This Week's Volume per Muscle, live: Sets in the Workout in progress count too. */
+    thisWeek: ThisWeek;
+    /** Whether the owner has no Bodyweight set yet. */
+    bodyweightNudge: boolean;
 }) {
     const { auth } = usePage().props;
 
@@ -72,9 +91,56 @@ export default function Dashboard({
                         </>
                     )}
                 </section>
-                <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
-                    <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                </div>
+
+                {bodyweightNudge ? (
+                    <Alert>
+                        <ScaleIcon aria-hidden="true" />
+                        <AlertTitle>Set your Bodyweight</AlertTitle>
+                        <AlertDescription>
+                            <p>
+                                Until you do, Bodyweight Exercises count only
+                                their added load toward Volume.{' '}
+                                <Link
+                                    href={editProfile()}
+                                    className="font-medium text-foreground underline underline-offset-4"
+                                >
+                                    Set it in your profile
+                                </Link>
+                            </p>
+                        </AlertDescription>
+                    </Alert>
+                ) : null}
+
+                <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground">
+                    <div className="space-y-0.5">
+                        <h2 className="text-base font-medium">This Week</h2>
+                        <p className="text-sm text-muted-foreground">
+                            Volume per Muscle since Monday{' '}
+                            {formatDate(thisWeek.starts_on)}, including the
+                            Workout in progress.
+                        </p>
+                    </div>
+
+                    {thisWeek.muscles.length === 0 ? (
+                        <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+                            No Volume yet this Week. Mark a Set done to see it
+                            here.
+                        </p>
+                    ) : (
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3">
+                            {thisWeek.muscles.map(({ muscle, volume }) => (
+                                <StatBlock
+                                    key={muscle}
+                                    size="sm"
+                                    tone="live"
+                                    value={volumeFormat.format(volume)}
+                                    unit="kg"
+                                    label={capitalize(muscle)}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </section>
             </div>
         </>
     );

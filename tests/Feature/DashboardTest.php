@@ -49,4 +49,22 @@ class DashboardTest extends TestCase
 
         $response->assertInertia(fn (Assert $page) => $page->where('workoutInProgress', null));
     }
+
+    public function test_the_dashboard_nudges_to_set_a_bodyweight_while_it_is_empty()
+    {
+        $owner = User::factory()->create(['bodyweight' => null]);
+
+        $response = $this->actingAs($owner)->get(route('dashboard'));
+
+        $response->assertInertia(fn (Assert $page) => $page->where('bodyweightNudge', true));
+    }
+
+    public function test_the_dashboard_does_not_nudge_once_a_bodyweight_is_set()
+    {
+        $owner = User::factory()->create(['bodyweight' => '80.00']);
+
+        $response = $this->actingAs($owner)->get(route('dashboard'));
+
+        $response->assertInertia(fn (Assert $page) => $page->where('bodyweightNudge', false));
+    }
 }
