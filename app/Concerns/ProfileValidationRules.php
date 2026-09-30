@@ -48,4 +48,24 @@ trait ProfileValidationRules
                 : Rule::unique(User::class)->ignore($userId),
         ];
     }
+
+    /**
+     * Get the validation rules used to validate the owner's current Bodyweight in kg.
+     *
+     * @return array<int, ValidationRule|array<mixed>|string>
+     */
+    protected function bodyweightRules(): array
+    {
+        return ['nullable', 'numeric', 'gt:0', 'max:999.99', 'decimal:0,2'];
+    }
+
+    /**
+     * Get the validation rules used to validate IANA timezone identifiers.
+     *
+     * @return array<int, ValidationRule|array<mixed>|string>
+     */
+    protected function timezoneRules(): array
+    {
+        return ['required', 'string', 'timezone:all'];
+    }
 }
