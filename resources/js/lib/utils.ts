@@ -50,3 +50,12 @@ export function formatDay(
         timeZone,
     }).format(new Date(iso));
 }
+
+/** Formats a calendar month ("2026-09") as its name and year, e.g. "September 2026". */
+export function formatMonth(month: string): string {
+    return new Intl.DateTimeFormat(undefined, {
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC',
+    }).format(new Date(`${month}-01`));
+}

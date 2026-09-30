@@ -59,6 +59,23 @@ class WeekCalendar
     }
 
     /**
+     * The Weeks whose Monday falls in a calendar month, oldest first, so that each Week belongs to exactly one month.
+     *
+     * @param  CarbonImmutable  $month  A calendar month as monthOf gives it
+     * @return list<CarbonImmutable>
+     */
+    public function weeksOfMonth(CarbonImmutable $month): array
+    {
+        $weeks = [];
+
+        for ($week = $this->weekOf($month->addDays(6)); $week->isSameMonth($month); $week = $week->addWeek()) {
+            $weeks[] = $week;
+        }
+
+        return $weeks;
+    }
+
+    /**
      * The Weeks from the one containing the first moment up to and including the one containing the second, oldest first.
      *
      * @return list<CarbonImmutable>

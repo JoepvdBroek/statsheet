@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import {
     BookOpen,
+    CalendarDays,
     ChartLine,
     ClipboardList,
     Dumbbell,
@@ -28,7 +29,7 @@ import { index as exercises } from '@/routes/exercises';
 import { index as goals } from '@/routes/goals';
 import { index as reviews } from '@/routes/reviews';
 import { index as routines } from '@/routes/routines';
-import { weeklyTrend } from '@/routes/statistics';
+import { monthlySummary, weeklyTrend } from '@/routes/statistics';
 import { index as workouts } from '@/routes/workouts';
 import type { NavItem } from '@/types';
 
@@ -57,6 +58,11 @@ const mainNavItems: NavItem[] = [
         title: 'Weekly trend',
         href: weeklyTrend(),
         icon: ChartLine,
+    },
+    {
+        title: 'Monthly summary',
+        href: monthlySummary(),
+        icon: CalendarDays,
     },
     {
         title: 'Weekly Reviews',

@@ -6,13 +6,15 @@ use App\Enums\MuscleRole;
 use App\Models\User;
 use App\Models\WorkoutSet;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
+use stdClass;
 
 /**
  * Computes Volume per Muscle from the log when read, with no stored aggregates, so edits and deletions show up straight away.
  *
  * Volume is the tonnage (reps × weight) of done, non-warm-up Sets: in full to each primary Muscle and half to each secondary Muscle.
  * A Bodyweight Exercise's weight is the Workout's Bodyweight plus the added load, a missing Bodyweight counting as 0.
- * A Workout counts in the Week of its start, in progress or not.
+ * A Workout counts in the Week and calendar month of its start, in progress or not.
  */
 class VolumeCalculator
 {
@@ -44,15 +46,51 @@ class VolumeCalculator
         }
 
         $sortedWeeks = collect($weeks)->sort()->values();
+        $rows = $this->perWorkout($user, $sortedWeeks->first(), $sortedWeeks->last()->addWeek());
 
-        $rows = WorkoutSet::query()
+        foreach ($rows as $row) {
+            $week = $calendar->weekOf(CarbonImmutable::parse($row->started_at, 'UTC'))->toDateString();
+
+            if (array_key_exists($week, $volume)) {
+                $volume[$week][$row->muscle] = ($volume[$week][$row->muscle] ?? 0) + (float) $row->volume;
+            }
+        }
+
+        return array_map($this->rounded(...), $volume);
+    }
+
+    /**
+     * Volume per Muscle in one calendar month, most Volume first. Muscles without Volume are left out.
+     *
+     * @param  CarbonImmutable  $month  A calendar month as WeekCalendar gives it
+     * @return array<string, float>
+     */
+    public function forMonth(User $user, CarbonImmutable $month): array
+    {
+        $volume = [];
+
+        foreach ($this->perWorkout($user, $month, $month->addMonth()) as $row) {
+            $volume[$row->muscle] = ($volume[$row->muscle] ?? 0) + (float) $row->volume;
+        }
+
+        return $this->rounded($volume);
+    }
+
+    /**
+     * Volume per Muscle of each Workout started from the first moment up to the second: one row per Workout and Muscle with its started_at, muscle and volume.
+     *
+     * @return Collection<int, stdClass>
+     */
+    private function perWorkout(User $user, CarbonImmutable $from, CarbonImmutable $until): Collection
+    {
+        return WorkoutSet::query()
             ->join('workout_exercises', 'workout_exercises.id', '=', 'workout_sets.workout_exercise_id')
             ->join('workouts', 'workouts.id', '=', 'workout_exercises.workout_id')
             ->join('exercises', 'exercises.id', '=', 'workout_exercises.exercise_id')
             ->join('exercise_muscles', 'exercise_muscles.exercise_id', '=', 'exercises.id')
             ->where('workouts.user_id', $user->id)
-            ->where('workouts.started_at', '>=', $sortedWeeks->first()->utc())
-            ->where('workouts.started_at', '<', $sortedWeeks->last()->addWeek()->utc())
+            ->where('workouts.started_at', '>=', $from->utc())
+            ->where('workouts.started_at', '<', $until->utc())
             ->whereNotNull('workout_sets.actual_reps')
             ->where('workout_sets.is_warm_up', false)
             ->select('workouts.started_at', 'exercise_muscles.muscle')
@@ -66,20 +104,19 @@ class VolumeCalculator
             ->orderBy('exercise_muscles.muscle')
             ->toBase()
             ->get();
+    }
 
-        foreach ($rows as $row) {
-            $week = $calendar->weekOf(CarbonImmutable::parse($row->started_at, 'UTC'))->toDateString();
+    /**
+     * Volume per Muscle rounded to the gram, Muscles without Volume left out, most Volume first.
+     *
+     * @param  array<string, float>  $muscles
+     * @return array<string, float>
+     */
+    private function rounded(array $muscles): array
+    {
+        $muscles = array_filter(array_map(fn (float $tonnage) => round($tonnage, 2), $muscles));
+        arsort($muscles);
 
-            if (array_key_exists($week, $volume)) {
-                $volume[$week][$row->muscle] = ($volume[$week][$row->muscle] ?? 0) + (float) $row->volume;
-            }
-        }
-
-        return array_map(function (array $muscles) {
-            $muscles = array_filter(array_map(fn (float $tonnage) => round($tonnage, 2), $muscles));
-            arsort($muscles);
-
-            return $muscles;
-        }, $volume);
+        return $muscles;
     }
 }

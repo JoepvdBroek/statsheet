@@ -94,6 +94,17 @@ class Workout extends Model
     }
 
     /**
+     * Workouts started from the first moment up to the second.
+     *
+     * @param  Builder<Workout>  $query
+     */
+    #[Scope]
+    protected function startedBetween(Builder $query, CarbonImmutable $from, CarbonImmutable $until): void
+    {
+        $query->where('started_at', '>=', $from->utc())->where('started_at', '<', $until->utc());
+    }
+
+    /**
      * Whether the Workout is still in progress; otherwise it is finished.
      */
     public function isInProgress(): bool
