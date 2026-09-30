@@ -1,6 +1,11 @@
 import { CheckIcon, TrophyIcon } from 'lucide-react';
 import * as React from 'react';
 
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
 type SetValues = { reps: number | null; weight: number | null };
@@ -24,6 +29,12 @@ type SetRowProps = Omit<React.ComponentProps<'div'>, 'onChange'> & {
     bodyweight?: boolean;
     /** This set set a Personal Record. */
     pr?: boolean;
+    /** The server's verdict on meeting the Target. Falls back to meetsTarget until the server has answered. */
+    met?: boolean;
+    /** Menu items, e.g. Warm-up or Remove, opened by tapping the set number. */
+    menu?: React.ReactNode;
+    /** Marks the fields that failed validation. */
+    invalid?: { reps?: boolean; weight?: boolean };
     /** Read-only rendering, e.g. in history or a finished workout. */
     readOnly?: boolean;
 };
@@ -110,6 +121,9 @@ function SetRow({
     warmup = false,
     bodyweight = false,
     pr = false,
+    met: metProp,
+    menu,
+    invalid = {},
     readOnly = false,
     className,
     ...props
@@ -124,7 +138,7 @@ function SetRow({
         defaultDone,
         onDoneChange,
     );
-    const met = meetsTarget(actual, target);
+    const met = metProp ?? meetsTarget(actual, target);
 
     const toggle = () => {
         if (readOnly) return;
@@ -152,15 +166,42 @@ function SetRow({
             <span
                 role="cell"
                 className="flex items-center justify-center gap-0.5 text-sm tabular-nums"
-                aria-label={warmup ? 'Warm-up set' : `Set ${index}`}
+                aria-label={
+                    menu ? undefined : warmup ? 'Warm-up set' : `Set ${index}`
+                }
             >
-                {warmup ? 'W' : index}
-                {pr ? (
-                    <TrophyIcon
-                        aria-label="Personal Record"
-                        className="size-3 text-primary"
-                    />
-                ) : null}
+                {menu ? (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                type="button"
+                                aria-label={`${warmup ? 'Warm-up set' : `Set ${index}`} actions`}
+                                className="flex h-10 w-8 items-center justify-center gap-0.5 rounded-md underline decoration-dotted underline-offset-4 outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            >
+                                {warmup ? 'W' : index}
+                                {pr ? (
+                                    <TrophyIcon
+                                        aria-label="Personal Record"
+                                        className="size-3 text-primary"
+                                    />
+                                ) : null}
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                            {menu}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                ) : (
+                    <>
+                        {warmup ? 'W' : index}
+                        {pr ? (
+                            <TrophyIcon
+                                aria-label="Personal Record"
+                                className="size-3 text-primary"
+                            />
+                        ) : null}
+                    </>
+                )}
             </span>
             <span
                 role="cell"
@@ -178,6 +219,7 @@ function SetRow({
                 readOnly={readOnly}
                 done={done}
                 step="0.5"
+                invalid={invalid.weight}
             />
             <SetField
                 label="Reps"
@@ -187,6 +229,7 @@ function SetRow({
                 readOnly={readOnly}
                 done={done}
                 step="1"
+                invalid={invalid.reps}
             />
             <button
                 type="button"

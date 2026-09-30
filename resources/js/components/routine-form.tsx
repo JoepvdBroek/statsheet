@@ -1,35 +1,14 @@
 import { useForm } from '@inertiajs/react';
 import type { UrlMethodPair } from '@inertiajs/core';
-import {
-    ArrowDownIcon,
-    ArrowUpIcon,
-    MoreHorizontalIcon,
-    PlusIcon,
-    SearchIcon,
-    Trash2Icon,
-} from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import ExercisePicker from '@/components/exercise-picker';
 import InputError from '@/components/input-error';
+import { ItemMenu } from '@/components/item-menu';
 import { ExerciseCard } from '@/components/statsheet/exercise-card';
-import { MuscleTag } from '@/components/statsheet/muscle-tag';
 import { PlannedSetRow } from '@/components/statsheet/set-row';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
 import type { Exercise, Routine } from '@/types';
 
 type PlannedSet = {
@@ -360,156 +339,16 @@ export default function RoutineForm({
                     );
                 })}
 
-                <ExercisePicker exercises={exercises} onPick={addExercise} />
+                <ExercisePicker
+                    exercises={exercises}
+                    onPick={addExercise}
+                    description="Archived Exercises aren't offered. Restore one first to plan it."
+                />
             </div>
 
             <Button type="submit" size="lg" disabled={form.processing}>
                 {submitLabel}
             </Button>
         </form>
-    );
-}
-
-function ItemMenu({
-    label,
-    removeLabel,
-    isFirst,
-    isLast,
-    onMove,
-    onRemove,
-}: {
-    label: string;
-    removeLabel: string;
-    isFirst: boolean;
-    isLast: boolean;
-    onMove: (offset: -1 | 1) => void;
-    onRemove: () => void;
-}) {
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <button
-                    type="button"
-                    aria-label={label}
-                    className="flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 [&>svg]:size-4"
-                >
-                    <MoreHorizontalIcon aria-hidden="true" />
-                </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                    disabled={isFirst}
-                    onSelect={() => onMove(-1)}
-                >
-                    <ArrowUpIcon aria-hidden="true" />
-                    Move up
-                </DropdownMenuItem>
-                <DropdownMenuItem disabled={isLast} onSelect={() => onMove(1)}>
-                    <ArrowDownIcon aria-hidden="true" />
-                    Move down
-                </DropdownMenuItem>
-                <DropdownMenuItem variant="destructive" onSelect={onRemove}>
-                    <Trash2Icon aria-hidden="true" />
-                    {removeLabel}
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
-}
-
-function ExercisePicker({
-    exercises,
-    onPick,
-}: {
-    exercises?: Exercise[];
-    onPick: (exercise: Exercise) => void;
-}) {
-    const [open, setOpen] = useState(false);
-    const [search, setSearch] = useState('');
-    const query = search.trim().toLowerCase();
-    const matches = (exercises ?? []).filter((exercise) =>
-        exercise.name.toLowerCase().includes(query),
-    );
-
-    return (
-        <Dialog
-            open={open}
-            onOpenChange={(isOpen) => {
-                setOpen(isOpen);
-                setSearch('');
-            }}
-        >
-            <DialogTrigger asChild>
-                <Button type="button" variant="outline" size="lg">
-                    <PlusIcon aria-hidden="true" />
-                    Add Exercise
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="flex max-h-[85dvh] flex-col">
-                <DialogTitle>Add Exercise</DialogTitle>
-                <DialogDescription>
-                    Archived Exercises aren't offered. Restore one first to plan
-                    it.
-                </DialogDescription>
-
-                <div className="relative">
-                    <SearchIcon
-                        aria-hidden="true"
-                        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                    />
-                    <Input
-                        type="search"
-                        aria-label="Search Exercises by name"
-                        placeholder="Search"
-                        value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                        className="pl-9"
-                    />
-                </div>
-
-                <div className="-mx-2 min-h-0 flex-1 overflow-y-auto">
-                    {exercises === undefined ? (
-                        <div className="flex flex-col gap-2 px-2">
-                            {[0, 1, 2, 3].map((row) => (
-                                <Skeleton key={row} className="h-14 w-full" />
-                            ))}
-                        </div>
-                    ) : matches.length === 0 ? (
-                        <p className="px-2 py-6 text-center text-sm text-muted-foreground">
-                            No Exercises match.
-                        </p>
-                    ) : (
-                        <ul className="flex flex-col">
-                            {matches.map((exercise) => (
-                                <li key={exercise.id}>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            onPick(exercise);
-                                            setOpen(false);
-                                            setSearch('');
-                                        }}
-                                        className="flex w-full flex-col items-start gap-1.5 rounded-lg px-2 py-2.5 text-left outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                    >
-                                        <span className="font-medium">
-                                            {exercise.name}
-                                        </span>
-                                        <span className="flex flex-wrap gap-1.5">
-                                            {exercise.muscles.map((trained) => (
-                                                <MuscleTag
-                                                    key={trained.muscle}
-                                                    muscle={trained.muscle}
-                                                    role={trained.role}
-                                                />
-                                            ))}
-                                        </span>
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
-            </DialogContent>
-        </Dialog>
     );
 }

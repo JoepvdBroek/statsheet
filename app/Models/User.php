@@ -76,4 +76,12 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     {
         return $this->hasMany(Routine::class);
     }
+
+    /**
+     * @return HasMany<Workout, $this>
+     */
+    public function workouts(): HasMany
+    {
+        return $this->hasMany(Workout::class);
+    }
 }

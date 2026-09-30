@@ -4,6 +4,7 @@ namespace Tests\Feature\Exercises;
 
 use App\Models\Exercise;
 use App\Models\Routine;
+use App\Models\Workout;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -54,6 +55,23 @@ class ExerciseRetirementTest extends TestCase
             ->delete(route('exercises.destroy', $exercise));
 
         $this->assertNotNull($exercise->refresh()->archived_at);
+    }
+
+    public function test_deleting_an_exercise_a_workout_uses_archives_it_and_keeps_the_logged_sets()
+    {
+        $workout = Workout::factory()->finished()->withExercises(1, 2)->create();
+        $exercise = $workout->exercises[0]->exercise;
+
+        $response = $this
+            ->actingAs($exercise->user)
+            ->delete(route('exercises.destroy', $exercise));
+
+        $response
+            ->assertRedirect(route('exercises.index'))
+            ->assertInertiaFlash('toast.message', 'Exercise archived, because a Routine or Workout uses it.');
+
+        $this->assertNotNull($exercise->refresh()->archived_at);
+        $this->assertDatabaseCount('workout_sets', 2);
     }
 
     public function test_restoring_an_archived_exercise_puts_it_back_in_use()

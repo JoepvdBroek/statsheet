@@ -15,3 +15,15 @@ export function capitalize(value: string): string {
 export function toUrl(url: NonNullable<InertiaLinkProps['href']>): string {
     return typeof url === 'string' ? url : url.url;
 }
+
+/** Formats a timestamp as a short weekday, date and time in the owner's timezone, e.g. "Tue 30 Sep, 18:05". */
+export function formatDateTime(iso: string, timeZone: string): string {
+    return new Intl.DateTimeFormat(undefined, {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone,
+    }).format(new Date(iso));
+}
