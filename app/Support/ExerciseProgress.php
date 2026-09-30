@@ -8,16 +8,32 @@ use App\Models\WorkoutExercise;
 use App\Models\WorkoutSet;
 
 /**
- * Computes an Exercise's Personal Records from the log when read, with nothing stored, so edits and deletions show up straight away.
+ * An Exercise's progress: its Personal Records, its best per Workout over time, and its recent performances.
+ * It is computed from the log when read, with nothing stored, so edits and deletions show up straight away.
+ * The done Sets are loaded once, when it is made.
  *
- * Only done, non-warm-up Sets count. Estimated 1RM is Epley's weight × (1 + reps / 30), for Sets of at most 12 reps.
+ * Only done, non-warm-up Sets count towards records and progress.
+ * Estimated 1RM is Epley's weight × (1 + reps / 30), for Sets of at most 12 reps.
  * For a Bodyweight Exercise, heaviest and reps-at-weight use the added load, while Estimated 1RM and set tonnage use
  * the Workout's Bodyweight plus the added load, a missing Bodyweight counting as 0.
  *
  * @phpstan-type MeasuredSet array{workout: Workout, reps: int, added_load: float, warm_up: bool, e1rm: float|null, tonnage: float}
  */
-class PersonalRecords
+class ExerciseProgress
 {
+    /**
+     * @param  list<MeasuredSet>  $doneSets  The Exercise's done Sets, in the order they were performed
+     */
+    private function __construct(private array $doneSets) {}
+
+    /**
+     * The progress of an Exercise, loading its done Sets.
+     */
+    public static function of(Exercise $exercise): self
+    {
+        return new self(self::doneSets($exercise));
+    }
+
     /**
      * The Exercise's Personal Records, each empty until a Set qualifies.
      *
@@ -25,9 +41,9 @@ class PersonalRecords
      *
      * @return array{heaviest: float|null, e1rm: float|null, reps_at_weight: list<array{weight: float, reps: int}>, tonnage: float|null}
      */
-    public function of(Exercise $exercise): array
+    public function records(): array
     {
-        $sets = $this->qualifying($this->doneSets($exercise));
+        $sets = $this->qualifying($this->doneSets);
 
         $bestRepsAtWeight = [];
 
@@ -55,11 +71,11 @@ class PersonalRecords
      *
      * @return list<array{workout_id: int, started_at: string, e1rm: float|null, heaviest: float}>
      */
-    public function perWorkout(Exercise $exercise): array
+    public function perWorkout(): array
     {
         $points = [];
 
-        foreach ($this->perWorkoutSets($this->qualifying($this->doneSets($exercise))) as $sets) {
+        foreach ($this->perWorkoutSets($this->qualifying($this->doneSets)) as $sets) {
             $workout = $sets[0]['workout'];
             $points[] = [
                 'workout_id' => $workout->id,
@@ -78,11 +94,11 @@ class PersonalRecords
      *
      * @return list<array{workout_id: int, started_at: string, routine: string|null, e1rm: float|null, sets: list<array{reps: int, weight: float, warm_up: bool, top: bool}>}>
      */
-    public function recentPerformances(Exercise $exercise): array
+    public function recentPerformances(): array
     {
         $performances = [];
 
-        foreach (array_slice(array_reverse($this->perWorkoutSets($this->doneSets($exercise))), 0, 10) as $sets) {
+        foreach (array_slice(array_reverse($this->perWorkoutSets($this->doneSets)), 0, 10) as $sets) {
             $workout = $sets[0]['workout'];
             $best = $this->best(array_column($this->qualifying($sets), 'e1rm'));
             $top = null;
@@ -157,7 +173,7 @@ class PersonalRecords
      *
      * @return list<MeasuredSet>
      */
-    private function doneSets(Exercise $exercise): array
+    private static function doneSets(Exercise $exercise): array
     {
         $performances = $exercise->workoutExercises()
             ->join('workouts', 'workouts.id', '=', 'workout_exercises.workout_id')
@@ -172,7 +188,7 @@ class PersonalRecords
 
         foreach ($performances as $performed) {
             foreach ($performed->sets as $set) {
-                $measured = $this->measure($set, $performed, $exercise->is_bodyweight);
+                $measured = self::measure($set, $performed, $exercise->is_bodyweight);
 
                 if ($measured !== null) {
                     $sets[] = $measured;
@@ -188,7 +204,7 @@ class PersonalRecords
      *
      * @return MeasuredSet|null
      */
-    private function measure(WorkoutSet $set, WorkoutExercise $performed, bool $isBodyweight): ?array
+    private static function measure(WorkoutSet $set, WorkoutExercise $performed, bool $isBodyweight): ?array
     {
         if ($set->actual_reps === null || $set->actual_weight === null) {
             return null;

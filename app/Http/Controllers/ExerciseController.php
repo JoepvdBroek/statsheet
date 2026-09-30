@@ -7,7 +7,7 @@ use App\Enums\Muscle;
 use App\Http\Requests\ExerciseRequest;
 use App\Http\Resources\ExerciseResource;
 use App\Models\Exercise;
-use App\Support\PersonalRecords;
+use App\Support\ExerciseProgress;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
@@ -78,13 +78,15 @@ class ExerciseController extends Controller
      * Show an Exercise's progress: its Personal Records, its best Estimated 1RM and heaviest weight per Workout over time, and its recent performances.
      */
     #[Authorize('view', 'exercise')]
-    public function show(Exercise $exercise, PersonalRecords $personalRecords): Response
+    public function show(Exercise $exercise): Response
     {
+        $progress = ExerciseProgress::of($exercise);
+
         return Inertia::render('exercises/show', [
             'exercise' => ExerciseResource::make($exercise->load('muscles'))->resolve(),
-            'records' => $personalRecords->of($exercise),
-            'progress' => $personalRecords->perWorkout($exercise),
-            'recent' => $personalRecords->recentPerformances($exercise),
+            'records' => $progress->records(),
+            'progress' => $progress->perWorkout(),
+            'recent' => $progress->recentPerformances(),
         ]);
     }
 
