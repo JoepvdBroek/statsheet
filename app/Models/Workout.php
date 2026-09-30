@@ -118,22 +118,22 @@ class Workout extends Model
      */
     public function plannedExercises(): array
     {
-        return $this->exercises()->with('sets')->get()
+        $planned = $this->exercises()->with('sets')->get()
             ->map(fn (WorkoutExercise $performed) => [
                 'exercise_id' => $performed->exercise_id,
-                'sets' => $performed->sets
+                'sets' => array_values($performed->sets
                     ->map(fn (WorkoutSet $set) => ($target = $set->plannedTarget()) === null ? null : [
                         'target_reps' => $target['reps'],
                         'target_weight' => $target['weight'],
                         'is_warm_up' => $set->is_warm_up,
                     ])
                     ->filter()
-                    ->values()
-                    ->all(),
+                    ->all()),
             ])
             ->filter(fn (array $planned) => $planned['sets'] !== [])
-            ->values()
             ->all();
+
+        return array_values($planned);
     }
 
     /**
