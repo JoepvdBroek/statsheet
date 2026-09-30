@@ -6,6 +6,8 @@ use App\Models\Exercise;
 use App\Models\Workout;
 use App\Models\WorkoutExercise;
 use App\Models\WorkoutSet;
+use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -38,11 +40,16 @@ class ExerciseProgress
     private function __construct(private array $doneSets) {}
 
     /**
-     * The progress of an Exercise, loading its done Sets.
+     * The progress of an Exercise, loading its done Sets, or only those of Workouts started before the given moment.
      */
-    public static function of(Exercise $exercise): self
+    public static function of(Exercise $exercise, ?CarbonInterface $before = null): self
     {
-        return new self(self::doneSets($exercise->workoutExercises()));
+        return new self(self::doneSets(
+            $exercise->workoutExercises()->when(
+                $before,
+                fn (Builder $performances) => $performances->where('workouts.started_at', '<', CarbonImmutable::instance($before)->utc()),
+            ),
+        ));
     }
 
     /**
@@ -102,6 +109,25 @@ class ExerciseProgress
             ),
             'tonnage' => $this->best(array_column($sets, 'tonnage')),
         ];
+    }
+
+    /**
+     * When Personal Records were beaten: for each Set that beat any, the start of its Workout and the records it beat, in the order they were performed.
+     *
+     * @return list<array{started_at: CarbonImmutable, beaten: non-empty-list<Measure>}>
+     */
+    public function recordsBeaten(): array
+    {
+        $newRecords = $this->newRecords();
+        $recordsBeaten = [];
+
+        foreach ($this->doneSets as $set) {
+            if (isset($newRecords[$set['id']])) {
+                $recordsBeaten[] = ['started_at' => $set['workout']->started_at, 'beaten' => $newRecords[$set['id']]];
+            }
+        }
+
+        return $recordsBeaten;
     }
 
     /**

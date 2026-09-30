@@ -99,6 +99,16 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * The owner's Weekly Reviews, one per Week.
+     *
+     * @return HasMany<WeeklyReview, $this>
+     */
+    public function weeklyReviews(): HasMany
+    {
+        return $this->hasMany(WeeklyReview::class);
+    }
+
+    /**
      * The weekly minimum in kg of each Muscle's Goal in force in the given Week: its latest version effective on or before it.
      * Muscles without a Goal, or whose Goal was removed, are left out.
      *

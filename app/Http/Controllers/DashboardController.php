@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\WeeklyReviewResource;
 use App\Support\VolumeCalculator;
 use App\Support\WeekCalendar;
 use Illuminate\Http\Request;
@@ -11,7 +12,7 @@ use Inertia\Response;
 class DashboardController extends Controller
 {
     /**
-     * Show the dashboard: resume the Workout in progress or start one, this Week's Volume per Muscle against its Goal, and a nudge to set a Bodyweight while it is empty.
+     * Show the dashboard: resume the Workout in progress or start one, this Week's Volume per Muscle against its Goal, the latest Weekly Review, and a nudge to set a Bodyweight while it is empty.
      */
     public function __invoke(Request $request, VolumeCalculator $volumeCalculator): Response
     {
@@ -19,6 +20,7 @@ class DashboardController extends Controller
         $workout = $user->workouts()->inProgress()->first();
         $week = WeekCalendar::for($user)->currentWeek();
         $volume = $volumeCalculator->forWeek($user, $week);
+        $latestReview = $user->weeklyReviews()->latest('week')->first();
 
         return Inertia::render('dashboard', [
             'workoutInProgress' => $workout === null ? null : [
@@ -29,6 +31,7 @@ class DashboardController extends Controller
                 'starts_on' => $week->toDateString(),
                 'muscles' => $this->againstGoals($volume, $user->goalsInForce($week)),
             ],
+            'latestReview' => $latestReview === null ? null : WeeklyReviewResource::make($latestReview)->resolve(),
             'bodyweightNudge' => $user->bodyweight === null,
         ]);
     }

@@ -33,6 +33,14 @@ class WeekCalendar
     }
 
     /**
+     * The Week a calendar day ("2026-09-24") falls in, taking the day in the owner's timezone.
+     */
+    public function weekOfDay(string $day): CarbonImmutable
+    {
+        return $this->weekOf(CarbonImmutable::parse($day, $this->timezone));
+    }
+
+    /**
      * The Week it is now.
      */
     public function currentWeek(): CarbonImmutable
