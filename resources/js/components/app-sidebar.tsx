@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import {
     BookOpen,
+    ChartLine,
     ClipboardList,
     Dumbbell,
     FolderGit2,
@@ -25,6 +26,7 @@ import { dashboard } from '@/routes';
 import { index as exercises } from '@/routes/exercises';
 import { index as goals } from '@/routes/goals';
 import { index as routines } from '@/routes/routines';
+import { weeklyTrend } from '@/routes/statistics';
 import { index as workouts } from '@/routes/workouts';
 import type { NavItem } from '@/types';
 
@@ -48,6 +50,11 @@ const mainNavItems: NavItem[] = [
         title: 'Goals',
         href: goals(),
         icon: Target,
+    },
+    {
+        title: 'Weekly trend',
+        href: weeklyTrend(),
+        icon: ChartLine,
     },
     {
         title: 'Exercises',

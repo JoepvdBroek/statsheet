@@ -107,14 +107,37 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
      */
     public function goalsInForce(CarbonImmutable $week): array
     {
-        return $this->goals()
-            ->whereDate('effective_week', '<=', $week->toDateString())
+        return $this->goalsInForcePerWeek([$week])[$week->toDateString()];
+    }
+
+    /**
+     * The weekly minimum in kg of each Muscle's Goal in force in each of the given Weeks, keyed by the Week's Monday date and then by Muscle.
+     * Muscles without a Goal in a Week, or whose Goal was removed by then, are left out of that Week.
+     *
+     * @param  list<CarbonImmutable>  $weeks  Weeks as WeekCalendar gives them
+     * @return array<string, array<string, float>>
+     */
+    public function goalsInForcePerWeek(array $weeks): array
+    {
+        if ($weeks === []) {
+            return [];
+        }
+
+        $mondays = array_map(fn (CarbonImmutable $week) => $week->toDateString(), $weeks);
+
+        $versions = $this->goals()
+            ->whereDate('effective_week', '<=', max($mondays))
             ->orderBy('effective_week')
-            ->get()
-            ->keyBy(fn (Goal $goal) => $goal->muscle->value)
-            ->whereNotNull('weekly_minimum')
-            ->map(fn (Goal $goal) => (float) $goal->weekly_minimum)
-            ->all();
+            ->get();
+
+        return collect($mondays)->mapWithKeys(fn (string $monday) => [
+            $monday => $versions
+                ->filter(fn (Goal $goal) => $goal->effective_week->toDateString() <= $monday)
+                ->keyBy(fn (Goal $goal) => $goal->muscle->value)
+                ->whereNotNull('weekly_minimum')
+                ->map(fn (Goal $goal) => (float) $goal->weekly_minimum)
+                ->all(),
+        ])->all();
     }
 
     /**

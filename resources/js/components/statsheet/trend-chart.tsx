@@ -8,6 +8,8 @@ type TrendPoint = {
     value: number;
     /** This point set a Personal Record: drawn as a ringed dot. */
     pr?: boolean;
+    /** The Goal in force at this point: drawn as a dashed line that steps where it changes, with a gap where there is none. */
+    goal?: number | null;
 };
 
 type TrendChartProps = Omit<React.ComponentProps<'figure'>, 'title'> & {
@@ -20,6 +22,13 @@ type TrendChartProps = Omit<React.ComponentProps<'figure'>, 'title'> & {
     height?: number;
     /** Decimal places in labels. */
     digits?: number;
+};
+
+/** The dashed stroke of the Goal line, shared with its legend. */
+const goalStroke = {
+    className: 'stroke-muted-foreground',
+    strokeWidth: 1.5,
+    strokeDasharray: '4 4',
 };
 
 function niceTicks(min: number, max: number, count = 4) {
@@ -75,7 +84,8 @@ function TrendChart({
     }
 
     const pad = { top: 16, right: 48, bottom: 24, left: 36 };
-    const values = points.map((p) => p.value);
+    const goals = points.flatMap((p) => (p.goal == null ? [] : [p.goal]));
+    const values = [...points.map((p) => p.value), ...goals];
     const ticks = niceTicks(Math.min(...values), Math.max(...values));
     const yMin = ticks[0];
     const yMax = ticks[ticks.length - 1];
@@ -88,6 +98,17 @@ function TrendChart({
         pad.top + ih - ((v - yMin) / (yMax - yMin || 1)) * ih;
     const path = points
         .map((p, i) => `${i ? 'L' : 'M'}${x(i)},${y(p.value)}`)
+        .join('');
+    const halfStep =
+        points.length === 1 ? iw / 2 : iw / (points.length - 1) / 2;
+    const goalPath = points
+        .map((p, i) => {
+            if (p.goal == null) return '';
+            const from = Math.max(pad.left, x(i) - halfStep);
+            const to = Math.min(pad.left + iw, x(i) + halfStep);
+            const joined = points[i - 1]?.goal != null;
+            return `${joined ? 'L' : 'M'}${from},${y(p.goal)}L${to},${y(p.goal)}`;
+        })
         .join('');
     const last = points.length - 1;
     const labelEvery = Math.max(
@@ -173,6 +194,9 @@ function TrendChart({
                             strokeWidth={1}
                         />
                     ) : null}
+                    {goalPath ? (
+                        <path d={goalPath} fill="none" {...goalStroke} />
+                    ) : null}
                     <path
                         d={path}
                         fill="none"
@@ -233,9 +257,25 @@ function TrendChart({
                                 <span className="text-primary"> · PR</span>
                             ) : null}
                         </div>
+                        {h.goal != null ? (
+                            <div className="text-muted-foreground tabular-nums">
+                                Goal {fmt(h.goal)} {unit}
+                            </div>
+                        ) : null}
                     </div>
                 ) : null}
             </div>
+            {goalPath ? (
+                <div
+                    aria-hidden="true"
+                    className="flex items-center gap-2 text-[11px] text-muted-foreground"
+                >
+                    <svg width={16} height={2} className="overflow-visible">
+                        <line x1={0} x2={16} y1={1} y2={1} {...goalStroke} />
+                    </svg>
+                    Goal
+                </div>
+            ) : null}
             <table className="sr-only">
                 <caption>{title}</caption>
                 <tbody>
@@ -245,6 +285,9 @@ function TrendChart({
                             <td>
                                 {fmt(p.value)} {unit}
                                 {p.pr ? ' (PR)' : ''}
+                                {p.goal != null
+                                    ? `, Goal ${fmt(p.goal)} ${unit}`
+                                    : ''}
                             </td>
                         </tr>
                     ))}
