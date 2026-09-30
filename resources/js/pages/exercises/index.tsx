@@ -202,18 +202,15 @@ function ExerciseRow({ exercise }: { exercise: Exercise }) {
         <li className="flex items-start gap-3 rounded-xl border bg-card px-4 py-3 text-card-foreground">
             <div className="flex min-w-0 flex-1 flex-col gap-2">
                 <div className="flex min-w-0 flex-col gap-0.5">
-                    {exercise.archived ? (
-                        <span className="truncate font-medium text-muted-foreground">
-                            {exercise.name}
-                        </span>
-                    ) : (
-                        <Link
-                            href={ExerciseController.edit(exercise.id)}
-                            className="truncate rounded-sm font-medium underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                        >
-                            {exercise.name}
-                        </Link>
-                    )}
+                    <Link
+                        href={ExerciseController.show(exercise.id)}
+                        className={cn(
+                            'truncate rounded-sm font-medium underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                            exercise.archived && 'text-muted-foreground',
+                        )}
+                    >
+                        {exercise.name}
+                    </Link>
                     {details.length ? (
                         <span className="text-sm text-muted-foreground">
                             {details.join(' · ')}

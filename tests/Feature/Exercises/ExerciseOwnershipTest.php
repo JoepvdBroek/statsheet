@@ -18,6 +18,7 @@ class ExerciseOwnershipTest extends TestCase
     public static function exerciseRoutes(): array
     {
         return [
+            'show' => ['get', 'exercises.show'],
             'edit' => ['get', 'exercises.edit'],
             'update' => ['put', 'exercises.update'],
             'destroy' => ['delete', 'exercises.destroy'],

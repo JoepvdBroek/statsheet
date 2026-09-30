@@ -3,7 +3,13 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { PRBadge } from '@/components/statsheet/pr-badge';
 
-type HistorySet = { reps: number; weight: number; warmup?: boolean };
+type HistorySet = {
+    reps: number;
+    weight: number;
+    warmup?: boolean;
+    /** The server's top Set of the Workout. When any Set carries it, it replaces the client-side `epley` pick. */
+    top?: boolean;
+};
 
 type HistoryEntryProps = React.ComponentProps<'article'> & {
     /** Pre-formatted date ("Mon 22 Sep"). */
@@ -33,10 +39,12 @@ function HistoryEntry({
     ...props
 }: HistoryEntryProps) {
     const working = sets.filter((s) => !s.warmup);
-    const top = working.reduce<HistorySet | null>(
-        (best, s) => (!best || epley(s) > epley(best) ? s : best),
-        null,
-    );
+    const top = sets.some((s) => s.top !== undefined)
+        ? (sets.find((s) => s.top) ?? null)
+        : working.reduce<HistorySet | null>(
+              (best, s) => (!best || epley(s) > epley(best) ? s : best),
+              null,
+          );
     return (
         <article
             data-slot="history-entry"

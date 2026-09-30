@@ -14,7 +14,7 @@ Route::inertia('/', 'welcome')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
-    Route::resource('exercises', ExerciseController::class)->except(['show']);
+    Route::resource('exercises', ExerciseController::class);
     Route::post('exercises/{exercise}/restore', [ExerciseController::class, 'restore'])->name('exercises.restore');
 
     Route::resource('routines', RoutineController::class)->except(['show', 'destroy']);

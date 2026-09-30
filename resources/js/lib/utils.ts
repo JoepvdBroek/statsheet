@@ -36,3 +36,17 @@ export function formatDate(date: string): string {
         timeZone: 'UTC',
     }).format(new Date(date));
 }
+
+/** Formats a timestamp as a short day and month in the owner's timezone, e.g. "22 Sep", or "Mon 22 Sep" with the weekday. */
+export function formatDay(
+    iso: string,
+    timeZone: string,
+    { weekday = false }: { weekday?: boolean } = {},
+): string {
+    return new Intl.DateTimeFormat(undefined, {
+        weekday: weekday ? 'short' : undefined,
+        day: 'numeric',
+        month: 'short',
+        timeZone,
+    }).format(new Date(iso));
+}

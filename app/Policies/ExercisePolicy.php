@@ -9,6 +9,14 @@ use Illuminate\Auth\Access\Response;
 class ExercisePolicy
 {
     /**
+     * Determine whether the user can see the Exercise's progress and Personal Records.
+     */
+    public function view(User $user, Exercise $exercise): Response
+    {
+        return $this->owns($user, $exercise);
+    }
+
+    /**
      * Determine whether the user can edit the Exercise.
      */
     public function update(User $user, Exercise $exercise): Response
