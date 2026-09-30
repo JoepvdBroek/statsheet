@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { capitalize, cn } from '@/lib/utils';
 
 type MuscleTagProps = React.ComponentProps<'span'> & {
     /** One of the 17 Muscles, written in lower case as in the glossary. */
@@ -33,7 +33,7 @@ function MuscleTag({
             )}
             {...props}
         >
-            {muscle.charAt(0).toUpperCase() + muscle.slice(1)}
+            {capitalize(muscle)}
         </span>
     );
 }
