@@ -15,3 +15,9 @@ export type WeeklyReview = {
     model: string | null;
     generated_at: string | null;
 };
+
+/** A Weekly Review as a list shows it, without its notes and advice. */
+export type WeeklyReviewSummary = Pick<
+    WeeklyReview,
+    'id' | 'week' | 'status' | 'summary'
+>;

@@ -28,7 +28,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('statistics/weekly-trend', WeeklyTrendController::class)->name('statistics.weekly-trend');
 
-    Route::resource('reviews', WeeklyReviewController::class)->only(['store', 'show']);
+    Route::resource('reviews', WeeklyReviewController::class)->only(['index', 'store', 'show']);
 
     Route::resource('workouts', WorkoutController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
     Route::post('workouts/{workout}/finish', [WorkoutController::class, 'finish'])->name('workouts.finish');

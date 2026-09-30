@@ -7,6 +7,7 @@ import {
     FolderGit2,
     History,
     LayoutGrid,
+    NotebookText,
     Target,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -25,6 +26,7 @@ import {
 import { dashboard } from '@/routes';
 import { index as exercises } from '@/routes/exercises';
 import { index as goals } from '@/routes/goals';
+import { index as reviews } from '@/routes/reviews';
 import { index as routines } from '@/routes/routines';
 import { weeklyTrend } from '@/routes/statistics';
 import { index as workouts } from '@/routes/workouts';
@@ -55,6 +57,11 @@ const mainNavItems: NavItem[] = [
         title: 'Weekly trend',
         href: weeklyTrend(),
         icon: ChartLine,
+    },
+    {
+        title: 'Weekly Reviews',
+        href: reviews(),
+        icon: NotebookText,
     },
     {
         title: 'Exercises',

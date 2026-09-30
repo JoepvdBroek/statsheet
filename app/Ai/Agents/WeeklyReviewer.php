@@ -2,6 +2,7 @@
 
 namespace App\Ai\Agents;
 
+use App\Ai\Tools\EarlierReviews;
 use App\Ai\Tools\GoalsPerWeek;
 use App\Ai\Tools\PersonalRecords;
 use App\Ai\Tools\VolumePerWeek;
@@ -50,6 +51,8 @@ class WeeklyReviewer implements Agent, HasStructuredOutput, HasTools
             - A Goal is a weekly minimum Volume for one Muscle. Each Week is judged against the Goal in force that Week.
             - A Workout Note gives context the numbers don't show, such as a deload, an injury or bad sleep. Take it into account.
 
+            Read the earlier reviews, at least the previous Week's, and check whether their advice was followed in the reviewed Week. Say so in the summary, and build the new advice on it rather than repeating it.
+
             Use the tools to read the reviewed Week and as much earlier history as you need to put it in context. Each tool reads a limited range of Weeks per call; call it again for earlier Weeks. Only state figures the tools gave you.
 
             Write:
@@ -76,6 +79,7 @@ class WeeklyReviewer implements Agent, HasStructuredOutput, HasTools
             $inProgress
                 ? 'This Week is still in progress: today is '.now($this->user->timezone)->toDateString().'. Review it so far.'
                 : 'This Week is over.',
+            'The previous Week began on Monday '.$this->week->subWeek()->toDateString().'.',
             $goals === []
                 ? 'No Muscle had a Goal in force that Week, so muscle_notes is empty.'
                 : 'Muscles with a Goal in force that Week (weekly minimum in kg): '
@@ -97,6 +101,7 @@ class WeeklyReviewer implements Agent, HasStructuredOutput, HasTools
             new VolumePerWeek($this->user),
             new GoalsPerWeek($this->user),
             new PersonalRecords($this->user),
+            new EarlierReviews($this->user, $this->week),
         ];
     }
 

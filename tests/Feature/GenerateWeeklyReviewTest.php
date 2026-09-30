@@ -39,7 +39,7 @@ class GenerateWeeklyReviewTest extends TestCase
         $this->assertSame(['Keep the fourth Set of bench.', 'Add a Set of rows.'], $review->advice);
         $this->assertSame('gpt-review', $review->model);
         $this->assertSame('2026-09-28 06:00:00', $review->generated_at->toDateTimeString());
-        WeeklyReviewer::assertPrompted(fn (AgentPrompt $prompt) => $prompt->contains('2026-09-21'));
+        WeeklyReviewer::assertPrompted(fn (AgentPrompt $prompt) => $prompt->contains('2026-09-21') && $prompt->contains('2026-09-14'));
     }
 
     public function test_only_one_note_per_muscle_with_a_goal_in_force_that_week_is_stored()

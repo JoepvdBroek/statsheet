@@ -1,20 +1,18 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 import { PlayIcon, PlusIcon, ScaleIcon } from 'lucide-react';
-import WeeklyReviewController from '@/actions/App/Http/Controllers/WeeklyReviewController';
 import WorkoutController from '@/actions/App/Http/Controllers/WorkoutController';
-import InputError from '@/components/input-error';
+import { AskForReviewForm } from '@/components/ask-for-review-form';
 import { StatBlock } from '@/components/statsheet/stat-block';
+import { WeeklyReviewLink } from '@/components/weekly-review-link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { capitalize, formatDate, formatDateTime } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as goalsIndex } from '@/routes/goals';
 import { edit as editProfile } from '@/routes/profile';
-import { show as showReview } from '@/routes/reviews';
+import { index as reviewsIndex } from '@/routes/reviews';
 import { show } from '@/routes/workouts';
-import type { ReviewStatus, WeeklyReview } from '@/types';
+import type { WeeklyReview } from '@/types';
 
 type ThisWeek = {
     /** The Week's Monday, as a date. */
@@ -183,12 +181,6 @@ export default function Dashboard({
     );
 }
 
-const reviewStatusLabels: Record<ReviewStatus, string> = {
-    pending: 'Being written',
-    done: 'Ready',
-    failed: 'Failed',
-};
-
 function WeeklyReviewCard({
     latestReview,
     thisWeekStartsOn,
@@ -198,59 +190,22 @@ function WeeklyReviewCard({
 }) {
     return (
         <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground">
-            <div className="space-y-0.5">
-                <h2 className="text-base font-medium">Weekly Review</h2>
-                <p className="text-sm text-muted-foreground">
-                    An AI-written look at a Week of your log. It only reads your
-                    data; it never changes it.
-                </p>
+            <div className="flex items-start justify-between gap-4">
+                <div className="space-y-0.5">
+                    <h2 className="text-base font-medium">Weekly Review</h2>
+                    <p className="text-sm text-muted-foreground">
+                        An AI-written look at a Week of your log. It only reads
+                        your data; it never changes it.
+                    </p>
+                </div>
+                <Button asChild variant="outline" size="sm">
+                    <Link href={reviewsIndex()}>All reviews</Link>
+                </Button>
             </div>
 
-            {latestReview ? (
-                <Link
-                    href={showReview(latestReview.id)}
-                    className="flex flex-col gap-1 rounded-lg border p-3 text-sm hover:bg-accent"
-                >
-                    <span className="flex items-center justify-between gap-2">
-                        <span className="font-medium">
-                            Week of {formatDate(latestReview.week)}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                            {reviewStatusLabels[latestReview.status]}
-                        </span>
-                    </span>
-                    {latestReview.summary ? (
-                        <span className="line-clamp-3 text-muted-foreground">
-                            {latestReview.summary}
-                        </span>
-                    ) : null}
-                </Link>
-            ) : null}
+            {latestReview ? <WeeklyReviewLink review={latestReview} /> : null}
 
-            <Form
-                {...WeeklyReviewController.store.form()}
-                className="flex flex-col gap-2"
-            >
-                {({ errors, processing }) => (
-                    <>
-                        <Label htmlFor="review-week">A day in the Week</Label>
-                        <div className="flex items-center gap-2">
-                            <Input
-                                id="review-week"
-                                name="week"
-                                type="date"
-                                defaultValue={thisWeekStartsOn}
-                                aria-invalid={errors.week ? true : undefined}
-                                className="w-44"
-                            />
-                            <Button type="submit" disabled={processing}>
-                                Ask for a review
-                            </Button>
-                        </div>
-                        <InputError message={errors.week} />
-                    </>
-                )}
-            </Form>
+            <AskForReviewForm defaultDay={thisWeekStartsOn} />
         </section>
     );
 }

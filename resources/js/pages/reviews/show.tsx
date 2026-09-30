@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { formatDate, formatDateTime } from '@/lib/utils';
-import { dashboard } from '@/routes';
+import { index } from '@/routes/reviews';
 import type { WeeklyReview } from '@/types';
 
 export default function ShowReview({ review }: { review: WeeklyReview }) {
@@ -168,8 +168,8 @@ function AskAgain({ week, label }: { week: string; label: string }) {
 ShowReview.layout = {
     breadcrumbs: [
         {
-            title: 'Dashboard',
-            href: dashboard(),
+            title: 'Weekly Reviews',
+            href: index(),
         },
     ],
 };

@@ -192,8 +192,54 @@ class WeeklyReviewTest extends TestCase
         $response->assertInertia(fn (Assert $page) => $page->where('latestReview', null));
     }
 
+    public function test_the_review_list_shows_the_owners_reviews_by_week_newest_first()
+    {
+        $this->travelTo('2026-09-30 12:00:00');
+        $owner = User::factory()->create();
+        $older = WeeklyReview::factory()->for($owner)->create(['week' => '2026-09-07', 'summary' => 'An older Week.']);
+        $newest = WeeklyReview::factory()->for($owner)->pending()->create(['week' => '2026-09-21']);
+        $middle = WeeklyReview::factory()->for($owner)->failed()->create(['week' => '2026-09-14', 'summary' => 'Kept from before.']);
+        WeeklyReview::factory()->create(['week' => '2026-09-28']);
+
+        $response = $this->actingAs($owner)->get(route('reviews.index'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('reviews/index')
+            ->where('currentWeek', '2026-09-28')
+            ->where('reviews', [
+                ['id' => $newest->id, 'week' => '2026-09-21', 'status' => 'pending', 'summary' => null],
+                ['id' => $middle->id, 'week' => '2026-09-14', 'status' => 'failed', 'summary' => 'Kept from before.'],
+                ['id' => $older->id, 'week' => '2026-09-07', 'status' => 'done', 'summary' => 'An older Week.'],
+            ])
+        );
+    }
+
+    public function test_a_past_review_opens_with_its_content()
+    {
+        $owner = User::factory()->create();
+        $review = WeeklyReview::factory()->for($owner)->create([
+            'week' => '2026-08-31',
+            'summary' => 'Back after a week off.',
+            'muscle_notes' => [['muscle' => 'lats', 'note' => 'Met.']],
+            'advice' => ['Add weight to rows.'],
+        ]);
+
+        $response = $this->actingAs($owner)->get(route('reviews.show', $review));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('reviews/show')
+            ->where('review.id', $review->id)
+            ->where('review.week', '2026-08-31')
+            ->where('review.status', 'done')
+            ->where('review.summary', 'Back after a week off.')
+            ->where('review.muscle_notes', [['muscle' => 'lats', 'note' => 'Met.']])
+            ->where('review.advice', ['Add weight to rows.'])
+        );
+    }
+
     public function test_guests_are_redirected_to_the_login_page()
     {
+        $this->get(route('reviews.index'))->assertRedirect(route('login'));
         $this->post(route('reviews.store'), ['week' => '2026-09-21'])->assertRedirect(route('login'));
         $this->get(route('reviews.show', WeeklyReview::factory()->create()))->assertRedirect(route('login'));
     }
