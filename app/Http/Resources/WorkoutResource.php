@@ -16,7 +16,7 @@ class WorkoutResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @return array{id: int, status: string, started_at: string, finished_at: string|null, bodyweight: float|null, note: string|null, exercises: array<int, array{id: int, exercise: array<string, mixed>, sets: array<int, array{id: int, target_reps: int|null, target_weight: float|null, actual_reps: int|null, actual_weight: float|null, is_warm_up: bool, done: bool, meets_target: bool}>}>}
+     * @return array{id: int, status: string, started_at: string, finished_at: string|null, routine: array{id: int, name: string, archived: bool}|null, bodyweight: float|null, note: string|null, exercises: array<int, array{id: int, exercise: array<string, mixed>, sets: array<int, array{id: int, target_reps: int|null, target_weight: float|null, actual_reps: int|null, actual_weight: float|null, is_warm_up: bool, done: bool, meets_target: bool}>}>}
      */
     public function toArray(Request $request): array
     {
@@ -25,6 +25,11 @@ class WorkoutResource extends JsonResource
             'status' => $this->isInProgress() ? 'in_progress' : 'finished',
             'started_at' => $this->started_at->toIso8601String(),
             'finished_at' => $this->finished_at?->toIso8601String(),
+            'routine' => $this->routine === null ? null : [
+                'id' => $this->routine->id,
+                'name' => $this->routine->name,
+                'archived' => $this->routine->archived_at !== null,
+            ],
             'bodyweight' => $this->bodyweight === null ? null : (float) $this->bodyweight,
             'note' => $this->note,
             'exercises' => $this->exercises

@@ -1,5 +1,8 @@
 import type { Exercise } from './exercise';
 
+/** The Routine a Workout was started from. */
+export type WorkoutRoutine = { id: number; name: string; archived: boolean };
+
 export type WorkoutSet = {
     id: number;
     /** Empty for a Set added during the Workout. */
@@ -27,6 +30,8 @@ export type Workout = {
     status: 'in_progress' | 'finished';
     started_at: string;
     finished_at: string | null;
+    /** The Routine it was started from, even when archived; empty when started empty. */
+    routine: WorkoutRoutine | null;
     /** The owner's Bodyweight in kg when the Workout started. */
     bodyweight: number | null;
     note: string | null;
@@ -40,6 +45,6 @@ export type WorkoutSummary = {
     status: 'in_progress' | 'finished';
     started_at: string;
     /** The Routine it was started from, even when archived; empty when started empty. */
-    routine: { id: number; name: string; archived: boolean } | null;
+    routine: WorkoutRoutine | null;
     note: string | null;
 };

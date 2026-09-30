@@ -111,6 +111,32 @@ class Workout extends Model
     }
 
     /**
+     * The Workout's Exercises in order as a Routine plans them, each Set with its planned Target and Warm-up flag.
+     * Sets with neither a Target nor an Actual are dropped, and so is an Exercise left without Sets.
+     *
+     * @return list<array{exercise_id: int, sets: list<array{target_reps: int, target_weight: string, is_warm_up: bool}>}>
+     */
+    public function plannedExercises(): array
+    {
+        return $this->exercises()->with('sets')->get()
+            ->map(fn (WorkoutExercise $performed) => [
+                'exercise_id' => $performed->exercise_id,
+                'sets' => $performed->sets
+                    ->map(fn (WorkoutSet $set) => ($target = $set->plannedTarget()) === null ? null : [
+                        'target_reps' => $target['reps'],
+                        'target_weight' => $target['weight'],
+                        'is_warm_up' => $set->is_warm_up,
+                    ])
+                    ->filter()
+                    ->values()
+                    ->all(),
+            ])
+            ->filter(fn (array $planned) => $planned['sets'] !== [])
+            ->values()
+            ->all();
+    }
+
+    /**
      * Add an Exercise after the others, with one Set to log.
      */
     public function addExercise(Exercise $exercise): WorkoutExercise

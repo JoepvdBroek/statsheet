@@ -11,6 +11,7 @@ use App\Models\Workout;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -53,7 +54,7 @@ class WorkoutController extends Controller
     public function show(Request $request, Workout $workout): Response
     {
         return Inertia::render('workouts/show', [
-            'workout' => WorkoutResource::make($workout->load('exercises.exercise.muscles', 'exercises.sets'))->resolve(),
+            'workout' => WorkoutResource::make($workout->load('routine', 'exercises.exercise.muscles', 'exercises.sets'))->resolve(),
             'exercises' => Inertia::defer(fn () => ExerciseResource::collection(
                 $request->user()->exercises()->active()->with('muscles')->orderBy('name')->orderBy('id')->get(),
             )->resolve()),
@@ -82,6 +83,19 @@ class WorkoutController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Workout finished.')]);
 
         return to_route('dashboard');
+    }
+
+    /**
+     * Replace the Routine's Exercises, order and Sets with this Workout's, only when the owner asks (ADR 0001).
+     */
+    #[Authorize('updateRoutine', 'workout')]
+    public function updateRoutine(Workout $workout): RedirectResponse
+    {
+        DB::transaction(fn () => $workout->routine->syncExercises($workout->plannedExercises()));
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Routine updated from this Workout.')]);
+
+        return to_route('workouts.show', $workout);
     }
 
     /**

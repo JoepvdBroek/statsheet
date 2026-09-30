@@ -29,6 +29,7 @@ class WorkoutOwnershipTest extends TestCase
             'update note' => ['patch', 'workouts.update', null],
             'finish' => ['post', 'workouts.finish', null],
             'delete' => ['delete', 'workouts.destroy', null],
+            'update routine' => ['put', 'workouts.routine.update', null],
             'add exercise' => ['post', 'workouts.exercises.store', null],
             'move exercise' => ['put', 'workouts.exercises.move', 'exercise'],
             'remove exercise' => ['delete', 'workouts.exercises.destroy', 'exercise'],

@@ -26,6 +26,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('workouts', WorkoutController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
     Route::post('workouts/{workout}/finish', [WorkoutController::class, 'finish'])->name('workouts.finish');
+    Route::put('workouts/{workout}/routine', [WorkoutController::class, 'updateRoutine'])->name('workouts.routine.update');
 
     Route::scopeBindings()->group(function () {
         Route::post('workouts/{workout}/exercises', [WorkoutExerciseController::class, 'store'])->name('workouts.exercises.store');

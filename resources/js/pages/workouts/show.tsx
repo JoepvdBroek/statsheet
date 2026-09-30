@@ -29,7 +29,13 @@ import {
 import { Label } from '@/components/ui/label';
 import { cn, formatDateTime } from '@/lib/utils';
 import { index } from '@/routes/workouts';
-import type { Exercise, Workout, WorkoutExercise, WorkoutSet } from '@/types';
+import type {
+    Exercise,
+    Workout,
+    WorkoutExercise,
+    WorkoutRoutine,
+    WorkoutSet,
+} from '@/types';
 
 type Errors = Record<string, string | undefined>;
 
@@ -135,6 +141,13 @@ export default function ShowWorkout({
 
                 <WorkoutNote key={workout.id} workout={workout} />
 
+                {workout.routine ? (
+                    <UpdateRoutine
+                        workout={workout}
+                        routine={workout.routine}
+                    />
+                ) : null}
+
                 <DeleteWorkout workout={workout} />
 
                 {inProgress ? (
@@ -155,6 +168,59 @@ export default function ShowWorkout({
                 ) : null}
             </div>
         </>
+    );
+}
+
+/** Replaces the Routine's plan with this Workout, only when the owner asks (ADR 0001). */
+function UpdateRoutine({
+    workout,
+    routine,
+}: {
+    workout: Workout;
+    /** The Workout's Routine, narrowed to present. */
+    routine: WorkoutRoutine;
+}) {
+    return (
+        <div className="space-y-4 border-t pt-6">
+            <Heading
+                variant="small"
+                title="Update Routine"
+                description={`Make this Workout the plan for ${routine.name}${routine.archived ? ' (archived)' : ''}. Changes never flow back on their own.`}
+            />
+
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="secondary">
+                        Update Routine from this Workout
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogTitle>Update {routine.name}?</DialogTitle>
+                    <DialogDescription>
+                        Its Exercises, order and Sets are replaced with this
+                        Workout's. Each Set keeps its Target, or its Actual when
+                        it had no Target; Sets with neither are left out. Other
+                        Workouts stay as they are.
+                    </DialogDescription>
+
+                    <Form
+                        {...WorkoutController.updateRoutine.form(workout.id)}
+                        options={structureVisit}
+                    >
+                        {({ processing }) => (
+                            <DialogFooter className="gap-2">
+                                <DialogClose asChild>
+                                    <Button variant="secondary">Cancel</Button>
+                                </DialogClose>
+                                <Button type="submit" disabled={processing}>
+                                    Update Routine
+                                </Button>
+                            </DialogFooter>
+                        )}
+                    </Form>
+                </DialogContent>
+            </Dialog>
+        </div>
     );
 }
 
