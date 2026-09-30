@@ -14,6 +14,7 @@ class WorkoutOwnershipTest extends TestCase
 
     public function test_guests_are_redirected_to_the_login_page()
     {
+        $this->get(route('workouts.index'))->assertRedirect(route('login'));
         $this->post(route('workouts.store'))->assertRedirect(route('login'));
         $this->assertDatabaseEmpty('workouts');
     }
@@ -27,6 +28,7 @@ class WorkoutOwnershipTest extends TestCase
             'show' => ['get', 'workouts.show', null],
             'update note' => ['patch', 'workouts.update', null],
             'finish' => ['post', 'workouts.finish', null],
+            'delete' => ['delete', 'workouts.destroy', null],
             'add exercise' => ['post', 'workouts.exercises.store', null],
             'move exercise' => ['put', 'workouts.exercises.move', 'exercise'],
             'remove exercise' => ['delete', 'workouts.exercises.destroy', 'exercise'],

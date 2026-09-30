@@ -25,6 +25,14 @@ class WorkoutPolicy
     }
 
     /**
+     * Determine whether the user can delete the Workout.
+     */
+    public function delete(User $user, Workout $workout): Response
+    {
+        return $this->owns($user, $workout);
+    }
+
+    /**
      * Another user's Workout is answered as if it doesn't exist.
      */
     private function owns(User $user, Workout $workout): Response

@@ -33,3 +33,13 @@ export type Workout = {
     /** In the order they are trained. */
     exercises: WorkoutExercise[];
 };
+
+/** A Workout as the history lists it, without its Exercises and Sets. */
+export type WorkoutSummary = {
+    id: number;
+    status: 'in_progress' | 'finished';
+    started_at: string;
+    /** The Routine it was started from, even when archived; empty when started empty. */
+    routine: { id: number; name: string; archived: boolean } | null;
+    note: string | null;
+};

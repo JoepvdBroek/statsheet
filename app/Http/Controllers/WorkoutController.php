@@ -6,6 +6,7 @@ use App\Actions\StartWorkout;
 use App\Http\Requests\UpdateWorkoutRequest;
 use App\Http\Resources\ExerciseResource;
 use App\Http\Resources\WorkoutResource;
+use App\Http\Resources\WorkoutSummaryResource;
 use App\Models\Workout;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,22 @@ use Inertia\Response;
 
 class WorkoutController extends Controller
 {
+    /**
+     * List the owner's Workouts, newest first.
+     */
+    public function index(Request $request): Response
+    {
+        $workouts = $request->user()->workouts()
+            ->with('routine')
+            ->orderByDesc('started_at')
+            ->orderByDesc('id')
+            ->paginate(30);
+
+        return Inertia::render('workouts/index', [
+            'workouts' => Inertia::scroll(WorkoutSummaryResource::collection($workouts)),
+        ]);
+    }
+
     /**
      * Start an empty Workout, or go to the one already in progress.
      */
@@ -65,5 +82,18 @@ class WorkoutController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Workout finished.')]);
 
         return to_route('dashboard');
+    }
+
+    /**
+     * Delete the Workout with its Exercises and Sets, so it no longer counts anywhere.
+     */
+    #[Authorize('delete', 'workout')]
+    public function destroy(Workout $workout): RedirectResponse
+    {
+        $workout->delete();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Workout deleted.')]);
+
+        return to_route('workouts.index');
     }
 }

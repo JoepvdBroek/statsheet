@@ -14,12 +14,21 @@ import { SetRow, meetsTarget } from '@/components/statsheet/set-row';
 import type { SetValues } from '@/components/statsheet/set-row';
 import { Button } from '@/components/ui/button';
 import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import {
     DropdownMenuItem,
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { cn, formatDateTime } from '@/lib/utils';
-import { dashboard } from '@/routes';
+import { index } from '@/routes/workouts';
 import type { Exercise, Workout, WorkoutExercise, WorkoutSet } from '@/types';
 
 type Errors = Record<string, string | undefined>;
@@ -126,6 +135,8 @@ export default function ShowWorkout({
 
                 <WorkoutNote key={workout.id} workout={workout} />
 
+                <DeleteWorkout workout={workout} />
+
                 {inProgress ? (
                     <div className="sticky bottom-0 -mx-4 border-t bg-background/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
                         <Form {...WorkoutController.finish.form(workout.id)}>
@@ -144,6 +155,48 @@ export default function ShowWorkout({
                 ) : null}
             </div>
         </>
+    );
+}
+
+function DeleteWorkout({ workout }: { workout: Workout }) {
+    return (
+        <div className="space-y-4 border-t pt-6">
+            <Heading
+                variant="small"
+                title="Delete Workout"
+                description="An accidental or test Workout can be deleted, so it no longer counts toward Volume, Goals or Personal Records."
+            />
+
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="destructive">Delete</Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogTitle>Delete this Workout?</DialogTitle>
+                    <DialogDescription>
+                        Its Exercises, Sets and Note are removed for good. This
+                        can't be undone.
+                    </DialogDescription>
+
+                    <Form {...WorkoutController.destroy.form(workout.id)}>
+                        {({ processing }) => (
+                            <DialogFooter className="gap-2">
+                                <DialogClose asChild>
+                                    <Button variant="secondary">Cancel</Button>
+                                </DialogClose>
+                                <Button
+                                    type="submit"
+                                    variant="destructive"
+                                    disabled={processing}
+                                >
+                                    Delete
+                                </Button>
+                            </DialogFooter>
+                        )}
+                    </Form>
+                </DialogContent>
+            </Dialog>
+        </div>
     );
 }
 
@@ -505,8 +558,8 @@ function WorkoutNote({ workout }: { workout: Workout }) {
 ShowWorkout.layout = {
     breadcrumbs: [
         {
-            title: 'Dashboard',
-            href: dashboard(),
+            title: 'Workouts',
+            href: index(),
         },
     ],
 };
