@@ -1,4 +1,4 @@
-import type { Exercise } from './exercise';
+import type { Exercise, PersonalRecordMeasure } from './exercise';
 
 /** The Routine a Workout was started from. */
 export type WorkoutRoutine = { id: number; name: string; archived: boolean };
@@ -16,6 +16,8 @@ export type WorkoutSet = {
     done: boolean;
     /** The server's verdict: done, with reps and weight at or above the Target (or no Target). */
     meets_target: boolean;
+    /** The Personal Records this Set beat, judged against every earlier done working Set of its Exercise. Empty for the first, a warm-up or a not-done Set. */
+    new_records: PersonalRecordMeasure[];
 };
 
 export type WorkoutExercise = {

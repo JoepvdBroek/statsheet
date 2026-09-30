@@ -178,7 +178,7 @@ class ExerciseProgressTest extends TestCase
         );
     }
 
-    public function test_recent_performances_list_each_workouts_done_sets_newest_first_with_its_top_set()
+    public function test_recent_performances_list_each_workouts_done_sets_newest_first_with_its_top_set_and_the_records_it_beat()
     {
         $this->freezeSecond();
         $pullUp = Exercise::factory()->bodyweight()->create();
@@ -204,6 +204,7 @@ class ExerciseProgressTest extends TestCase
                     'started_at' => $newer->started_at->toIso8601String(),
                     'routine' => 'Pull day',
                     'e1rm' => 120,
+                    'new_records' => ['heaviest', 'e1rm'],
                     'sets' => [
                         ['reps' => 5, 'weight' => 0, 'warm_up' => true, 'top' => false],
                         ['reps' => 12, 'weight' => 0, 'warm_up' => false, 'top' => false],
@@ -215,6 +216,7 @@ class ExerciseProgressTest extends TestCase
                     'started_at' => $older->started_at->toIso8601String(),
                     'routine' => null,
                     'e1rm' => 98.8,
+                    'new_records' => ['reps', 'tonnage'],
                     'sets' => [
                         ['reps' => 8, 'weight' => 0, 'warm_up' => false, 'top' => true],
                         ['reps' => 13, 'weight' => 0, 'warm_up' => false, 'top' => false],

@@ -16,6 +16,9 @@ export type Exercise = {
     muscles: ExerciseMuscle[];
 };
 
+/** A Personal Record measure: heaviest weight, best Estimated 1RM, most reps at a weight, or best set tonnage. */
+export type PersonalRecordMeasure = 'heaviest' | 'e1rm' | 'reps' | 'tonnage';
+
 /** An Exercise's Personal Records, from done, non-warm-up Sets; each empty until a Set qualifies. */
 export type PersonalRecords = {
     /** kg; the added load for a Bodyweight Exercise. */
@@ -44,6 +47,8 @@ export type ExercisePerformance = {
     routine: string | null;
     /** The Workout's best Estimated 1RM in kg. */
     e1rm: number | null;
+    /** The Personal Records its Sets beat. */
+    new_records: PersonalRecordMeasure[];
     /** In order; weight is the added load for a Bodyweight Exercise. */
     sets: { reps: number; weight: number; warm_up: boolean; top: boolean }[];
 };

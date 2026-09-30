@@ -202,6 +202,7 @@ export default function ShowExercise({
                                         : kgFormat.format(performance.e1rm)
                                 }
                                 bodyweight={bodyweight}
+                                prs={performance.new_records}
                                 sets={performance.sets.map((set) => ({
                                     reps: set.reps,
                                     weight: set.weight,

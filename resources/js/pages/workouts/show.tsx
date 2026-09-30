@@ -10,6 +10,7 @@ import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { ItemMenu, MoveRemoveItems } from '@/components/item-menu';
 import { ExerciseCard } from '@/components/statsheet/exercise-card';
+import { PRBadge } from '@/components/statsheet/pr-badge';
 import { SetRow, meetsTarget } from '@/components/statsheet/set-row';
 import type { SetValues } from '@/components/statsheet/set-row';
 import { Button } from '@/components/ui/button';
@@ -442,6 +443,7 @@ function LoggedSet({
                     actual_weight: null,
                     done: false,
                     meets_target: false,
+                    new_records: [],
                 }),
         });
     };
@@ -480,6 +482,7 @@ function LoggedSet({
                 optimistic: (props) =>
                     withSetChanges(props, set.id, {
                         is_warm_up: !set.is_warm_up,
+                        ...(set.is_warm_up ? {} : { new_records: [] }),
                     }),
             },
         );
@@ -498,6 +501,7 @@ function LoggedSet({
                 met={set.done ? set.meets_target : undefined}
                 warmup={set.is_warm_up}
                 bodyweight={bodyweight}
+                pr={set.new_records.length > 0}
                 invalid={{
                     reps: Boolean(errors.actual_reps),
                     weight: Boolean(errors.actual_weight),
@@ -532,6 +536,19 @@ function LoggedSet({
                     </>
                 }
             />
+            {set.new_records.length ? (
+                <div role="row">
+                    <div
+                        role="cell"
+                        aria-label="Personal Records beaten"
+                        className="flex flex-wrap gap-1.5 px-1 pb-1"
+                    >
+                        {set.new_records.map((measure) => (
+                            <PRBadge key={measure} kind={measure} />
+                        ))}
+                    </div>
+                </div>
+            ) : null}
             {messages.length ? (
                 <div role="row">
                     <InputError
