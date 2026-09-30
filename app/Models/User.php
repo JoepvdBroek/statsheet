@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\Muscle;
+use App\Support\WeekCalendar;
+use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -83,5 +86,72 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function workouts(): HasMany
     {
         return $this->hasMany(Workout::class);
+    }
+
+    /**
+     * Every dated version of the owner's Goals.
+     *
+     * @return HasMany<Goal, $this>
+     */
+    public function goals(): HasMany
+    {
+        return $this->hasMany(Goal::class);
+    }
+
+    /**
+     * The weekly minimum in kg of each Muscle's Goal in force in the given Week: its latest version effective on or before it.
+     * Muscles without a Goal, or whose Goal was removed, are left out.
+     *
+     * @param  CarbonImmutable  $week  A Week as WeekCalendar gives it
+     * @return array<string, float>
+     */
+    public function goalsInForce(CarbonImmutable $week): array
+    {
+        return $this->goals()
+            ->whereDate('effective_week', '<=', $week->toDateString())
+            ->orderBy('effective_week')
+            ->get()
+            ->keyBy(fn (Goal $goal) => $goal->muscle->value)
+            ->whereNotNull('weekly_minimum')
+            ->map(fn (Goal $goal) => (float) $goal->weekly_minimum)
+            ->all();
+    }
+
+    /**
+     * Set or change a Muscle's Goal from this Week on. Earlier Weeks keep the Goal in force then.
+     */
+    public function setGoal(Muscle $muscle, string $weeklyMinimum): void
+    {
+        $this->putGoalInForceThisWeek($muscle, $weeklyMinimum);
+    }
+
+    /**
+     * Remove a Muscle's Goal from this Week on. Earlier Weeks are still judged against it.
+     */
+    public function removeGoal(Muscle $muscle): void
+    {
+        $this->putGoalInForceThisWeek($muscle, null);
+    }
+
+    /**
+     * Store this Week's version of a Muscle's Goal, replacing one set earlier this Week.
+     * Nothing is stored when the Goal in force stays the same.
+     */
+    private function putGoalInForceThisWeek(Muscle $muscle, ?string $weeklyMinimum): void
+    {
+        $thisWeek = WeekCalendar::for($this)->currentWeek();
+        $inForce = $this->goalsInForce($thisWeek)[$muscle->value] ?? null;
+
+        if ($inForce === ($weeklyMinimum === null ? null : (float) $weeklyMinimum)) {
+            return;
+        }
+
+        $effectiveWeek = $thisWeek->toDateString();
+
+        $version = $this->goals()->where('muscle', $muscle)->whereDate('effective_week', $effectiveWeek)->first()
+            ?? $this->goals()->make(['muscle' => $muscle, 'effective_week' => $effectiveWeek]);
+
+        $version->weekly_minimum = $weeklyMinimum;
+        $version->save();
     }
 }

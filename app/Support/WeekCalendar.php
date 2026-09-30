@@ -33,6 +33,14 @@ class WeekCalendar
     }
 
     /**
+     * The Week it is now.
+     */
+    public function currentWeek(): CarbonImmutable
+    {
+        return $this->weekOf(now());
+    }
+
+    /**
      * The calendar month a moment falls in: its first day at midnight in the owner's timezone.
      */
     public function monthOf(CarbonInterface $moment): CarbonImmutable

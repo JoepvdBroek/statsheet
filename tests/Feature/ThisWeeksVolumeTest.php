@@ -31,8 +31,8 @@ class ThisWeeksVolumeTest extends TestCase
         $response->assertInertia(fn (Assert $page) => $page
             ->where('thisWeek.starts_on', '2026-09-28')
             ->where('thisWeek.muscles', [
-                ['muscle' => 'chest', 'volume' => 1000],
-                ['muscle' => 'triceps', 'volume' => 500],
+                ['muscle' => 'chest', 'volume' => 1000, 'goal' => null, 'met' => null],
+                ['muscle' => 'triceps', 'volume' => 500, 'goal' => null, 'met' => null],
             ])
         );
     }
@@ -52,7 +52,7 @@ class ThisWeeksVolumeTest extends TestCase
         $response = $this->actingAs($owner)->get(route('dashboard'));
 
         $response->assertInertia(fn (Assert $page) => $page
-            ->where('thisWeek.muscles', [['muscle' => 'quadriceps', 'volume' => 500]])
+            ->where('thisWeek.muscles', [['muscle' => 'quadriceps', 'volume' => 500, 'goal' => null, 'met' => null]])
         );
     }
 
@@ -81,8 +81,8 @@ class ThisWeeksVolumeTest extends TestCase
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('thisWeek.muscles', [
-                ['muscle' => 'lats', 'volume' => 1250],
-                ['muscle' => 'biceps', 'volume' => 625],
+                ['muscle' => 'lats', 'volume' => 1250, 'goal' => null, 'met' => null],
+                ['muscle' => 'biceps', 'volume' => 625, 'goal' => null, 'met' => null],
             ])
         );
     }
@@ -98,7 +98,7 @@ class ThisWeeksVolumeTest extends TestCase
         $response = $this->actingAs($owner)->get(route('dashboard'));
 
         $response->assertInertia(fn (Assert $page) => $page
-            ->where('thisWeek.muscles', [['muscle' => 'triceps', 'volume' => 100]])
+            ->where('thisWeek.muscles', [['muscle' => 'triceps', 'volume' => 100, 'goal' => null, 'met' => null]])
         );
     }
 
@@ -114,7 +114,7 @@ class ThisWeeksVolumeTest extends TestCase
         $response = $this->get(route('dashboard'));
 
         $response->assertInertia(fn (Assert $page) => $page
-            ->where('thisWeek.muscles', [['muscle' => 'middle back', 'volume' => 560]])
+            ->where('thisWeek.muscles', [['muscle' => 'middle back', 'volume' => 560, 'goal' => null, 'met' => null]])
         );
     }
 
@@ -130,7 +130,7 @@ class ThisWeeksVolumeTest extends TestCase
         $response = $this->get(route('dashboard'));
 
         $response->assertInertia(fn (Assert $page) => $page
-            ->where('thisWeek.muscles', [['muscle' => 'quadriceps', 'volume' => 300]])
+            ->where('thisWeek.muscles', [['muscle' => 'quadriceps', 'volume' => 300, 'goal' => null, 'met' => null]])
         );
     }
 
@@ -160,7 +160,7 @@ class ThisWeeksVolumeTest extends TestCase
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('thisWeek.starts_on', '2026-09-28')
-            ->where('thisWeek.muscles', [['muscle' => 'quadriceps', 'volume' => 500]])
+            ->where('thisWeek.muscles', [['muscle' => 'quadriceps', 'volume' => 500, 'goal' => null, 'met' => null]])
         );
     }
 
@@ -176,7 +176,7 @@ class ThisWeeksVolumeTest extends TestCase
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('thisWeek.starts_on', '2026-10-05')
-            ->where('thisWeek.muscles', [['muscle' => 'quadriceps', 'volume' => 200]])
+            ->where('thisWeek.muscles', [['muscle' => 'quadriceps', 'volume' => 200, 'goal' => null, 'met' => null]])
         );
     }
 

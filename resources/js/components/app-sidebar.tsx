@@ -6,6 +6,7 @@ import {
     FolderGit2,
     History,
     LayoutGrid,
+    Target,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -22,6 +23,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as exercises } from '@/routes/exercises';
+import { index as goals } from '@/routes/goals';
 import { index as routines } from '@/routes/routines';
 import { index as workouts } from '@/routes/workouts';
 import type { NavItem } from '@/types';
@@ -41,6 +43,11 @@ const mainNavItems: NavItem[] = [
         title: 'Routines',
         href: routines(),
         icon: ClipboardList,
+    },
+    {
+        title: 'Goals',
+        href: goals(),
+        icon: Target,
     },
     {
         title: 'Exercises',

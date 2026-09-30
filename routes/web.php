@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExerciseController;
+use App\Http\Controllers\GoalController;
 use App\Http\Controllers\RoutineController;
 use App\Http\Controllers\WorkoutController;
 use App\Http\Controllers\WorkoutExerciseController;
@@ -20,6 +21,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('routines/{routine}/archive', [RoutineController::class, 'archive'])->name('routines.archive');
     Route::post('routines/{routine}/restore', [RoutineController::class, 'restore'])->name('routines.restore');
     Route::post('routines/{routine}/start', [RoutineController::class, 'start'])->name('routines.start');
+
+    Route::resource('goals', GoalController::class)->only(['index', 'update', 'destroy'])->parameters(['goals' => 'muscle']);
 
     Route::resource('workouts', WorkoutController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
     Route::post('workouts/{workout}/finish', [WorkoutController::class, 'finish'])->name('workouts.finish');

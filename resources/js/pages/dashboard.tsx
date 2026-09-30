@@ -6,14 +6,23 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { capitalize, formatDate, formatDateTime } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { index as goalsIndex } from '@/routes/goals';
 import { edit as editProfile } from '@/routes/profile';
 import { show } from '@/routes/workouts';
 
 type ThisWeek = {
     /** The Week's Monday, as a date. */
     starts_on: string;
-    /** Volume in kg per Muscle, most first; Muscles without Volume are left out. */
-    muscles: { muscle: string; volume: number }[];
+    /** Each Muscle with Volume or a Goal in force, most Volume first. */
+    muscles: {
+        muscle: string;
+        /** kg */
+        volume: number;
+        /** The weekly minimum in kg of the Goal in force, if any. */
+        goal: number | null;
+        /** Whether the Goal is met; empty without a Goal. */
+        met: boolean | null;
+    }[];
 };
 
 const volumeFormat = new Intl.NumberFormat(undefined, {
@@ -112,13 +121,18 @@ export default function Dashboard({
                 ) : null}
 
                 <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground">
-                    <div className="space-y-0.5">
-                        <h2 className="text-base font-medium">This Week</h2>
-                        <p className="text-sm text-muted-foreground">
-                            Volume per Muscle since Monday{' '}
-                            {formatDate(thisWeek.starts_on)}, including the
-                            Workout in progress.
-                        </p>
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-0.5">
+                            <h2 className="text-base font-medium">This Week</h2>
+                            <p className="text-sm text-muted-foreground">
+                                Volume per Muscle since Monday{' '}
+                                {formatDate(thisWeek.starts_on)}, including the
+                                Workout in progress.
+                            </p>
+                        </div>
+                        <Button asChild variant="outline" size="sm">
+                            <Link href={goalsIndex()}>Goals</Link>
+                        </Button>
                     </div>
 
                     {thisWeek.muscles.length === 0 ? (
@@ -128,16 +142,25 @@ export default function Dashboard({
                         </p>
                     ) : (
                         <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3">
-                            {thisWeek.muscles.map(({ muscle, volume }) => (
-                                <StatBlock
-                                    key={muscle}
-                                    size="sm"
-                                    tone="live"
-                                    value={volumeFormat.format(volume)}
-                                    unit="kg"
-                                    label={capitalize(muscle)}
-                                />
-                            ))}
+                            {thisWeek.muscles.map(
+                                ({ muscle, volume, goal, met }) => (
+                                    <StatBlock
+                                        key={muscle}
+                                        size="sm"
+                                        tone="live"
+                                        value={volumeFormat.format(volume)}
+                                        unit="kg"
+                                        label={capitalize(muscle)}
+                                        delta={
+                                            goal === null
+                                                ? undefined
+                                                : met
+                                                  ? `Goal met · ${volumeFormat.format(goal)}`
+                                                  : `${volumeFormat.format(goal - volume)} to go`
+                                        }
+                                    />
+                                ),
+                            )}
                         </div>
                     )}
                 </section>
