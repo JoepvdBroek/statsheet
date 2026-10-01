@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ReviewRating;
 use App\Enums\ReviewStatus;
 use App\Support\WeekCalendar;
 use Carbon\CarbonImmutable;
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * The owner's AI-written review of one Week: text only, never changing their data (ADR 0003). There is one per user and Week.
  * Regenerating replaces the content only once the new text is in, so a pending or failed review keeps the last good one.
+ * The owner can rate the content; a new generation clears the rating, because it was about the old text.
  *
  * @property int $id
  * @property int $user_id
@@ -24,6 +26,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property list<string>|null $advice Advice points for the next Week
  * @property string|null $model The AI model that wrote the content
  * @property CarbonImmutable|null $generated_at When the content was written
+ * @property ReviewRating|null $rating The owner's thumbs up or down on the content
+ * @property string|null $rating_comment The owner's comment with their rating
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
@@ -46,6 +50,7 @@ class WeeklyReview extends Model
             'muscle_notes' => 'array',
             'advice' => 'array',
             'generated_at' => 'datetime',
+            'rating' => ReviewRating::class,
         ];
     }
 
@@ -66,7 +71,7 @@ class WeeklyReview extends Model
     }
 
     /**
-     * Replace the content with a new generation and mark the review done.
+     * Replace the content with a new generation and mark the review done. The rating was about the old text, so it is cleared.
      *
      * @param  array{summary: string, muscle_notes: list<array{muscle: string, note: string}>, advice: list<string>}  $parts
      */
@@ -79,7 +84,25 @@ class WeeklyReview extends Model
             'advice' => $parts['advice'],
             'model' => $model,
             'generated_at' => now(),
+            'rating' => null,
+            'rating_comment' => null,
         ])->save();
+    }
+
+    /**
+     * Rate the content with a thumbs up or down and an optional comment, replacing any earlier rating.
+     */
+    public function rate(ReviewRating $rating, ?string $comment): void
+    {
+        $this->forceFill(['rating' => $rating, 'rating_comment' => $comment])->save();
+    }
+
+    /**
+     * Take back the owner's rating.
+     */
+    public function clearRating(): void
+    {
+        $this->forceFill(['rating' => null, 'rating_comment' => null])->save();
     }
 
     /**

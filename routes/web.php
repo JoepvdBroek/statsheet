@@ -31,6 +31,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('statistics/monthly-summary', MonthlySummaryController::class)->name('statistics.monthly-summary');
 
     Route::resource('reviews', WeeklyReviewController::class)->only(['index', 'store', 'show']);
+    Route::put('reviews/{review}/rating', [WeeklyReviewController::class, 'rate'])->name('reviews.rating.update');
+    Route::delete('reviews/{review}/rating', [WeeklyReviewController::class, 'clearRating'])->name('reviews.rating.destroy');
 
     Route::resource('workouts', WorkoutController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
     Route::post('workouts/{workout}/finish', [WorkoutController::class, 'finish'])->name('workouts.finish');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\AskForWeeklyReview;
+use App\Http\Requests\RateWeeklyReviewRequest;
 use App\Http\Requests\WeeklyReviewRequest;
 use App\Http\Resources\WeeklyReviewResource;
 use App\Http\Resources\WeeklyReviewSummaryResource;
@@ -48,5 +49,27 @@ class WeeklyReviewController extends Controller
         return Inertia::render('reviews/show', [
             'review' => WeeklyReviewResource::make($review)->resolve(),
         ]);
+    }
+
+    /**
+     * Rate a Weekly Review with a thumbs up or down and an optional comment, or change the rating.
+     */
+    #[Authorize('rate', 'review')]
+    public function rate(RateWeeklyReviewRequest $request, WeeklyReview $review): RedirectResponse
+    {
+        $review->rate($request->rating(), $request->comment());
+
+        return to_route('reviews.show', $review);
+    }
+
+    /**
+     * Take back the rating of a Weekly Review.
+     */
+    #[Authorize('rate', 'review')]
+    public function clearRating(WeeklyReview $review): RedirectResponse
+    {
+        $review->clearRating();
+
+        return to_route('reviews.show', $review);
     }
 }

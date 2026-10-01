@@ -3,6 +3,7 @@ import { AlertTriangleIcon, RefreshCwIcon } from 'lucide-react';
 import { useEffect } from 'react';
 import WeeklyReviewController from '@/actions/App/Http/Controllers/WeeklyReviewController';
 import Heading from '@/components/heading';
+import { ReviewRatingForm } from '@/components/review-rating-form';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -134,6 +135,22 @@ export default function ShowReview({ review }: { review: WeeklyReview }) {
                             </p>
                         ) : null}
                     </article>
+                ) : null}
+
+                {review.status === 'done' ? (
+                    // A new generation or a taken-back rating starts the form afresh from the stored rating.
+                    <ReviewRatingForm
+                        key={`${review.generated_at}-${review.rating}`}
+                        review={review}
+                    />
+                ) : review.rating ? (
+                    <p className="text-sm text-muted-foreground">
+                        You rated the review above{' '}
+                        {review.rating === 'up' ? 'useful' : 'not useful'}
+                        {review.rating_comment
+                            ? `: “${review.rating_comment}”`
+                            : '.'}
+                    </p>
                 ) : null}
             </div>
         </>

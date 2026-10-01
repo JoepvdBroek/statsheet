@@ -129,6 +129,8 @@ class WeeklyReviewTest extends TestCase
                 'advice' => null,
                 'model' => null,
                 'generated_at' => null,
+                'rating' => null,
+                'rating_comment' => null,
             ])
         );
     }

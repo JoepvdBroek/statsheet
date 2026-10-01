@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\Muscle;
+use App\Enums\ReviewRating;
 use App\Enums\ReviewStatus;
 use App\Models\User;
 use App\Models\WeeklyReview;
@@ -54,6 +55,17 @@ class WeeklyReviewFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => ReviewStatus::Failed,
+        ]);
+    }
+
+    /**
+     * Indicate that the owner has rated the review.
+     */
+    public function rated(ReviewRating $rating, ?string $comment = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'rating' => $rating,
+            'rating_comment' => $comment,
         ]);
     }
 }

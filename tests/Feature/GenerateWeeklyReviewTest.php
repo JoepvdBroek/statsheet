@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Ai\Agents\WeeklyReviewer;
 use App\Enums\Muscle;
+use App\Enums\ReviewRating;
 use App\Enums\ReviewStatus;
 use App\Jobs\GenerateWeeklyReview;
 use App\Models\Goal;
@@ -82,6 +83,35 @@ class GenerateWeeklyReviewTest extends TestCase
         $this->assertSame('The earlier review.', $review->summary);
         $this->assertSame(['Sleep more.'], $review->advice);
         $this->assertSame('2026-09-27 20:00:00', $review->generated_at->toDateTimeString());
+    }
+
+    public function test_a_regeneration_clears_the_rating_of_the_old_text()
+    {
+        $review = WeeklyReview::factory()->rated(ReviewRating::Down, 'Too vague.')->create(['status' => ReviewStatus::Pending]);
+        WeeklyReviewer::fake([[
+            'summary' => 'A sharper review.',
+            'muscle_notes' => [],
+            'advice' => ['Add a Set of rows.'],
+        ]])->preventStrayPrompts();
+
+        GenerateWeeklyReview::dispatchSync($review);
+
+        $review->refresh();
+        $this->assertSame('A sharper review.', $review->summary);
+        $this->assertNull($review->rating);
+        $this->assertNull($review->rating_comment);
+    }
+
+    public function test_a_failed_regeneration_keeps_the_rating()
+    {
+        $review = WeeklyReview::factory()->rated(ReviewRating::Up, 'Spot on.')->create(['status' => ReviewStatus::Pending]);
+        WeeklyReviewer::fake(fn () => throw new RuntimeException('The provider is down.'))->preventStrayPrompts();
+
+        GenerateWeeklyReview::dispatchSync($review);
+
+        $review->refresh();
+        $this->assertSame(ReviewRating::Up, $review->rating);
+        $this->assertSame('Spot on.', $review->rating_comment);
     }
 
     public function test_without_an_openai_key_a_generation_fails_and_can_be_retried()
