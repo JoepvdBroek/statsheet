@@ -1,8 +1,7 @@
-import { Form, Head, InfiniteScroll, Link, usePage } from '@inertiajs/react';
-import { PlusIcon } from 'lucide-react';
+import { Head, InfiniteScroll, Link, usePage } from '@inertiajs/react';
 import WorkoutController from '@/actions/App/Http/Controllers/WorkoutController';
+import { StartEmptyWorkoutButton } from '@/components/start-empty-workout-button';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/utils';
 import type { PageShell, WorkoutSummary } from '@/types';
 
@@ -18,19 +17,7 @@ export default function WorkoutsIndex({
             <Head title="Workout history" />
 
             <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
-                <Form {...WorkoutController.store.form()}>
-                    {({ processing }) => (
-                        <Button
-                            type="submit"
-                            variant="ghost"
-                            className="h-11 w-full rounded-full border border-dashed"
-                            disabled={processing}
-                        >
-                            <PlusIcon aria-hidden="true" />
-                            Start an empty workout
-                        </Button>
-                    )}
-                </Form>
+                <StartEmptyWorkoutButton />
 
                 <p className="text-sm text-muted-foreground">
                     Every Workout you logged, newest first.

@@ -1,7 +1,7 @@
-import { Form, Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { PlayIcon, PlusIcon, ScaleIcon, SettingsIcon } from 'lucide-react';
 import RoutineController from '@/actions/App/Http/Controllers/RoutineController';
-import WorkoutController from '@/actions/App/Http/Controllers/WorkoutController';
+import { StartEmptyWorkoutButton } from '@/components/start-empty-workout-button';
 import { RoutineCard } from '@/components/statsheet/routine-card';
 import { StatBlock } from '@/components/statsheet/stat-block';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -113,19 +113,7 @@ export default function Home({
                     <RoutineCards routines={routines} />
                 )}
 
-                <Form {...WorkoutController.store.form()}>
-                    {({ processing }) => (
-                        <Button
-                            type="submit"
-                            variant="ghost"
-                            className="h-11 w-full rounded-full border border-dashed"
-                            disabled={processing}
-                        >
-                            <PlusIcon aria-hidden="true" />
-                            Start an empty workout
-                        </Button>
-                    )}
-                </Form>
+                <StartEmptyWorkoutButton />
 
                 <Button
                     asChild
