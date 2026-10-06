@@ -59,3 +59,48 @@ export function formatMonth(month: string): string {
         timeZone: 'UTC',
     }).format(new Date(`${month}-01`));
 }
+
+/**
+ * Formats a Last Done relative to today in the owner's timezone: "Today", "Yesterday",
+ * a weekday within the past Week, otherwise a short date; "Never done" when empty.
+ */
+export function formatLastDone(iso: string | null, timeZone: string): string {
+    if (iso === null) {
+        return 'Never done';
+    }
+
+    const daysAgo =
+        calendarDay(new Date(), timeZone) -
+        calendarDay(new Date(iso), timeZone);
+
+    if (daysAgo === 0) {
+        return 'Today';
+    }
+
+    if (daysAgo === 1) {
+        return 'Yesterday';
+    }
+
+    if (daysAgo > 1 && daysAgo < 7) {
+        return new Intl.DateTimeFormat(undefined, {
+            weekday: 'long',
+            timeZone,
+        }).format(new Date(iso));
+    }
+
+    return formatDay(iso, timeZone);
+}
+
+/** The number of days since the epoch of the calendar day a moment falls on in the given timezone. */
+function calendarDay(moment: Date, timeZone: string): number {
+    const parts = new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        timeZone,
+    }).formatToParts(moment);
+    const part = (type: Intl.DateTimeFormatPartTypes) =>
+        Number(parts.find((candidate) => candidate.type === type)?.value);
+
+    return Date.UTC(part('year'), part('month') - 1, part('day')) / 86_400_000;
+}

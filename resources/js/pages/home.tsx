@@ -6,14 +6,14 @@ import { RoutineCard } from '@/components/statsheet/routine-card';
 import { StatBlock } from '@/components/statsheet/stat-block';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, formatLastDone } from '@/lib/utils';
 import { home } from '@/routes';
 import { edit as editProfile } from '@/routes/profile';
 import { show } from '@/routes/workouts';
 import type { PageShell, Routine } from '@/types';
 
 type HomeProps = {
-    /** The owner's Routines in use. */
+    /** The owner's Routines in use with their Last Done, the one most likely due first. */
     routines: Routine[];
     /** The owner's Archived Routines, only when the toggle asks for them. */
     archivedRoutines: Routine[] | null;
@@ -158,8 +158,10 @@ export default function Home({
     );
 }
 
-/** Routine cards with Start and Edit, or Restore for an Archived Routine. */
+/** Routine cards with Start, Edit and Last Done, or Restore for an Archived Routine. */
 function RoutineCards({ routines }: { routines: Routine[] }) {
+    const { auth } = usePage().props;
+
     return (
         <div className="flex flex-col gap-3">
             {routines.map((routine) => (
@@ -172,6 +174,14 @@ function RoutineCards({ routines }: { routines: Routine[] }) {
                         0,
                     )}
                     muscles={primaryMuscles(routine)}
+                    lastPerformed={
+                        routine.last_done === undefined
+                            ? undefined
+                            : formatLastDone(
+                                  routine.last_done,
+                                  auth.user.timezone,
+                              )
+                    }
                     archived={routine.archived}
                     onStart={() =>
                         router.visit(RoutineController.start(routine.id))

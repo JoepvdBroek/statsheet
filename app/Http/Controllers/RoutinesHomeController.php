@@ -17,7 +17,7 @@ class RoutinesHomeController extends Controller
 {
     /**
      * Show the Routines home: the Workout in progress to resume, a nudge to set a Bodyweight while it is empty,
-     * the owner's Routines in use to start a Workout from, and the archived ones when asked.
+     * the owner's Routines in use to start a Workout from, the one most likely due first, and the archived ones when asked.
      */
     public function __invoke(Request $request, VolumeCalculator $volumeCalculator): Response
     {
@@ -25,9 +25,9 @@ class RoutinesHomeController extends Controller
         $workout = $user->workouts()->inProgress()->with('routine')->first();
 
         return Inertia::render('home', [
-            'routines' => RoutineResource::collection($this->routines($user)->active()->get())->resolve(),
+            'routines' => RoutineResource::collection($this->routines($user)->active()->dueFirst()->get())->resolve(),
             'archivedRoutines' => $request->boolean('archived')
-                ? RoutineResource::collection($this->routines($user)->archived()->get())->resolve()
+                ? RoutineResource::collection($this->routines($user)->archived()->orderBy('name')->orderBy('id')->get())->resolve()
                 : null,
             'workoutInProgress' => $workout === null ? null : [
                 'id' => $workout->id,
@@ -40,7 +40,7 @@ class RoutinesHomeController extends Controller
     }
 
     /**
-     * The owner's Routines with their planned Exercises and Sets, by name.
+     * The owner's Routines with their planned Exercises and Sets.
      *
      * @return Builder<Routine>
      */
@@ -48,8 +48,6 @@ class RoutinesHomeController extends Controller
     {
         return $user->routines()
             ->with('exercises.exercise.muscles', 'exercises.sets')
-            ->orderBy('name')
-            ->orderBy('id')
             ->getQuery();
     }
 
