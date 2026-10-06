@@ -1,8 +1,9 @@
 import { Head } from '@inertiajs/react';
 import ExerciseController from '@/actions/App/Http/Controllers/ExerciseController';
 import ExerciseForm from '@/components/exercise-form';
-import Heading from '@/components/heading';
-import { create, index } from '@/routes/exercises';
+import { PageDescription } from '@/components/page-description';
+import { parentScreens } from '@/lib/parent-screens';
+import type { PageShell } from '@/types';
 
 export default function CreateExercise({
     muscles,
@@ -16,10 +17,9 @@ export default function CreateExercise({
             <Head title="New Exercise" />
 
             <div className="mx-auto w-full max-w-2xl p-4">
-                <Heading
-                    title="New Exercise"
-                    description="A specific movement, variation included."
-                />
+                <PageDescription>
+                    A specific movement, variation included.
+                </PageDescription>
 
                 <ExerciseForm
                     muscles={muscles}
@@ -33,14 +33,7 @@ export default function CreateExercise({
 }
 
 CreateExercise.layout = {
-    breadcrumbs: [
-        {
-            title: 'Exercises',
-            href: index(),
-        },
-        {
-            title: 'New Exercise',
-            href: create(),
-        },
-    ],
-};
+    tab: 'stats',
+    title: 'New Exercise',
+    parent: parentScreens.exercises,
+} satisfies PageShell;

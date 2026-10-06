@@ -1,31 +1,41 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\GoalController;
+use App\Http\Controllers\MonthlySummaryController;
 use App\Http\Controllers\RoutineController;
+use App\Http\Controllers\RoutinesHomeController;
+use App\Http\Controllers\StatsHubController;
+use App\Http\Controllers\WeeklyReviewController;
 use App\Http\Controllers\WeeklyTrendController;
 use App\Http\Controllers\WorkoutController;
 use App\Http\Controllers\WorkoutExerciseController;
 use App\Http\Controllers\WorkoutSetController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::get('dashboard', fn () => to_route('home', status: 301));
+Route::get('routines', fn () => to_route('home', status: 301));
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/', RoutinesHomeController::class)->name('home');
 
     Route::resource('exercises', ExerciseController::class);
     Route::post('exercises/{exercise}/restore', [ExerciseController::class, 'restore'])->name('exercises.restore');
 
-    Route::resource('routines', RoutineController::class)->except(['show', 'destroy']);
+    Route::resource('routines', RoutineController::class)->except(['index', 'show', 'destroy']);
     Route::post('routines/{routine}/archive', [RoutineController::class, 'archive'])->name('routines.archive');
     Route::post('routines/{routine}/restore', [RoutineController::class, 'restore'])->name('routines.restore');
     Route::post('routines/{routine}/start', [RoutineController::class, 'start'])->name('routines.start');
 
     Route::resource('goals', GoalController::class)->only(['index', 'update', 'destroy'])->parameters(['goals' => 'muscle']);
 
+    Route::get('statistics', StatsHubController::class)->name('statistics.hub');
     Route::get('statistics/weekly-trend', WeeklyTrendController::class)->name('statistics.weekly-trend');
+    Route::get('statistics/monthly-summary', MonthlySummaryController::class)->name('statistics.monthly-summary');
+
+    Route::resource('reviews', WeeklyReviewController::class)->only(['index', 'store', 'show']);
+    Route::put('reviews/{review}/rating', [WeeklyReviewController::class, 'rate'])->name('reviews.rating.update');
+    Route::delete('reviews/{review}/rating', [WeeklyReviewController::class, 'clearRating'])->name('reviews.rating.destroy');
 
     Route::resource('workouts', WorkoutController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
     Route::post('workouts/{workout}/finish', [WorkoutController::class, 'finish'])->name('workouts.finish');

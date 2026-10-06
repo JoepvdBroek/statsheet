@@ -1,10 +1,10 @@
 import { Head, InfiniteScroll, Link, usePage } from '@inertiajs/react';
 import WorkoutController from '@/actions/App/Http/Controllers/WorkoutController';
-import Heading from '@/components/heading';
+import { PageDescription } from '@/components/page-description';
+import { StartEmptyWorkoutButton } from '@/components/start-empty-workout-button';
 import { Badge } from '@/components/ui/badge';
-import { formatDateTime } from '@/lib/utils';
-import { index } from '@/routes/workouts';
-import type { WorkoutSummary } from '@/types';
+import { formatDateTime, isInProgress } from '@/lib/utils';
+import type { PageShell, WorkoutSummary } from '@/types';
 
 export default function WorkoutsIndex({
     workouts,
@@ -15,17 +15,18 @@ export default function WorkoutsIndex({
 
     return (
         <>
-            <Head title="Workouts" />
+            <Head title="Workout history" />
 
             <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
-                <Heading
-                    title="Workouts"
-                    description="Every Workout you logged, newest first."
-                />
+                <StartEmptyWorkoutButton />
+
+                <PageDescription>
+                    Every Workout you logged, newest first.
+                </PageDescription>
 
                 {workouts.data.length === 0 ? (
                     <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-                        No Workouts yet. Start one from the dashboard or a
+                        No Workouts yet. Start an empty one above, or one from a
                         Routine.
                     </p>
                 ) : (
@@ -76,7 +77,7 @@ function WorkoutRow({
                     </p>
                 ) : null}
             </div>
-            {workout.status === 'in_progress' ? (
+            {isInProgress(workout) ? (
                 <Badge className="shrink-0">In progress</Badge>
             ) : null}
         </li>
@@ -84,10 +85,6 @@ function WorkoutRow({
 }
 
 WorkoutsIndex.layout = {
-    breadcrumbs: [
-        {
-            title: 'Workouts',
-            href: index(),
-        },
-    ],
-};
+    tab: 'workout',
+    title: 'Workout history',
+} satisfies PageShell;

@@ -7,9 +7,9 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { edit } from '@/routes/profile';
-import type { Auth } from '@/types';
+import { parentScreens } from '@/lib/parent-screens';
 import { send } from '@/routes/verification';
+import type { Auth, PageShell } from '@/types';
 
 type PageProps = {
     auth: Auth;
@@ -29,8 +29,6 @@ export default function Profile({
     return (
         <>
             <Head title="Profile settings" />
-
-            <h1 className="sr-only">Profile settings</h1>
 
             <div className="space-y-6">
                 <Heading
@@ -191,10 +189,7 @@ export default function Profile({
 }
 
 Profile.layout = {
-    breadcrumbs: [
-        {
-            title: 'Profile settings',
-            href: edit(),
-        },
-    ],
-};
+    tab: null,
+    title: 'Settings',
+    parent: parentScreens.routines,
+} satisfies PageShell;

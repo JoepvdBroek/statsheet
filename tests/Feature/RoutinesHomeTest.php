@@ -1,0 +1,251 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Routine;
+use App\Models\User;
+use App\Models\Workout;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Routing\CompiledRouteCollection;
+use Inertia\Testing\AssertableInertia as Assert;
+use PHPUnit\Framework\Attributes\TestWith;
+use Tests\TestCase;
+
+class RoutinesHomeTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_guests_are_redirected_to_the_login_page()
+    {
+        $response = $this->get(route('home'));
+
+        $response->assertRedirect(route('login'));
+    }
+
+    public function test_the_owner_sees_their_routines_in_use_by_name()
+    {
+        $owner = Routine::factory()->create(['name' => 'Push day'])->user;
+        Routine::factory()->for($owner)->withExercises(2, 3)->create(['name' => 'Legs']);
+        Routine::factory()->for($owner)->archived()->create(['name' => 'Old pull day']);
+        Routine::factory()->create(['name' => 'Someone else\'s day']);
+
+        $response = $this->actingAs($owner)->get(route('home'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('home')
+            ->has('routines', 2)
+            ->where('routines.0.name', 'Legs')
+            ->has('routines.0.exercises', 2)
+            ->has('routines.0.exercises.1.sets', 3)
+            ->where('routines.1.name', 'Push day')
+            ->where('archivedRoutines', null)
+        );
+    }
+
+    public function test_routines_are_ordered_never_done_first_then_least_recently_done_then_by_name()
+    {
+        $owner = User::factory()->create();
+        $recent = Routine::factory()->for($owner)->create(['name' => 'Arms']);
+        $longAgo = Routine::factory()->for($owner)->create(['name' => 'Push day']);
+        $sameDayAsPushDay = Routine::factory()->for($owner)->create(['name' => 'Pull day']);
+        Routine::factory()->for($owner)->create(['name' => 'Legs']);
+        Routine::factory()->for($owner)->create(['name' => 'Core']);
+        Workout::factory()->for($owner)->for($recent)->finished()->create(['started_at' => '2026-09-30 16:05:00']);
+        Workout::factory()->for($owner)->for($recent)->finished()->create(['started_at' => '2026-09-20 16:05:00']);
+        Workout::factory()->for($owner)->for($longAgo)->finished()->create(['started_at' => '2026-09-21 18:00:00']);
+        Workout::factory()->for($owner)->for($sameDayAsPushDay)->finished()->create(['started_at' => '2026-09-21 18:00:00']);
+
+        $response = $this->actingAs($owner)->get(route('home'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('routines.0.name', 'Core')
+            ->where('routines.0.last_done', null)
+            ->where('routines.1.name', 'Legs')
+            ->where('routines.1.last_done', null)
+            ->where('routines.2.name', 'Pull day')
+            ->where('routines.2.last_done', '2026-09-21T18:00:00+00:00')
+            ->where('routines.3.name', 'Push day')
+            ->where('routines.3.last_done', '2026-09-21T18:00:00+00:00')
+            ->where('routines.4.name', 'Arms')
+            ->where('routines.4.last_done', '2026-09-30T16:05:00+00:00')
+        );
+    }
+
+    public function test_routines_last_done_on_the_same_day_are_ordered_by_name()
+    {
+        $owner = User::factory()->create(['timezone' => 'Europe/Amsterdam']);
+        $doneLaterThatDay = Routine::factory()->for($owner)->create(['name' => 'Arms']);
+        $doneEarlierThatDay = Routine::factory()->for($owner)->create(['name' => 'Back']);
+        Workout::factory()->for($owner)->for($doneLaterThatDay)->finished()->create(['started_at' => '2026-09-21 18:00:00']);
+        Workout::factory()->for($owner)->for($doneEarlierThatDay)->finished()->create(['started_at' => '2026-09-21 06:00:00']);
+
+        $response = $this->actingAs($owner)->get(route('home'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('routines.0.name', 'Arms')
+            ->where('routines.1.name', 'Back')
+        );
+    }
+
+    public function test_the_day_a_routine_was_last_done_is_taken_in_the_owners_timezone()
+    {
+        $owner = User::factory()->create(['timezone' => 'Europe/Amsterdam']);
+        $doneJustAfterMidnight = Routine::factory()->for($owner)->create(['name' => 'Arms']);
+        $doneTheDayBefore = Routine::factory()->for($owner)->create(['name' => 'Back']);
+        Workout::factory()->for($owner)->for($doneJustAfterMidnight)->finished()->create(['started_at' => '2026-09-21 22:30:00']);
+        Workout::factory()->for($owner)->for($doneTheDayBefore)->finished()->create(['started_at' => '2026-09-21 06:00:00']);
+
+        $response = $this->actingAs($owner)->get(route('home'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('routines.0.name', 'Back')
+            ->where('routines.1.name', 'Arms')
+        );
+    }
+
+    public function test_a_workout_in_progress_does_not_change_the_last_done()
+    {
+        $routine = Routine::factory()->create();
+        Workout::factory()->for($routine->user)->for($routine)->finished()->create(['started_at' => '2026-09-21 18:00:00']);
+        Workout::factory()->for($routine->user)->for($routine)->create(['started_at' => '2026-09-30 16:05:00']);
+
+        $response = $this->actingAs($routine->user)->get(route('home'));
+
+        $response->assertInertia(fn (Assert $page) => $page->where('routines.0.last_done', '2026-09-21T18:00:00+00:00'));
+    }
+
+    public function test_a_workout_from_another_routine_does_not_count()
+    {
+        $routine = Routine::factory()->create(['name' => 'Legs']);
+        $other = Routine::factory()->for($routine->user)->create(['name' => 'Push day']);
+        Workout::factory()->for($routine->user)->for($other)->finished()->create(['started_at' => '2026-09-30 16:05:00']);
+
+        $response = $this->actingAs($routine->user)->get(route('home'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('routines.0.name', 'Legs')
+            ->where('routines.0.last_done', null)
+        );
+    }
+
+    public function test_an_empty_workout_does_not_count_for_any_routine()
+    {
+        $routine = Routine::factory()->create();
+        Workout::factory()->for($routine->user)->finished()->create(['started_at' => '2026-09-30 16:05:00']);
+
+        $response = $this->actingAs($routine->user)->get(route('home'));
+
+        $response->assertInertia(fn (Assert $page) => $page->where('routines.0.last_done', null));
+    }
+
+    public function test_another_users_workouts_do_not_count()
+    {
+        $routine = Routine::factory()->create();
+        Workout::factory()->for($routine)->finished()->create(['started_at' => '2026-09-30 16:05:00']);
+
+        $response = $this->actingAs($routine->user)->get(route('home'));
+
+        $response->assertInertia(fn (Assert $page) => $page->where('routines.0.last_done', null));
+    }
+
+    public function test_archived_routines_are_shown_only_when_asked_for()
+    {
+        $routine = Routine::factory()->archived()->create(['name' => 'Old pull day']);
+        Routine::factory()->for($routine->user)->create(['name' => 'Legs']);
+
+        $response = $this->actingAs($routine->user)->get(route('home', ['archived' => 1]));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('routines', 1)
+            ->where('routines.0.name', 'Legs')
+            ->has('archivedRoutines', 1)
+            ->where('archivedRoutines.0.name', 'Old pull day')
+            ->where('archivedRoutines.0.archived', true)
+        );
+    }
+
+    public function test_the_home_offers_to_resume_the_workout_in_progress()
+    {
+        $routine = Routine::factory()->create(['name' => 'Push day']);
+        $workout = Workout::factory()->for($routine->user)->for($routine)->create(['started_at' => '2026-09-30 16:05:00']);
+
+        $response = $this->actingAs($workout->user)->get(route('home'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('workoutInProgress.id', $workout->id)
+            ->where('workoutInProgress.started_at', '2026-09-30T16:05:00+00:00')
+            ->where('workoutInProgress.routine_name', 'Push day')
+        );
+    }
+
+    public function test_the_resume_banner_has_no_routine_name_for_an_empty_workout()
+    {
+        $workout = Workout::factory()->create();
+
+        $response = $this->actingAs($workout->user)->get(route('home'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('workoutInProgress.id', $workout->id)
+            ->where('workoutInProgress.routine_name', null)
+        );
+    }
+
+    public function test_there_is_nothing_to_resume_when_no_workout_is_in_progress()
+    {
+        $finished = Workout::factory()->finished()->create();
+        Workout::factory()->create();
+
+        $response = $this->actingAs($finished->user)->get(route('home'));
+
+        $response->assertInertia(fn (Assert $page) => $page->where('workoutInProgress', null));
+    }
+
+    public function test_the_home_nudges_to_set_a_bodyweight_while_it_is_empty()
+    {
+        $owner = User::factory()->create(['bodyweight' => null]);
+
+        $response = $this->actingAs($owner)->get(route('home'));
+
+        $response->assertInertia(fn (Assert $page) => $page->where('bodyweightNudge', true));
+    }
+
+    public function test_the_home_does_not_nudge_once_a_bodyweight_is_set()
+    {
+        $owner = User::factory()->create(['bodyweight' => '80.00']);
+
+        $response = $this->actingAs($owner)->get(route('home'));
+
+        $response->assertInertia(fn (Assert $page) => $page->where('bodyweightNudge', false));
+    }
+
+    #[TestWith(['/dashboard'])]
+    #[TestWith(['/routines'])]
+    public function test_old_links_redirect_permanently_to_the_home(string $oldLink)
+    {
+        $response = $this->get($oldLink);
+
+        $response->assertMovedPermanently()->assertRedirect(route('home'));
+    }
+
+    #[TestWith(['/dashboard', 'post'])]
+    #[TestWith(['/routines', 'put'])]
+    public function test_old_links_only_redirect_when_opened(string $oldLink, string $method)
+    {
+        $response = $this->actingAs(User::factory()->create())->call($method, $oldLink);
+
+        $response->assertMethodNotAllowed();
+    }
+
+    public function test_creating_a_routine_is_not_taken_by_the_old_routines_link_once_routes_are_cached()
+    {
+        $compiled = $this->app['router']->getRoutes()->compile();
+        $cachedRoutes = (new CompiledRouteCollection($compiled['compiled'], $compiled['attributes']))
+            ->setRouter($this->app['router'])
+            ->setContainer($this->app);
+
+        $route = $cachedRoutes->match(Request::create('/routines', 'POST'));
+
+        $this->assertSame('routines.store', $route->getName());
+    }
+}

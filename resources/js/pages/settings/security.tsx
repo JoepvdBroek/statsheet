@@ -6,11 +6,12 @@ import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { edit } from '@/routes/security';
 import type { Props as ManagePasskeysProps } from '@/components/manage-passkeys';
 import ManagePasskeys from '@/components/manage-passkeys';
 import type { Props as ManageTwoFactorProps } from '@/components/manage-two-factor';
 import ManageTwoFactor from '@/components/manage-two-factor';
+import { parentScreens } from '@/lib/parent-screens';
+import type { PageShell } from '@/types';
 
 // oxfmt-ignore
 type Props = {
@@ -25,8 +26,6 @@ export default function Security(props: Props) {
     return (
         <>
             <Head title="Security settings" />
-
-            <h1 className="sr-only">Security settings</h1>
 
             <div className="space-y-6">
                 <Heading
@@ -139,10 +138,7 @@ export default function Security(props: Props) {
 }
 
 Security.layout = {
-    breadcrumbs: [
-        {
-            title: 'Security settings',
-            href: edit(),
-        },
-    ],
-};
+    tab: null,
+    title: 'Settings',
+    parent: parentScreens.routines,
+} satisfies PageShell;

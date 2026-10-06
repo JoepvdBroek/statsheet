@@ -3,14 +3,15 @@ import { PlusIcon, SearchIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import ExerciseController from '@/actions/App/Http/Controllers/ExerciseController';
 import { nativeSelectClassName } from '@/components/exercise-form';
-import Heading from '@/components/heading';
+import { PageDescription } from '@/components/page-description';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { parentScreens } from '@/lib/parent-screens';
 import { capitalize, cn } from '@/lib/utils';
 import { index } from '@/routes/exercises';
-import type { Exercise } from '@/types';
+import type { Exercise, PageShell } from '@/types';
 
 type Filters = {
     search: string | null;
@@ -70,10 +71,9 @@ export default function ExercisesIndex({
 
             <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
                 <div className="flex items-start justify-between gap-4">
-                    <Heading
-                        title="Exercises"
-                        description="Search by name, filter by Muscle or equipment."
-                    />
+                    <PageDescription>
+                        Search by name, filter by Muscle or equipment.
+                    </PageDescription>
                     <Button asChild>
                         <Link href={ExerciseController.create()}>
                             <PlusIcon aria-hidden="true" />
@@ -246,10 +246,7 @@ function ExerciseRow({ exercise }: { exercise: Exercise }) {
 }
 
 ExercisesIndex.layout = {
-    breadcrumbs: [
-        {
-            title: 'Exercises',
-            href: index(),
-        },
-    ],
-};
+    tab: 'stats',
+    title: 'Exercises',
+    parent: parentScreens.stats,
+} satisfies PageShell;

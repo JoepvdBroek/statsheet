@@ -128,8 +128,8 @@ class WeeklyTrendTest extends TestCase
         $this->travelTo(CarbonImmutable::parse('2026-09-27 23:45:00', 'America/New_York'));
         $owner = User::factory()->create(['timezone' => 'America/New_York']);
         $deadlift = Exercise::factory()->for($owner)->primaryMuscle(Muscle::LowerBack)->create();
-        $sundayNight = CarbonImmutable::parse('2026-09-27 23:30:00', 'America/New_York');
-        $this->perform(Workout::factory()->for($owner)->create(['started_at' => $sundayNight]), $deadlift, [$this->doneSet(5, '200.00')]);
+        $sundayNightInNewYork = '2026-09-28 03:30:00';
+        $this->perform(Workout::factory()->for($owner)->create(['started_at' => $sundayNightInNewYork]), $deadlift, [$this->doneSet(5, '200.00')]);
 
         $response = $this->actingAs($owner)->get(route('statistics.weekly-trend', ['muscle' => 'lower back']));
 

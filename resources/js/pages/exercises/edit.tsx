@@ -2,6 +2,7 @@ import { Form, Head } from '@inertiajs/react';
 import ExerciseController from '@/actions/App/Http/Controllers/ExerciseController';
 import ExerciseForm from '@/components/exercise-form';
 import Heading from '@/components/heading';
+import { PageDescription } from '@/components/page-description';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -12,8 +13,8 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { index } from '@/routes/exercises';
-import type { Exercise } from '@/types';
+import { parentScreens } from '@/lib/parent-screens';
+import type { Exercise, PageShell } from '@/types';
 
 export default function EditExercise({
     exercise,
@@ -30,10 +31,7 @@ export default function EditExercise({
 
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-10 p-4">
                 <div>
-                    <Heading
-                        title="Edit Exercise"
-                        description={exercise.name}
-                    />
+                    <PageDescription>{exercise.name}</PageDescription>
 
                     <ExerciseForm
                         exercise={exercise}
@@ -93,10 +91,7 @@ export default function EditExercise({
 }
 
 EditExercise.layout = {
-    breadcrumbs: [
-        {
-            title: 'Exercises',
-            href: index(),
-        },
-    ],
-};
+    tab: 'stats',
+    title: 'Edit Exercise',
+    parent: parentScreens.exercises,
+} satisfies PageShell;

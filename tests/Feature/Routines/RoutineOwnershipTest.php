@@ -14,7 +14,7 @@ class RoutineOwnershipTest extends TestCase
 
     public function test_guests_are_redirected_to_the_login_page()
     {
-        $this->get(route('routines.index'))->assertRedirect(route('login'));
+        $this->get(route('routines.create'))->assertRedirect(route('login'));
     }
 
     /**

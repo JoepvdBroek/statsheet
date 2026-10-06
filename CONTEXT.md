@@ -21,6 +21,10 @@ Optional free text on a Workout giving context the numbers don't show (deload, i
 A Routine taken out of use. It is hidden from planning but restorable, and the Workouts started from it still point to it.
 _Avoid_: Deleted routine
 
+**Last Done**:
+The start date of the most recent finished Workout started from a Routine. A Routine never performed has none. A Workout in progress does not count.
+_Avoid_: Last performed, last used
+
 **Set**:
 One planned or performed round of an exercise within a Workout, recording a **Target** and an **Actual**. A set without an Actual is *not done*.
 

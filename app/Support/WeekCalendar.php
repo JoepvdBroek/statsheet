@@ -33,6 +33,14 @@ class WeekCalendar
     }
 
     /**
+     * The Week a calendar day ("2026-09-24") falls in, taking the day in the owner's timezone.
+     */
+    public function weekOfDay(string $day): CarbonImmutable
+    {
+        return $this->weekOf(CarbonImmutable::parse($day, $this->timezone));
+    }
+
+    /**
      * The Week it is now.
      */
     public function currentWeek(): CarbonImmutable
@@ -48,6 +56,23 @@ class WeekCalendar
         return CarbonImmutable::instance($moment)
             ->setTimezone($this->timezone)
             ->startOfMonth();
+    }
+
+    /**
+     * The Weeks whose Monday falls in a calendar month, oldest first, so that each Week belongs to exactly one month.
+     *
+     * @param  CarbonImmutable  $month  A calendar month as monthOf gives it
+     * @return list<CarbonImmutable>
+     */
+    public function weeksOfMonth(CarbonImmutable $month): array
+    {
+        $weeks = [];
+
+        for ($week = $this->weekOf($month->addDays(6)); $week->isSameMonth($month); $week = $week->addWeek()) {
+            $weeks[] = $week;
+        }
+
+        return $weeks;
     }
 
     /**

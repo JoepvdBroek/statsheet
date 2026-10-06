@@ -40,7 +40,7 @@ class RoutineManagementTest extends TestCase
 
         $response
             ->assertSessionHasNoErrors()
-            ->assertRedirect(route('routines.index'))
+            ->assertRedirect(route('home'))
             ->assertInertiaFlash('toast.message', 'Routine created.');
 
         $routine = $owner->routines()->sole();
@@ -249,7 +249,7 @@ class RoutineManagementTest extends TestCase
 
         $response
             ->assertSessionHasNoErrors()
-            ->assertRedirect(route('routines.index'))
+            ->assertRedirect(route('home'))
             ->assertInertiaFlash('toast.message', 'Routine saved.');
 
         $routine->refresh();

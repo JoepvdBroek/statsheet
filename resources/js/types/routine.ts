@@ -17,6 +17,8 @@ export type Routine = {
     id: number;
     name: string;
     archived: boolean;
+    /** Start of the latest finished Workout from it; empty if never done. Only on the Routines home's active list. */
+    last_done?: string | null;
     /** In the order they are trained. */
     exercises: RoutineExercise[];
 };

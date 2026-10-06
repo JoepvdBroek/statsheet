@@ -18,26 +18,6 @@ use Inertia\Response;
 class RoutineController extends Controller
 {
     /**
-     * List the owner's Routines in use, or the archived ones when asked.
-     */
-    public function index(Request $request): Response
-    {
-        $archived = $request->boolean('archived');
-
-        $routines = $request->user()->routines()
-            ->with('exercises.exercise.muscles', 'exercises.sets')
-            ->when($archived, fn ($query) => $query->archived(), fn ($query) => $query->active())
-            ->orderBy('name')
-            ->orderBy('id')
-            ->get();
-
-        return Inertia::render('routines/index', [
-            'routines' => RoutineResource::collection($routines)->resolve(),
-            'archived' => $archived,
-        ]);
-    }
-
-    /**
      * Show the form for creating a Routine.
      */
     public function create(Request $request): Response
@@ -60,7 +40,7 @@ class RoutineController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Routine created.')]);
 
-        return to_route('routines.index');
+        return to_route('home');
     }
 
     /**
@@ -89,7 +69,7 @@ class RoutineController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Routine saved.')]);
 
-        return to_route('routines.index');
+        return to_route('home');
     }
 
     /**
@@ -102,7 +82,7 @@ class RoutineController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Routine archived.')]);
 
-        return to_route('routines.index');
+        return to_route('home');
     }
 
     /**
@@ -115,7 +95,7 @@ class RoutineController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Routine restored.')]);
 
-        return to_route('routines.index', ['archived' => 1]);
+        return to_route('home', ['archived' => 1]);
     }
 
     /**

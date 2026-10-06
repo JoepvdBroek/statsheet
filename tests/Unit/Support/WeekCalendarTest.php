@@ -17,6 +17,15 @@ class WeekCalendarTest extends TestCase
         $this->assertSame('2026-10-01 00:00:00 Europe/Amsterdam', $month->format('Y-m-d H:i:s e'));
     }
 
+    public function test_a_calendar_day_belongs_to_the_week_of_that_day_in_the_owners_timezone()
+    {
+        $calendar = new WeekCalendar('America/New_York');
+
+        $week = $calendar->weekOfDay('2026-09-27');
+
+        $this->assertSame('2026-09-21 00:00:00 America/New_York', $week->format('Y-m-d H:i:s e'));
+    }
+
     public function test_weeks_in_a_range_start_at_local_midnight_across_a_daylight_saving_change()
     {
         $calendar = new WeekCalendar('Europe/Amsterdam');

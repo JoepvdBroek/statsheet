@@ -25,7 +25,7 @@ class ThisWeeksVolumeTest extends TestCase
         $workout = Workout::factory()->for($owner)->finished()->create(['started_at' => '2026-09-28 10:00:00']);
         $this->perform($workout, $benchPress, [$this->doneSet(10, '100.00')]);
 
-        $response = $this->actingAs($owner)->get(route('dashboard'));
+        $response = $this->actingAs($owner)->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('thisWeek.starts_on', '2026-09-28')
@@ -48,7 +48,7 @@ class ThisWeeksVolumeTest extends TestCase
             WorkoutSet::factory()->state(['target_reps' => 5, 'target_weight' => '100.00'])->notDone(),
         ]);
 
-        $response = $this->actingAs($owner)->get(route('dashboard'));
+        $response = $this->actingAs($owner)->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('thisWeek.muscles', [['muscle' => 'quadriceps', 'volume' => 500, 'goal' => null, 'met' => null]])
@@ -63,7 +63,7 @@ class ThisWeeksVolumeTest extends TestCase
         $workout = Workout::factory()->for($owner)->create(['started_at' => '2026-09-30 10:00:00']);
         $this->perform($workout, $plankReach, [$this->doneSet(12, '0.00')]);
 
-        $response = $this->actingAs($owner)->get(route('dashboard'));
+        $response = $this->actingAs($owner)->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page->where('thisWeek.muscles', []));
     }
@@ -76,7 +76,7 @@ class ThisWeeksVolumeTest extends TestCase
         $workout = Workout::factory()->for($owner)->finished()->create(['started_at' => '2026-09-29 10:00:00', 'bodyweight' => '80.00']);
         $this->perform($workout, $pullUp, [$this->doneSet(10, '0.00'), $this->doneSet(5, '10.00')]);
 
-        $response = $this->actingAs($owner)->get(route('dashboard'));
+        $response = $this->actingAs($owner)->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('thisWeek.muscles', [
@@ -94,7 +94,7 @@ class ThisWeeksVolumeTest extends TestCase
         $workout = Workout::factory()->for($owner)->finished()->create(['started_at' => '2026-09-29 10:00:00', 'bodyweight' => null]);
         $this->perform($workout, $dip, [$this->doneSet(10, '0.00'), $this->doneSet(8, '12.50')]);
 
-        $response = $this->actingAs($owner)->get(route('dashboard'));
+        $response = $this->actingAs($owner)->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('thisWeek.muscles', [['muscle' => 'triceps', 'volume' => 100, 'goal' => null, 'met' => null]])
@@ -110,7 +110,7 @@ class ThisWeeksVolumeTest extends TestCase
         $this->perform($workout, $row, [WorkoutSet::factory()->state(['target_reps' => 8, 'target_weight' => '70.00'])->notDone()]);
         $this->actingAs($owner)->put(route('workouts.sets.done', [$workout, $workout->sets()->sole()]));
 
-        $response = $this->get(route('dashboard'));
+        $response = $this->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('thisWeek.muscles', [['muscle' => 'middle back', 'volume' => 560, 'goal' => null, 'met' => null]])
@@ -126,7 +126,7 @@ class ThisWeeksVolumeTest extends TestCase
         $this->perform($workout, $squat, [$this->doneSet(5, '100.00')]);
         $this->actingAs($owner)->patch(route('workouts.sets.update', [$workout, $workout->sets()->sole()]), ['actual_reps' => 3, 'actual_weight' => '100']);
 
-        $response = $this->get(route('dashboard'));
+        $response = $this->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('thisWeek.muscles', [['muscle' => 'quadriceps', 'volume' => 300, 'goal' => null, 'met' => null]])
@@ -142,7 +142,7 @@ class ThisWeeksVolumeTest extends TestCase
         $this->perform($workout, $squat, [$this->doneSet(5, '100.00')]);
         $this->actingAs($owner)->delete(route('workouts.destroy', $workout));
 
-        $response = $this->get(route('dashboard'));
+        $response = $this->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page->where('thisWeek.muscles', []));
     }
@@ -155,7 +155,7 @@ class ThisWeeksVolumeTest extends TestCase
         $this->perform(Workout::factory()->for($owner)->finished()->create(['started_at' => '2026-09-28 03:30:00']), $squat, [$this->doneSet(1, '100.00')]);
         $this->perform(Workout::factory()->for($owner)->create(['started_at' => '2026-10-05 03:30:00']), $squat, [$this->doneSet(5, '100.00')]);
 
-        $response = $this->actingAs($owner)->get(route('dashboard'));
+        $response = $this->actingAs($owner)->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('thisWeek.starts_on', '2026-09-28')
@@ -171,7 +171,7 @@ class ThisWeeksVolumeTest extends TestCase
         $this->perform(Workout::factory()->for($owner)->finished()->create(['started_at' => '2026-10-05 03:30:00']), $squat, [$this->doneSet(5, '100.00')]);
         $this->perform(Workout::factory()->for($owner)->create(['started_at' => '2026-10-05 04:05:00']), $squat, [$this->doneSet(2, '100.00')]);
 
-        $response = $this->actingAs($owner)->get(route('dashboard'));
+        $response = $this->actingAs($owner)->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('thisWeek.starts_on', '2026-10-05')
@@ -186,7 +186,7 @@ class ThisWeeksVolumeTest extends TestCase
         $someoneElses = Workout::factory()->create(['started_at' => '2026-09-29 10:00:00']);
         $this->perform($someoneElses, Exercise::factory()->for($someoneElses->user)->primaryMuscle(Muscle::Quadriceps)->create(), [$this->doneSet(5, '100.00')]);
 
-        $response = $this->actingAs($owner)->get(route('dashboard'));
+        $response = $this->actingAs($owner)->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page->where('thisWeek.muscles', []));
     }

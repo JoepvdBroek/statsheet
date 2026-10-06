@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $user_id
  * @property string $name
  * @property CarbonImmutable|null $archived_at When the Routine was taken out of use, hiding it from planning
+ * @property CarbonImmutable|null $last_done_at The Routine's Last Done, only when queried withLastDone()
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
@@ -54,6 +55,33 @@ class Routine extends Model
     public function exercises(): HasMany
     {
         return $this->hasMany(RoutineExercise::class)->orderBy('position');
+    }
+
+    /**
+     * The Workouts started from the Routine.
+     *
+     * @return HasMany<Workout, $this>
+     */
+    public function workouts(): HasMany
+    {
+        return $this->hasMany(Workout::class);
+    }
+
+    /**
+     * Add each Routine's Last Done as `last_done_at`: the start of the owner's latest finished Workout from it,
+     * or null when it was never done.
+     *
+     * @param  Builder<Routine>  $query
+     */
+    #[Scope]
+    protected function withLastDone(Builder $query): void
+    {
+        $query
+            ->withMax(['workouts as last_done_at' => fn (Builder $workouts) => $workouts
+                ->whereNotNull('workouts.finished_at')
+                ->whereColumn('workouts.user_id', 'routines.user_id'),
+            ], 'started_at')
+            ->withCasts(['last_done_at' => 'datetime']);
     }
 
     /**

@@ -11,8 +11,8 @@ type RoutineCardProps = React.ComponentProps<'article'> & {
     setCount?: number;
     /** Primary Muscles trained, most volume first. Up to four are shown. */
     muscles?: string[];
-    /** Pre-formatted ("Monday", "12 days ago", "Never"). */
-    lastPerformed?: string;
+    /** The Last Done, pre-formatted ("Today", "Monday", "22 Sep", "Never done"). */
+    lastDone?: string;
     archived?: boolean;
     /** Start workout is shown only when onStart or startHref is given. */
     onStart?: () => void;
@@ -29,7 +29,7 @@ function RoutineCard({
     exerciseCount,
     setCount,
     muscles = [],
-    lastPerformed,
+    lastDone,
     archived = false,
     onStart,
     startHref,
@@ -64,7 +64,7 @@ function RoutineCard({
                     <p className="text-sm text-muted-foreground tabular-nums">
                         {exerciseCount} exercises
                         {setCount !== undefined ? ` · ${setCount} sets` : ''}
-                        {lastPerformed ? ` · ${lastPerformed}` : ''}
+                        {lastDone ? ` · ${lastDone}` : ''}
                     </p>
                 </div>
                 {archived ? <Badge variant="outline">Archived</Badge> : null}

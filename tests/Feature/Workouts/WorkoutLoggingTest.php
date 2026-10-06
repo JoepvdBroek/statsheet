@@ -273,7 +273,7 @@ class WorkoutLoggingTest extends TestCase
         $response = $this->actingAs($workout->user)->post(route('workouts.finish', $workout));
 
         $response
-            ->assertRedirect(route('dashboard'))
+            ->assertRedirect(route('home'))
             ->assertInertiaFlash('toast.message', 'Workout finished.');
 
         $this->assertTrue($workout->refresh()->finished_at->equalTo(now()));

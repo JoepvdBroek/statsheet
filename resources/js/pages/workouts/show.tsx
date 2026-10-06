@@ -1,6 +1,6 @@
-import { Form, Head, router, usePage } from '@inertiajs/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import type { VisitOptions } from '@inertiajs/core';
-import { FlameIcon } from 'lucide-react';
+import { FlameIcon, HistoryIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import WorkoutController from '@/actions/App/Http/Controllers/WorkoutController';
 import WorkoutExerciseController from '@/actions/App/Http/Controllers/WorkoutExerciseController';
@@ -9,6 +9,7 @@ import ExercisePicker from '@/components/exercise-picker';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { ItemMenu, MoveRemoveItems } from '@/components/item-menu';
+import { PageDescription } from '@/components/page-description';
 import { ExerciseCard } from '@/components/statsheet/exercise-card';
 import { PRBadge } from '@/components/statsheet/pr-badge';
 import { SetRow, meetsTarget } from '@/components/statsheet/set-row';
@@ -28,10 +29,13 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
-import { cn, formatDateTime } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
+import { parentScreens } from '@/lib/parent-screens';
+import { formatDateTime, isInProgress } from '@/lib/utils';
 import { index } from '@/routes/workouts';
 import type {
     Exercise,
+    PageShell,
     Workout,
     WorkoutExercise,
     WorkoutRoutine,
@@ -80,7 +84,7 @@ export default function ShowWorkout({
     exercises?: Exercise[];
 }) {
     const { auth, errors } = usePage<{ errors: Errors }>().props;
-    const inProgress = workout.status === 'in_progress';
+    const inProgress = isInProgress(workout);
     const timeZone = auth.user.timezone;
 
     return (
@@ -88,21 +92,30 @@ export default function ShowWorkout({
             <Head title="Workout" />
 
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
-                <div>
-                    <Heading
-                        title={inProgress ? 'Workout in progress' : 'Workout'}
-                        description={[
-                            `Started ${formatDateTime(workout.started_at, timeZone)}`,
-                            workout.finished_at
-                                ? `finished ${formatDateTime(workout.finished_at, timeZone)}`
-                                : null,
-                            workout.bodyweight !== null
-                                ? `Bodyweight ${workout.bodyweight} kg`
-                                : null,
-                        ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                    />
+                <div className="flex flex-col gap-8">
+                    <div className="flex items-start justify-between gap-4">
+                        <PageDescription>
+                            {[
+                                `Started ${formatDateTime(workout.started_at, timeZone)}`,
+                                workout.finished_at
+                                    ? `finished ${formatDateTime(workout.finished_at, timeZone)}`
+                                    : null,
+                                workout.bodyweight !== null
+                                    ? `Bodyweight ${workout.bodyweight} kg`
+                                    : null,
+                            ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                        </PageDescription>
+                        {inProgress ? (
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href={index()}>
+                                    <HistoryIcon aria-hidden="true" />
+                                    Workout history
+                                </Link>
+                            </Button>
+                        ) : null}
+                    </div>
 
                     <div className="flex flex-col gap-3">
                         {workout.exercises.length === 0 ? (
@@ -152,7 +165,7 @@ export default function ShowWorkout({
                 <DeleteWorkout workout={workout} />
 
                 {inProgress ? (
-                    <div className="sticky bottom-0 -mx-4 border-t bg-background/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
+                    <div className="sticky bottom-(--tab-bar-height) -mx-4 border-t bg-background/95 px-4 py-3 backdrop-blur">
                         <Form {...WorkoutController.finish.form(workout.id)}>
                             {({ processing }) => (
                                 <Button
@@ -609,7 +622,7 @@ function WorkoutNote({ workout }: { workout: Workout }) {
                           : null}
                 </span>
             </div>
-            <textarea
+            <Textarea
                 id="note"
                 rows={3}
                 value={note}
@@ -627,22 +640,18 @@ function WorkoutNote({ workout }: { workout: Workout }) {
                         save(note);
                     }
                 }}
-                className={cn(
-                    'w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground md:text-sm',
-                    'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
-                    'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
-                )}
             />
             <InputError message={error} />
         </div>
     );
 }
 
-ShowWorkout.layout = {
-    breadcrumbs: [
-        {
-            title: 'Workouts',
-            href: index(),
-        },
-    ],
-};
+/** The Workout in progress is the Workout tab's own screen; a finished Workout is a detail of Workout history. */
+ShowWorkout.layout = ({ workout }: { workout: Workout }): PageShell =>
+    isInProgress(workout)
+        ? { tab: 'workout', title: 'Workout in progress' }
+        : {
+              tab: 'workout',
+              title: 'Workout',
+              parent: parentScreens.workoutHistory,
+          };
