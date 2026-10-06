@@ -167,14 +167,14 @@ class WeeklyReviewTest extends TestCase
         $this->actingAs($owner)->get(route('reviews.show', $theirs))->assertNotFound();
     }
 
-    public function test_the_dashboard_shows_the_owners_latest_weekly_review()
+    public function test_the_stats_hub_shows_the_owners_latest_weekly_review()
     {
         $owner = User::factory()->create();
         WeeklyReview::factory()->for($owner)->create(['week' => '2026-09-14']);
         $latest = WeeklyReview::factory()->for($owner)->create(['week' => '2026-09-21', 'summary' => 'A solid Week.']);
         WeeklyReview::factory()->create(['week' => '2026-09-28']);
 
-        $response = $this->actingAs($owner)->get(route('dashboard'));
+        $response = $this->actingAs($owner)->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('latestReview.id', $latest->id)
@@ -184,12 +184,12 @@ class WeeklyReviewTest extends TestCase
         );
     }
 
-    public function test_the_dashboard_has_no_latest_weekly_review_before_the_first()
+    public function test_the_stats_hub_has_no_latest_weekly_review_before_the_first()
     {
         WeeklyReview::factory()->create();
         $owner = User::factory()->create();
 
-        $response = $this->actingAs($owner)->get(route('dashboard'));
+        $response = $this->actingAs($owner)->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page->where('latestReview', null));
     }

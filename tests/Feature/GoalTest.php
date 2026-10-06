@@ -36,7 +36,7 @@ class GoalTest extends TestCase
         $this->assertSame('5000.00', $goal->weekly_minimum);
         $this->assertSame('2026-09-28', $goal->effective_week->toDateString());
 
-        $this->get(route('dashboard'))->assertInertia(fn (Assert $page) => $page
+        $this->get(route('statistics.hub'))->assertInertia(fn (Assert $page) => $page
             ->where('thisWeek.muscles', [['muscle' => 'chest', 'volume' => 0, 'goal' => 5000, 'met' => false]])
         );
     }
@@ -55,7 +55,7 @@ class GoalTest extends TestCase
             ->done()
             ->create();
 
-        $response = $this->actingAs($owner)->get(route('dashboard'));
+        $response = $this->actingAs($owner)->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('thisWeek.muscles', [
@@ -116,7 +116,7 @@ class GoalTest extends TestCase
     }
 
     /**
-     * A moment to look at the dashboard, and the chest Goal in force then. Chest has 6,000 kg Volume every Week.
+     * A moment to look at the Stats hub, and the chest Goal in force then. Chest has 6,000 kg Volume every Week.
      *
      * @return array<string, array{0: string, 1: int|null, 2: bool|null}>
      */
@@ -149,7 +149,7 @@ class GoalTest extends TestCase
         }
         $this->travelTo($moment);
 
-        $response = $this->actingAs($owner)->get(route('dashboard'));
+        $response = $this->actingAs($owner)->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('thisWeek.muscles', [['muscle' => 'chest', 'volume' => 6000, 'goal' => $expectedGoal, 'met' => $expectedMet]])
@@ -172,7 +172,7 @@ class GoalTest extends TestCase
             [['2026-09-14', '5000.00'], ['2026-09-28', null]],
             $owner->goals()->orderBy('effective_week')->get()->map(fn (Goal $goal) => [$goal->effective_week->toDateString(), $goal->weekly_minimum])->all(),
         );
-        $this->get(route('dashboard'))->assertInertia(fn (Assert $page) => $page->where('thisWeek.muscles', []));
+        $this->get(route('statistics.hub'))->assertInertia(fn (Assert $page) => $page->where('thisWeek.muscles', []));
     }
 
     /**
@@ -242,13 +242,13 @@ class GoalTest extends TestCase
         $this->assertSame('5000.00', $owner->goals()->sole()->weekly_minimum);
     }
 
-    public function test_another_users_goals_do_not_show_on_the_dashboard()
+    public function test_another_users_goals_do_not_show_on_the_stats_hub()
     {
         $this->travelTo('2026-09-30 12:00:00');
         Goal::factory()->create(['muscle' => Muscle::Chest, 'effective_week' => '2026-09-28']);
         $owner = User::factory()->create();
 
-        $response = $this->actingAs($owner)->get(route('dashboard'));
+        $response = $this->actingAs($owner)->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page->where('thisWeek.muscles', []));
     }
