@@ -2,8 +2,8 @@ import { Link, usePage } from '@inertiajs/react';
 import { ChartLine, ClipboardList, Dumbbell } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { dashboard } from '@/routes';
 import { index as routinesIndex } from '@/routes/routines';
+import { hub as statsHub } from '@/routes/statistics';
 import { index as workoutsIndex, show as showWorkout } from '@/routes/workouts';
 import type { AppTab, NavItem } from '@/types';
 
@@ -32,7 +32,7 @@ export function TabBar({ activeTab }: { activeTab: AppTab | null }) {
             icon: Dumbbell,
             live: workoutInProgressId !== null,
         },
-        { tab: 'stats', title: 'Stats', href: dashboard(), icon: ChartLine },
+        { tab: 'stats', title: 'Stats', href: statsHub(), icon: ChartLine },
     ];
 
     return (
