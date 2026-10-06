@@ -1,6 +1,6 @@
-import { Form, Head, router, usePage } from '@inertiajs/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import type { VisitOptions } from '@inertiajs/core';
-import { FlameIcon } from 'lucide-react';
+import { FlameIcon, HistoryIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import WorkoutController from '@/actions/App/Http/Controllers/WorkoutController';
 import WorkoutExerciseController from '@/actions/App/Http/Controllers/WorkoutExerciseController';
@@ -31,6 +31,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { parentScreens } from '@/lib/parent-screens';
 import { formatDateTime } from '@/lib/utils';
+import { index } from '@/routes/workouts';
 import type {
     Exercise,
     PageShell,
@@ -105,6 +106,14 @@ export default function ShowWorkout({
                                 .filter(Boolean)
                                 .join(' · ')}
                         </p>
+                        {inProgress ? (
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href={index()}>
+                                    <HistoryIcon aria-hidden="true" />
+                                    Workout history
+                                </Link>
+                            </Button>
+                        ) : null}
                     </div>
 
                     <div className="flex flex-col gap-3">
