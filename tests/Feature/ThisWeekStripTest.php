@@ -36,6 +36,18 @@ class ThisWeekStripTest extends TestCase
         );
     }
 
+    public function test_the_volume_is_the_sum_over_muscles_so_a_secondary_muscle_adds_half()
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-09-30 18:00:00', 'Europe/Amsterdam'));
+        $owner = User::factory()->create(['timezone' => 'Europe/Amsterdam']);
+        $squat = Exercise::factory()->for($owner)->primaryMuscle(Muscle::Quadriceps)->withSecondaryMuscle(Muscle::Glutes)->create();
+        $this->perform(Workout::factory()->for($owner)->finished()->create(['started_at' => '2026-09-28 10:00:00']), $squat, [$this->doneSet(5, '100.00')]);
+
+        $response = $this->actingAs($owner)->get(route('home'));
+
+        $response->assertInertia(fn (Assert $page) => $page->where('thisWeek.volume', 750));
+    }
+
     public function test_last_weeks_volume_counts_only_workouts_started_up_to_the_same_weekday_and_time()
     {
         $this->travelTo(CarbonImmutable::parse('2026-09-30 18:00:00', 'Europe/Amsterdam'));
