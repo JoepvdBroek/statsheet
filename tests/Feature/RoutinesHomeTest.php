@@ -30,7 +30,7 @@ class RoutinesHomeTest extends TestCase
         Routine::factory()->for($owner)->archived()->create(['name' => 'Old pull day']);
         Routine::factory()->create(['name' => 'Someone else\'s day']);
 
-        $response = $this->actingAs($owner)->get('/');
+        $response = $this->actingAs($owner)->get(route('home'));
 
         $response->assertInertia(fn (Assert $page) => $page
             ->component('home')
@@ -69,6 +69,38 @@ class RoutinesHomeTest extends TestCase
             ->where('routines.3.last_done', '2026-09-21T18:00:00+00:00')
             ->where('routines.4.name', 'Arms')
             ->where('routines.4.last_done', '2026-09-30T16:05:00+00:00')
+        );
+    }
+
+    public function test_routines_last_done_on_the_same_day_are_ordered_by_name()
+    {
+        $owner = User::factory()->create(['timezone' => 'Europe/Amsterdam']);
+        $doneLaterThatDay = Routine::factory()->for($owner)->create(['name' => 'Arms']);
+        $doneEarlierThatDay = Routine::factory()->for($owner)->create(['name' => 'Back']);
+        Workout::factory()->for($owner)->for($doneLaterThatDay)->finished()->create(['started_at' => '2026-09-21 18:00:00']);
+        Workout::factory()->for($owner)->for($doneEarlierThatDay)->finished()->create(['started_at' => '2026-09-21 06:00:00']);
+
+        $response = $this->actingAs($owner)->get(route('home'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('routines.0.name', 'Arms')
+            ->where('routines.1.name', 'Back')
+        );
+    }
+
+    public function test_the_day_a_routine_was_last_done_is_taken_in_the_owners_timezone()
+    {
+        $owner = User::factory()->create(['timezone' => 'Europe/Amsterdam']);
+        $doneJustAfterMidnight = Routine::factory()->for($owner)->create(['name' => 'Arms']);
+        $doneTheDayBefore = Routine::factory()->for($owner)->create(['name' => 'Back']);
+        Workout::factory()->for($owner)->for($doneJustAfterMidnight)->finished()->create(['started_at' => '2026-09-21 22:30:00']);
+        Workout::factory()->for($owner)->for($doneTheDayBefore)->finished()->create(['started_at' => '2026-09-21 06:00:00']);
+
+        $response = $this->actingAs($owner)->get(route('home'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('routines.0.name', 'Back')
+            ->where('routines.1.name', 'Arms')
         );
     }
 

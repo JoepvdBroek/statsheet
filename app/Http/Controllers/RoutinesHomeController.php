@@ -9,6 +9,7 @@ use App\Support\VolumeCalculator;
 use App\Support\WeekCalendar;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,7 +26,7 @@ class RoutinesHomeController extends Controller
         $workout = $user->workouts()->inProgress()->with('routine')->first();
 
         return Inertia::render('home', [
-            'routines' => RoutineResource::collection($this->routines($user)->active()->dueFirst()->get())->resolve(),
+            'routines' => RoutineResource::collection($this->dueFirst($this->routines($user)->active()->withLastDone()->get(), $user))->resolve(),
             'archivedRoutines' => $request->boolean('archived')
                 ? RoutineResource::collection($this->routines($user)->archived()->orderBy('name')->orderBy('id')->get())->resolve()
                 : null,
@@ -49,6 +50,26 @@ class RoutinesHomeController extends Controller
         return $user->routines()
             ->with('exercises.exercise.muscles', 'exercises.sets')
             ->getQuery();
+    }
+
+    /**
+     * Order the Routines the owner is most likely due for first: never done, then by the day they were Last Done
+     * in the owner's timezone, least recent first, then by name.
+     *
+     * @param  Collection<int, Routine>  $routines
+     * @return Collection<int, Routine>
+     */
+    private function dueFirst(Collection $routines, User $user): Collection
+    {
+        $lastDoneDay = fn (Routine $routine): string => $routine->last_done_at?->setTimezone($user->timezone)->toDateString() ?? '';
+
+        return $routines
+            ->sortBy([
+                fn (Routine $a, Routine $b) => $lastDoneDay($a) <=> $lastDoneDay($b),
+                ['name', 'asc'],
+                ['id', 'asc'],
+            ])
+            ->values();
     }
 
     /**
