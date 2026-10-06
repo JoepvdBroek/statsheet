@@ -3,6 +3,7 @@ import { PlayIcon, PlusIcon, ScaleIcon, SettingsIcon } from 'lucide-react';
 import RoutineController from '@/actions/App/Http/Controllers/RoutineController';
 import WorkoutController from '@/actions/App/Http/Controllers/WorkoutController';
 import { RoutineCard } from '@/components/statsheet/routine-card';
+import { StatBlock } from '@/components/statsheet/stat-block';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/utils';
@@ -25,13 +26,28 @@ type HomeProps = {
     } | null;
     /** Whether the owner has no Bodyweight set yet. */
     bodyweightNudge: boolean;
+    thisWeek: ThisWeek;
 };
+
+type ThisWeek = {
+    /** Workouts started this Week, the one in progress included. */
+    workouts: number;
+    /** This Week's total Volume in kg, done Sets of the Workout in progress included. */
+    volume: number;
+    /** Last Week's total Volume in kg, of Workouts started up to the same weekday and time. */
+    last_week_volume: number;
+};
+
+const volumeFormat = new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 1,
+});
 
 export default function Home({
     routines,
     archivedRoutines,
     workoutInProgress,
     bodyweightNudge,
+    thisWeek,
 }: HomeProps) {
     const { auth } = usePage().props;
     const showsArchived = archivedRoutines !== null;
@@ -86,6 +102,8 @@ export default function Home({
                         </AlertDescription>
                     </Alert>
                 ) : null}
+
+                <ThisWeekStrip thisWeek={thisWeek} />
 
                 {routines.length === 0 ? (
                     <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
@@ -192,6 +210,55 @@ function primaryMuscles(routine: Routine): string[] {
     return [...workingSets.entries()]
         .sort(([, a], [, b]) => b - a)
         .map(([muscle]) => muscle);
+}
+
+/** This Week's Workouts and Volume, with the % change against last Week up to the same moment while last Week had Volume by then. */
+function ThisWeekStrip({ thisWeek }: { thisWeek: ThisWeek }) {
+    const { workouts, volume, last_week_volume: lastWeekVolume } = thisWeek;
+    const change =
+        lastWeekVolume > 0
+            ? Math.round(((volume - lastWeekVolume) / lastWeekVolume) * 100)
+            : null;
+
+    return (
+        <section
+            aria-label="This week"
+            className="grid grid-cols-2 gap-4 rounded-xl border bg-card p-4 text-card-foreground"
+        >
+            <StatBlock
+                size="sm"
+                tone="plain"
+                value={workouts}
+                unit={workouts === 1 ? 'Workout' : 'Workouts'}
+                label="This week"
+            />
+            <StatBlock
+                size="sm"
+                value={volumeFormat.format(volume)}
+                unit="kg"
+                label="Volume"
+                delta={
+                    change === null ? undefined : (
+                        <>
+                            {change > 0 ? '+' : change < 0 ? '−' : ''}
+                            {Math.abs(change)}%
+                            <span className="sr-only">
+                                {' '}
+                                against last week up to now
+                            </span>
+                        </>
+                    )
+                }
+                trend={
+                    change === null || change === 0
+                        ? 'flat'
+                        : change > 0
+                          ? 'up'
+                          : 'down'
+                }
+            />
+        </section>
+    );
 }
 
 /** New routine and the settings gear, beside the title. */
