@@ -6,6 +6,8 @@ use App\Models\Routine;
 use App\Models\User;
 use App\Models\Workout;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Routing\CompiledRouteCollection;
 use Inertia\Testing\AssertableInertia as Assert;
 use PHPUnit\Framework\Attributes\TestWith;
 use Tests\TestCase;
@@ -192,5 +194,26 @@ class RoutinesHomeTest extends TestCase
         $response = $this->get($oldLink);
 
         $response->assertMovedPermanently()->assertRedirect(route('home'));
+    }
+
+    #[TestWith(['/dashboard', 'post'])]
+    #[TestWith(['/routines', 'put'])]
+    public function test_old_links_only_redirect_when_opened(string $oldLink, string $method)
+    {
+        $response = $this->actingAs(User::factory()->create())->call($method, $oldLink);
+
+        $response->assertMethodNotAllowed();
+    }
+
+    public function test_creating_a_routine_is_not_taken_by_the_old_routines_link_once_routes_are_cached()
+    {
+        $compiled = $this->app['router']->getRoutes()->compile();
+        $cachedRoutes = (new CompiledRouteCollection($compiled['compiled'], $compiled['attributes']))
+            ->setRouter($this->app['router'])
+            ->setContainer($this->app);
+
+        $route = $cachedRoutes->match(Request::create('/routines', 'POST'));
+
+        $this->assertSame('routines.store', $route->getName());
     }
 }

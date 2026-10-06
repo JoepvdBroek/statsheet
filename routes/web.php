@@ -13,10 +13,8 @@ use App\Http\Controllers\WorkoutExerciseController;
 use App\Http\Controllers\WorkoutSetController;
 use Illuminate\Support\Facades\Route;
 
-// Old links and installed apps opening at the dashboard or the routines list. These answer any method,
-// so they stay above the routines resource, whose POST /routines replaces this redirect for creating.
-Route::permanentRedirect('dashboard', '/');
-Route::permanentRedirect('routines', '/');
+Route::get('dashboard', fn () => to_route('home', status: 301));
+Route::get('routines', fn () => to_route('home', status: 301));
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/', RoutinesHomeController::class)->name('home');
