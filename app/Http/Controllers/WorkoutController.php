@@ -108,6 +108,6 @@ class WorkoutController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Workout deleted.')]);
 
-        return to_route('workouts.index');
+        return to_route('home');
     }
 }

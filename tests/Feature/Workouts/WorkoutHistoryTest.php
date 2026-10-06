@@ -104,7 +104,7 @@ class WorkoutHistoryTest extends TestCase
         $response = $this->actingAs($workout->user)->delete(route('workouts.destroy', $workout));
 
         $response
-            ->assertRedirect(route('workouts.index'))
+            ->assertRedirect(route('home'))
             ->assertInertiaFlash('toast.message', 'Workout deleted.');
 
         $this->assertModelMissing($workout);
