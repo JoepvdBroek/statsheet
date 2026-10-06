@@ -91,8 +91,8 @@ export default function ShowWorkout({
             <Head title="Workout" />
 
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
-                <div>
-                    <div className="mb-8 flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-8">
+                    <div className="flex items-start justify-between gap-4">
                         <p className="text-sm text-muted-foreground">
                             {[
                                 `Started ${formatDateTime(workout.started_at, timeZone)}`,
