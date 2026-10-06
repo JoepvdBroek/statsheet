@@ -12,7 +12,7 @@ import { AskForReviewForm } from '@/components/ask-for-review-form';
 import { StatBlock } from '@/components/statsheet/stat-block';
 import { WeeklyReviewLink } from '@/components/weekly-review-link';
 import { Button } from '@/components/ui/button';
-import { capitalize, formatDate } from '@/lib/utils';
+import { capitalize, formatDate, formatKg } from '@/lib/utils';
 import { index as exercisesIndex } from '@/routes/exercises';
 import { index as goalsIndex } from '@/routes/goals';
 import { index as reviewsIndex } from '@/routes/reviews';
@@ -35,10 +35,6 @@ type ThisWeek = {
 };
 
 type HubRow = NavItem & { description: string; icon: LucideIcon };
-
-const volumeFormat = new Intl.NumberFormat(undefined, {
-    maximumFractionDigits: 1,
-});
 
 /** The statistics views and their settings, each opened from a row on the hub. */
 const rows: HubRow[] = [
@@ -115,15 +111,15 @@ export default function StatsHub({
                                         key={muscle}
                                         size="sm"
                                         tone="live"
-                                        value={volumeFormat.format(volume)}
+                                        value={formatKg(volume)}
                                         unit="kg"
                                         label={capitalize(muscle)}
                                         delta={
                                             goal === null
                                                 ? undefined
                                                 : met
-                                                  ? `Goal met · ${volumeFormat.format(goal)}`
-                                                  : `${volumeFormat.format(goal - volume)} to go`
+                                                  ? `Goal met · ${formatKg(goal)}`
+                                                  : `${formatKg(goal - volume)} to go`
                                         }
                                     />
                                 ),

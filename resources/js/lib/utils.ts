@@ -16,6 +16,15 @@ export function toUrl(url: NonNullable<InertiaLinkProps['href']>): string {
     return typeof url === 'string' ? url : url.url;
 }
 
+const kgFormat = new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 1,
+});
+
+/** Formats a weight or Volume in kg with at most one decimal, e.g. "1,234.5". */
+export function formatKg(kg: number): string {
+    return kgFormat.format(kg);
+}
+
 /** Formats a timestamp as a short weekday, date and time in the owner's timezone, e.g. "Tue 30 Sep, 18:05". */
 export function formatDateTime(iso: string, timeZone: string): string {
     return new Intl.DateTimeFormat(undefined, {

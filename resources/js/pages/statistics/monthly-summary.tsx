@@ -4,7 +4,7 @@ import Heading from '@/components/heading';
 import { StatBlock } from '@/components/statsheet/stat-block';
 import { Button } from '@/components/ui/button';
 import { parentScreens } from '@/lib/parent-screens';
-import { capitalize, formatMonth } from '@/lib/utils';
+import { capitalize, formatKg, formatMonth } from '@/lib/utils';
 import { monthlySummary } from '@/routes/statistics';
 import type { PageShell } from '@/types';
 
@@ -21,10 +21,6 @@ type GoalWeeks = {
     /** Weeks with this Muscle's Goal in force. */
     weeks_with_goal: number;
 };
-
-const volumeFormat = new Intl.NumberFormat(undefined, {
-    maximumFractionDigits: 1,
-});
 
 export default function MonthlySummary({
     month,
@@ -147,7 +143,7 @@ export default function MonthlySummary({
                                     key={muscle}
                                     size="sm"
                                     tone="plain"
-                                    value={volumeFormat.format(tonnage)}
+                                    value={formatKg(tonnage)}
                                     unit="kg"
                                     label={capitalize(muscle)}
                                 />

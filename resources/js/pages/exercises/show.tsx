@@ -9,7 +9,7 @@ import { TrendChart } from '@/components/statsheet/trend-chart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { parentScreens } from '@/lib/parent-screens';
-import { formatDay } from '@/lib/utils';
+import { formatDay, formatKg } from '@/lib/utils';
 import type {
     Exercise,
     ExercisePerformance,
@@ -17,10 +17,6 @@ import type {
     PageShell,
     PersonalRecords,
 } from '@/types';
-
-const kgFormat = new Intl.NumberFormat(undefined, {
-    maximumFractionDigits: 1,
-});
 
 export default function ShowExercise({
     exercise,
@@ -40,8 +36,8 @@ export default function ShowExercise({
     const bodyweight = exercise.is_bodyweight;
     const addedLoad = (weight: number) =>
         bodyweight
-            ? `BW${weight ? `+${kgFormat.format(weight)}` : ''}`
-            : kgFormat.format(weight);
+            ? `BW${weight ? `+${formatKg(weight)}` : ''}`
+            : formatKg(weight);
 
     return (
         <>
@@ -113,7 +109,7 @@ export default function ShowExercise({
                                     value={
                                         records.e1rm === null
                                             ? '–'
-                                            : kgFormat.format(records.e1rm)
+                                            : formatKg(records.e1rm)
                                     }
                                     unit={
                                         records.e1rm === null ? undefined : 'kg'
@@ -123,9 +119,7 @@ export default function ShowExercise({
                                     size="sm"
                                     tone="plain"
                                     label="Best set"
-                                    value={kgFormat.format(
-                                        records.tonnage ?? 0,
-                                    )}
+                                    value={formatKg(records.tonnage ?? 0)}
                                     unit="kg"
                                 />
                             </div>
@@ -196,7 +190,7 @@ export default function ShowExercise({
                                 e1rm={
                                     performance.e1rm === null
                                         ? undefined
-                                        : kgFormat.format(performance.e1rm)
+                                        : formatKg(performance.e1rm)
                                 }
                                 bodyweight={bodyweight}
                                 prs={performance.new_records}

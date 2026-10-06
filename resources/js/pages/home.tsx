@@ -6,7 +6,7 @@ import { RoutineCard } from '@/components/statsheet/routine-card';
 import { StatBlock } from '@/components/statsheet/stat-block';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { formatDateTime, formatLastDone } from '@/lib/utils';
+import { formatDateTime, formatKg, formatLastDone } from '@/lib/utils';
 import { home } from '@/routes';
 import { edit as editProfile } from '@/routes/profile';
 import { show } from '@/routes/workouts';
@@ -37,10 +37,6 @@ type ThisWeek = {
     /** Last Week's total Volume in kg, of Workouts started up to the same weekday and time. */
     last_week_volume: number;
 };
-
-const volumeFormat = new Intl.NumberFormat(undefined, {
-    maximumFractionDigits: 1,
-});
 
 export default function Home({
     routines,
@@ -232,7 +228,7 @@ function ThisWeekStrip({ thisWeek }: { thisWeek: ThisWeek }) {
             />
             <StatBlock
                 size="sm"
-                value={volumeFormat.format(volume)}
+                value={formatKg(volume)}
                 unit="kg"
                 label="Volume"
                 delta={
