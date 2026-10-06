@@ -2,6 +2,7 @@ import type { InertiaLinkProps } from '@inertiajs/react';
 import { clsx } from 'clsx';
 import type { ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import type { Workout } from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -10,6 +11,11 @@ export function cn(...inputs: ClassValue[]) {
 /** Upper-cases the first letter, e.g. "lower back" → "Lower back". */
 export function capitalize(value: string): string {
     return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+/** Whether a Workout is still in progress, not yet finished. */
+export function isInProgress(workout: Pick<Workout, 'status'>): boolean {
+    return workout.status === 'in_progress';
 }
 
 export function toUrl(url: NonNullable<InertiaLinkProps['href']>): string {

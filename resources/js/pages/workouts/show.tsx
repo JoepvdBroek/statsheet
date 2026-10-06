@@ -31,7 +31,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { parentScreens } from '@/lib/parent-screens';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, isInProgress } from '@/lib/utils';
 import { index } from '@/routes/workouts';
 import type {
     Exercise,
@@ -84,7 +84,7 @@ export default function ShowWorkout({
     exercises?: Exercise[];
 }) {
     const { auth, errors } = usePage<{ errors: Errors }>().props;
-    const inProgress = workout.status === 'in_progress';
+    const inProgress = isInProgress(workout);
     const timeZone = auth.user.timezone;
 
     return (
@@ -648,7 +648,7 @@ function WorkoutNote({ workout }: { workout: Workout }) {
 
 /** The Workout in progress is the Workout tab's own screen; a finished Workout is a detail of Workout history. */
 ShowWorkout.layout = ({ workout }: { workout: Workout }): PageShell =>
-    workout.status === 'in_progress'
+    isInProgress(workout)
         ? { tab: 'workout', title: 'Workout in progress' }
         : {
               tab: 'workout',

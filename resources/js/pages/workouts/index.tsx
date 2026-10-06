@@ -3,7 +3,7 @@ import WorkoutController from '@/actions/App/Http/Controllers/WorkoutController'
 import { PageDescription } from '@/components/page-description';
 import { StartEmptyWorkoutButton } from '@/components/start-empty-workout-button';
 import { Badge } from '@/components/ui/badge';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, isInProgress } from '@/lib/utils';
 import type { PageShell, WorkoutSummary } from '@/types';
 
 export default function WorkoutsIndex({
@@ -77,7 +77,7 @@ function WorkoutRow({
                     </p>
                 ) : null}
             </div>
-            {workout.status === 'in_progress' ? (
+            {isInProgress(workout) ? (
                 <Badge className="shrink-0">In progress</Badge>
             ) : null}
         </li>
