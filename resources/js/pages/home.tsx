@@ -174,7 +174,7 @@ function RoutineCards({ routines }: { routines: Routine[] }) {
                         0,
                     )}
                     muscles={primaryMuscles(routine)}
-                    lastPerformed={
+                    lastDone={
                         routine.last_done === undefined
                             ? undefined
                             : formatLastDone(
