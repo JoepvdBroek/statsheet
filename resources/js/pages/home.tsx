@@ -206,6 +206,9 @@ function primaryMuscles(routine: Routine): string[] {
         .map(([muscle]) => muscle);
 }
 
+/** The sign in front of the % change, by its trend. */
+const signs = { up: '+', down: '−', flat: '' } as const;
+
 /** This Week's Workouts and Volume, with the % change against last Week up to the same moment while last Week had Volume by then. */
 function ThisWeekStrip({ thisWeek }: { thisWeek: ThisWeek }) {
     const { workouts, volume, last_week_volume: lastWeekVolume } = thisWeek;
@@ -213,6 +216,8 @@ function ThisWeekStrip({ thisWeek }: { thisWeek: ThisWeek }) {
         lastWeekVolume > 0
             ? Math.round(((volume - lastWeekVolume) / lastWeekVolume) * 100)
             : null;
+    const trend =
+        change === null || change === 0 ? 'flat' : change > 0 ? 'up' : 'down';
 
     return (
         <section
@@ -234,7 +239,7 @@ function ThisWeekStrip({ thisWeek }: { thisWeek: ThisWeek }) {
                 delta={
                     change === null ? undefined : (
                         <>
-                            {change > 0 ? '+' : change < 0 ? '−' : ''}
+                            {signs[trend]}
                             {Math.abs(change)}%
                             <span className="sr-only">
                                 {' '}
@@ -243,13 +248,7 @@ function ThisWeekStrip({ thisWeek }: { thisWeek: ThisWeek }) {
                         </>
                     )
                 }
-                trend={
-                    change === null || change === 0
-                        ? 'flat'
-                        : change > 0
-                          ? 'up'
-                          : 'down'
-                }
+                trend={trend}
             />
         </section>
     );
