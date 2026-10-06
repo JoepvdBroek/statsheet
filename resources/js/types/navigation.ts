@@ -1,5 +1,6 @@
 import type { InertiaLinkProps } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 export type NavItem = {
     title: string;
@@ -25,4 +26,6 @@ export type PageShell = {
     title: string;
     /** Only on detail screens. */
     parent?: ParentScreen;
+    /** Buttons beside the title, such as New routine and the settings gear on home. */
+    actions?: ReactNode;
 };
