@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\GoalController;
 use App\Http\Controllers\MonthlySummaryController;
 use App\Http\Controllers\RoutineController;
+use App\Http\Controllers\RoutinesHomeController;
 use App\Http\Controllers\StatsHubController;
 use App\Http\Controllers\WeeklyReviewController;
 use App\Http\Controllers\WeeklyTrendController;
@@ -13,15 +13,18 @@ use App\Http\Controllers\WorkoutExerciseController;
 use App\Http\Controllers\WorkoutSetController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'welcome')->name('home');
+// Old links and installed apps opening at the dashboard or the routines list. These answer any method,
+// so they stay above the routines resource, whose POST /routines replaces this redirect for creating.
+Route::permanentRedirect('dashboard', '/');
+Route::permanentRedirect('routines', '/');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/', RoutinesHomeController::class)->name('home');
 
     Route::resource('exercises', ExerciseController::class);
     Route::post('exercises/{exercise}/restore', [ExerciseController::class, 'restore'])->name('exercises.restore');
 
-    Route::resource('routines', RoutineController::class)->except(['show', 'destroy']);
+    Route::resource('routines', RoutineController::class)->except(['index', 'show', 'destroy']);
     Route::post('routines/{routine}/archive', [RoutineController::class, 'archive'])->name('routines.archive');
     Route::post('routines/{routine}/restore', [RoutineController::class, 'restore'])->name('routines.restore');
     Route::post('routines/{routine}/start', [RoutineController::class, 'start'])->name('routines.start');

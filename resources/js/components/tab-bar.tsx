@@ -2,7 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { ChartLine, ClipboardList, Dumbbell } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { index as routinesIndex } from '@/routes/routines';
+import { home } from '@/routes';
 import { hub as statsHub } from '@/routes/statistics';
 import { index as workoutsIndex, show as showWorkout } from '@/routes/workouts';
 import type { AppTab, NavItem } from '@/types';
@@ -19,7 +19,7 @@ export function TabBar({ activeTab }: { activeTab: AppTab | null }) {
         {
             tab: 'routines',
             title: 'Routines',
-            href: routinesIndex(),
+            href: home(),
             icon: ClipboardList,
         },
         {
