@@ -1,9 +1,8 @@
 import { Head } from '@inertiajs/react';
 import { AskForReviewForm } from '@/components/ask-for-review-form';
-import Heading from '@/components/heading';
 import { WeeklyReviewLink } from '@/components/weekly-review-link';
-import { index } from '@/routes/reviews';
-import type { WeeklyReviewSummary } from '@/types';
+import { parentScreens } from '@/lib/parent-screens';
+import type { PageShell, WeeklyReviewSummary } from '@/types';
 
 export default function ReviewsIndex({
     currentWeek,
@@ -19,10 +18,10 @@ export default function ReviewsIndex({
             <Head title="Weekly Reviews" />
 
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
-                <Heading
-                    title="Weekly Reviews"
-                    description="Reread earlier reviews and their advice, or ask for the review of another Week."
-                />
+                <p className="text-sm text-muted-foreground">
+                    Reread earlier reviews and their advice, or ask for the
+                    review of another Week.
+                </p>
 
                 <AskForReviewForm defaultDay={currentWeek} />
 
@@ -45,10 +44,7 @@ export default function ReviewsIndex({
 }
 
 ReviewsIndex.layout = {
-    breadcrumbs: [
-        {
-            title: 'Weekly Reviews',
-            href: index(),
-        },
-    ],
-};
+    tab: 'stats',
+    title: 'Weekly Reviews',
+    parent: parentScreens.stats,
+} satisfies PageShell;

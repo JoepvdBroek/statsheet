@@ -29,10 +29,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { parentScreens } from '@/lib/parent-screens';
 import { formatDateTime } from '@/lib/utils';
-import { index } from '@/routes/workouts';
 import type {
     Exercise,
+    PageShell,
     Workout,
     WorkoutExercise,
     WorkoutRoutine,
@@ -90,20 +91,21 @@ export default function ShowWorkout({
 
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
                 <div>
-                    <Heading
-                        title={inProgress ? 'Workout in progress' : 'Workout'}
-                        description={[
-                            `Started ${formatDateTime(workout.started_at, timeZone)}`,
-                            workout.finished_at
-                                ? `finished ${formatDateTime(workout.finished_at, timeZone)}`
-                                : null,
-                            workout.bodyweight !== null
-                                ? `Bodyweight ${workout.bodyweight} kg`
-                                : null,
-                        ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                    />
+                    <div className="mb-8 flex items-start justify-between gap-4">
+                        <p className="text-sm text-muted-foreground">
+                            {[
+                                `Started ${formatDateTime(workout.started_at, timeZone)}`,
+                                workout.finished_at
+                                    ? `finished ${formatDateTime(workout.finished_at, timeZone)}`
+                                    : null,
+                                workout.bodyweight !== null
+                                    ? `Bodyweight ${workout.bodyweight} kg`
+                                    : null,
+                            ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                        </p>
+                    </div>
 
                     <div className="flex flex-col gap-3">
                         {workout.exercises.length === 0 ? (
@@ -153,7 +155,7 @@ export default function ShowWorkout({
                 <DeleteWorkout workout={workout} />
 
                 {inProgress ? (
-                    <div className="sticky bottom-0 -mx-4 border-t bg-background/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
+                    <div className="sticky bottom-(--tab-bar-height) -mx-4 border-t bg-background/95 px-4 py-3 backdrop-blur">
                         <Form {...WorkoutController.finish.form(workout.id)}>
                             {({ processing }) => (
                                 <Button
@@ -634,11 +636,12 @@ function WorkoutNote({ workout }: { workout: Workout }) {
     );
 }
 
-ShowWorkout.layout = {
-    breadcrumbs: [
-        {
-            title: 'Workouts',
-            href: index(),
-        },
-    ],
-};
+/** The Workout in progress is the Workout tab's own screen; a finished Workout is a detail of Workout history. */
+ShowWorkout.layout = ({ workout }: { workout: Workout }): PageShell =>
+    workout.status === 'in_progress'
+        ? { tab: 'workout', title: 'Workout in progress' }
+        : {
+              tab: 'workout',
+              title: 'Workout',
+              parent: parentScreens.workoutHistory,
+          };

@@ -1,12 +1,12 @@
 import { Form, Head } from '@inertiajs/react';
 import GoalController from '@/actions/App/Http/Controllers/GoalController';
-import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { parentScreens } from '@/lib/parent-screens';
 import { capitalize } from '@/lib/utils';
-import { index } from '@/routes/goals';
+import type { PageShell } from '@/types';
 
 type GoalInForce = {
     muscle: string;
@@ -20,10 +20,11 @@ export default function GoalsIndex({ goals }: { goals: GoalInForce[] }) {
             <Head title="Goals" />
 
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
-                <Heading
-                    title="Goals"
-                    description="An optional weekly minimum Volume per Muscle. A change applies from this Week; earlier Weeks keep the Goal they had."
-                />
+                <p className="text-sm text-muted-foreground">
+                    An optional weekly minimum Volume per Muscle. A change
+                    applies from this Week; earlier Weeks keep the Goal they
+                    had.
+                </p>
 
                 <ul className="flex flex-col gap-2">
                     {goals.map((goal) => (
@@ -104,10 +105,7 @@ function GoalRow({ goal }: { goal: GoalInForce }) {
 }
 
 GoalsIndex.layout = {
-    breadcrumbs: [
-        {
-            title: 'Goals',
-            href: index(),
-        },
-    ],
-};
+    tab: 'stats',
+    title: 'Goals',
+    parent: parentScreens.stats,
+} satisfies PageShell;

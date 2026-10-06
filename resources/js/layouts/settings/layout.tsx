@@ -1,10 +1,11 @@
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
+import { LogOut } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
-import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
+import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import type { NavItem } from '@/types';
@@ -27,10 +28,9 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
 
     return (
         <div className="px-4 py-6">
-            <Heading
-                title="Settings"
-                description="Manage your profile and account settings"
-            />
+            <p className="mb-8 text-sm text-muted-foreground">
+                Manage your profile and account settings
+            </p>
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">
@@ -56,6 +56,22 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                 </Link>
                             </Button>
                         ))}
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            asChild
+                            className="w-full justify-start"
+                        >
+                            <Link
+                                href={logout()}
+                                as="button"
+                                onClick={() => router.flushAll()}
+                                data-test="logout-button"
+                            >
+                                <LogOut className="h-4 w-4" />
+                                Log out
+                            </Link>
+                        </Button>
                     </nav>
                 </aside>
 

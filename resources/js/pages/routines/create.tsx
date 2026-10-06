@@ -1,9 +1,8 @@
 import { Head } from '@inertiajs/react';
 import RoutineController from '@/actions/App/Http/Controllers/RoutineController';
-import Heading from '@/components/heading';
 import RoutineForm from '@/components/routine-form';
-import { create, index } from '@/routes/routines';
-import type { Exercise } from '@/types';
+import { parentScreens } from '@/lib/parent-screens';
+import type { Exercise, PageShell } from '@/types';
 
 export default function CreateRoutine({
     exercises,
@@ -15,10 +14,9 @@ export default function CreateRoutine({
             <Head title="New Routine" />
 
             <div className="mx-auto w-full max-w-2xl p-4">
-                <Heading
-                    title="New Routine"
-                    description="A reusable plan of Exercises, each with a Target per Set."
-                />
+                <p className="text-sm text-muted-foreground">
+                    A reusable plan of Exercises, each with a Target per Set.
+                </p>
 
                 <RoutineForm
                     exercises={exercises}
@@ -31,14 +29,7 @@ export default function CreateRoutine({
 }
 
 CreateRoutine.layout = {
-    breadcrumbs: [
-        {
-            title: 'Routines',
-            href: index(),
-        },
-        {
-            title: 'New Routine',
-            href: create(),
-        },
-    ],
-};
+    tab: 'routines',
+    title: 'New Routine',
+    parent: parentScreens.routines,
+} satisfies PageShell;

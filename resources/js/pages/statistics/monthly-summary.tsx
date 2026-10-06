@@ -3,8 +3,10 @@ import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import Heading from '@/components/heading';
 import { StatBlock } from '@/components/statsheet/stat-block';
 import { Button } from '@/components/ui/button';
+import { parentScreens } from '@/lib/parent-screens';
 import { capitalize, formatMonth } from '@/lib/utils';
 import { monthlySummary } from '@/routes/statistics';
+import type { PageShell } from '@/types';
 
 type MuscleVolume = {
     muscle: string;
@@ -159,10 +161,7 @@ export default function MonthlySummary({
 }
 
 MonthlySummary.layout = {
-    breadcrumbs: [
-        {
-            title: 'Monthly summary',
-            href: monthlySummary(),
-        },
-    ],
-};
+    tab: 'stats',
+    title: 'Monthly summary',
+    parent: parentScreens.stats,
+} satisfies PageShell;

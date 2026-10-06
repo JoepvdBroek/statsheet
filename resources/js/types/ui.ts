@@ -1,12 +1,9 @@
 import type { ReactNode } from 'react';
-import type { BreadcrumbItem } from '@/types/navigation';
+import type { PageShell } from '@/types/navigation';
 
-export type AppLayoutProps = {
+export type AppLayoutProps = Partial<PageShell> & {
     children: ReactNode;
-    breadcrumbs?: BreadcrumbItem[];
 };
-
-export type AppVariant = 'header' | 'sidebar';
 
 export type FlashToast = {
     type: 'success' | 'info' | 'warning' | 'error';

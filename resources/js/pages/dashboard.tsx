@@ -7,12 +7,11 @@ import { WeeklyReviewLink } from '@/components/weekly-review-link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { capitalize, formatDate, formatDateTime } from '@/lib/utils';
-import { dashboard } from '@/routes';
 import { index as goalsIndex } from '@/routes/goals';
 import { edit as editProfile } from '@/routes/profile';
 import { index as reviewsIndex } from '@/routes/reviews';
 import { show } from '@/routes/workouts';
-import type { WeeklyReview } from '@/types';
+import type { PageShell, WeeklyReview } from '@/types';
 
 type ThisWeek = {
     /** The Week's Monday, as a date. */
@@ -210,11 +209,4 @@ function WeeklyReviewCard({
     );
 }
 
-Dashboard.layout = {
-    breadcrumbs: [
-        {
-            title: 'Dashboard',
-            href: dashboard(),
-        },
-    ],
-};
+Dashboard.layout = { tab: 'stats', title: 'Dashboard' } satisfies PageShell;

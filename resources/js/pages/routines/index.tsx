@@ -1,12 +1,11 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { PlusIcon } from 'lucide-react';
 import RoutineController from '@/actions/App/Http/Controllers/RoutineController';
-import Heading from '@/components/heading';
 import { RoutineCard } from '@/components/statsheet/routine-card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { index } from '@/routes/routines';
-import type { Routine } from '@/types';
+import type { PageShell, Routine } from '@/types';
 
 /** Primary Muscles the Routine trains, the most planned working Sets first. */
 function primaryMuscles(routine: Routine): string[] {
@@ -43,10 +42,9 @@ export default function RoutinesIndex({
 
             <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
                 <div className="flex items-start justify-between gap-4">
-                    <Heading
-                        title="Routines"
-                        description="Reusable plans to start a Workout from."
-                    />
+                    <p className="text-sm text-muted-foreground">
+                        Reusable plans to start a Workout from.
+                    </p>
                     <Button asChild>
                         <Link href={RoutineController.create()}>
                             <PlusIcon aria-hidden="true" />
@@ -129,10 +127,6 @@ export default function RoutinesIndex({
 }
 
 RoutinesIndex.layout = {
-    breadcrumbs: [
-        {
-            title: 'Routines',
-            href: index(),
-        },
-    ],
-};
+    tab: 'routines',
+    title: 'Routines',
+} satisfies PageShell;

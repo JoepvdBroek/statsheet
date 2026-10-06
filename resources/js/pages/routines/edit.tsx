@@ -3,8 +3,8 @@ import RoutineController from '@/actions/App/Http/Controllers/RoutineController'
 import Heading from '@/components/heading';
 import RoutineForm from '@/components/routine-form';
 import { Button } from '@/components/ui/button';
-import { index } from '@/routes/routines';
-import type { Exercise, Routine } from '@/types';
+import { parentScreens } from '@/lib/parent-screens';
+import type { Exercise, PageShell, Routine } from '@/types';
 
 export default function EditRoutine({
     routine,
@@ -19,7 +19,9 @@ export default function EditRoutine({
 
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-10 p-4">
                 <div>
-                    <Heading title="Edit Routine" description={routine.name} />
+                    <p className="text-sm text-muted-foreground">
+                        {routine.name}
+                    </p>
 
                     <RoutineForm
                         routine={routine}
@@ -80,10 +82,7 @@ export default function EditRoutine({
 }
 
 EditRoutine.layout = {
-    breadcrumbs: [
-        {
-            title: 'Routines',
-            href: index(),
-        },
-    ],
-};
+    tab: 'routines',
+    title: 'Edit Routine',
+    parent: parentScreens.routines,
+} satisfies PageShell;

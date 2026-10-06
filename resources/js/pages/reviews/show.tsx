@@ -2,15 +2,14 @@ import { Form, Head, usePage, usePoll } from '@inertiajs/react';
 import { AlertTriangleIcon, RefreshCwIcon } from 'lucide-react';
 import { useEffect } from 'react';
 import WeeklyReviewController from '@/actions/App/Http/Controllers/WeeklyReviewController';
-import Heading from '@/components/heading';
 import { ReviewRatingForm } from '@/components/review-rating-form';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { parentScreens } from '@/lib/parent-screens';
 import { formatDate, formatDateTime } from '@/lib/utils';
-import { index } from '@/routes/reviews';
-import type { WeeklyReview } from '@/types';
+import type { PageShell, WeeklyReview } from '@/types';
 
 export default function ShowReview({ review }: { review: WeeklyReview }) {
     const { auth } = usePage().props;
@@ -36,10 +35,9 @@ export default function ShowReview({ review }: { review: WeeklyReview }) {
 
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
                 <div className="flex items-start justify-between gap-4">
-                    <Heading
-                        title="Weekly Review"
-                        description={`The Week of Monday ${formatDate(review.week)}.`}
-                    />
+                    <p className="text-sm text-muted-foreground">
+                        The Week of Monday {formatDate(review.week)}.
+                    </p>
                     {review.status === 'done' ? (
                         <AskAgain week={review.week} label="Regenerate" />
                     ) : null}
@@ -183,10 +181,7 @@ function AskAgain({ week, label }: { week: string; label: string }) {
 }
 
 ShowReview.layout = {
-    breadcrumbs: [
-        {
-            title: 'Weekly Reviews',
-            href: index(),
-        },
-    ],
-};
+    tab: 'stats',
+    title: 'Weekly Review',
+    parent: parentScreens.reviews,
+} satisfies PageShell;

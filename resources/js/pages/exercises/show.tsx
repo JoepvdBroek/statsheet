@@ -1,7 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { PencilIcon } from 'lucide-react';
 import ExerciseController from '@/actions/App/Http/Controllers/ExerciseController';
-import Heading from '@/components/heading';
 import { HistoryEntry } from '@/components/statsheet/history-entry';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
 import { PRBadge } from '@/components/statsheet/pr-badge';
@@ -9,12 +8,13 @@ import { StatBlock } from '@/components/statsheet/stat-block';
 import { TrendChart } from '@/components/statsheet/trend-chart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { parentScreens } from '@/lib/parent-screens';
 import { formatDay } from '@/lib/utils';
-import { index } from '@/routes/exercises';
 import type {
     Exercise,
     ExercisePerformance,
     ExerciseProgressPoint,
+    PageShell,
     PersonalRecords,
 } from '@/types';
 
@@ -49,14 +49,11 @@ export default function ShowExercise({
 
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
                 <div className="flex items-start justify-between gap-3">
-                    <Heading
-                        title={exercise.name}
-                        description={
-                            bodyweight
-                                ? 'Heaviest and reps-at-weight use the added load. Estimated 1RM and best set add your Bodyweight.'
-                                : 'Personal Records count done Sets, never warm-ups.'
-                        }
-                    />
+                    <p className="text-sm text-muted-foreground">
+                        {bodyweight
+                            ? 'Heaviest and reps-at-weight use the added load. Estimated 1RM and best set add your Bodyweight.'
+                            : 'Personal Records count done Sets, never warm-ups.'}
+                    </p>
                     {exercise.archived ? (
                         <Badge variant="outline">Archived</Badge>
                     ) : (
@@ -218,11 +215,8 @@ export default function ShowExercise({
     );
 }
 
-ShowExercise.layout = {
-    breadcrumbs: [
-        {
-            title: 'Exercises',
-            href: index(),
-        },
-    ],
-};
+ShowExercise.layout = ({ exercise }: { exercise: Exercise }): PageShell => ({
+    tab: 'stats',
+    title: exercise.name,
+    parent: parentScreens.exercises,
+});
