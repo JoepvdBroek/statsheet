@@ -67,9 +67,19 @@ class VolumeCalculator
      */
     public function forMonth(User $user, CarbonImmutable $month): array
     {
+        return $this->between($user, $month, $month->addMonth());
+    }
+
+    /**
+     * Volume per Muscle of the Workouts started from the first moment up to the second, most Volume first. Muscles without Volume are left out.
+     *
+     * @return array<string, float>
+     */
+    public function between(User $user, CarbonImmutable $from, CarbonImmutable $until): array
+    {
         $volume = [];
 
-        foreach ($this->perWorkout($user, $month, $month->addMonth()) as $row) {
+        foreach ($this->perWorkout($user, $from, $until) as $row) {
             $volume[$row->muscle] = ($volume[$row->muscle] ?? 0) + (float) $row->volume;
         }
 
