@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import ExerciseController from '@/actions/App/Http/Controllers/ExerciseController';
 import ExerciseForm from '@/components/exercise-form';
+import { PageDescription } from '@/components/page-description';
 import { parentScreens } from '@/lib/parent-screens';
 import type { PageShell } from '@/types';
 
@@ -16,9 +17,9 @@ export default function CreateExercise({
             <Head title="New Exercise" />
 
             <div className="mx-auto w-full max-w-2xl p-4">
-                <p className="text-sm text-muted-foreground">
+                <PageDescription>
                     A specific movement, variation included.
-                </p>
+                </PageDescription>
 
                 <ExerciseForm
                     muscles={muscles}

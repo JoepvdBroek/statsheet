@@ -9,6 +9,7 @@ import ExercisePicker from '@/components/exercise-picker';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { ItemMenu, MoveRemoveItems } from '@/components/item-menu';
+import { PageDescription } from '@/components/page-description';
 import { ExerciseCard } from '@/components/statsheet/exercise-card';
 import { PRBadge } from '@/components/statsheet/pr-badge';
 import { SetRow, meetsTarget } from '@/components/statsheet/set-row';
@@ -93,7 +94,7 @@ export default function ShowWorkout({
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
                 <div className="flex flex-col gap-8">
                     <div className="flex items-start justify-between gap-4">
-                        <p className="text-sm text-muted-foreground">
+                        <PageDescription>
                             {[
                                 `Started ${formatDateTime(workout.started_at, timeZone)}`,
                                 workout.finished_at
@@ -105,7 +106,7 @@ export default function ShowWorkout({
                             ]
                                 .filter(Boolean)
                                 .join(' · ')}
-                        </p>
+                        </PageDescription>
                         {inProgress ? (
                             <Button variant="outline" size="sm" asChild>
                                 <Link href={index()}>

@@ -2,6 +2,7 @@ import { Form, Head, usePage, usePoll } from '@inertiajs/react';
 import { AlertTriangleIcon, RefreshCwIcon } from 'lucide-react';
 import { useEffect } from 'react';
 import WeeklyReviewController from '@/actions/App/Http/Controllers/WeeklyReviewController';
+import { PageDescription } from '@/components/page-description';
 import { ReviewRatingForm } from '@/components/review-rating-form';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -35,9 +36,9 @@ export default function ShowReview({ review }: { review: WeeklyReview }) {
 
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
                 <div className="flex items-start justify-between gap-4">
-                    <p className="text-sm text-muted-foreground">
+                    <PageDescription>
                         The Week of Monday {formatDate(review.week)}.
-                    </p>
+                    </PageDescription>
                     {review.status === 'done' ? (
                         <AskAgain week={review.week} label="Regenerate" />
                     ) : null}

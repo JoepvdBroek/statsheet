@@ -3,6 +3,7 @@ import { PlusIcon, SearchIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import ExerciseController from '@/actions/App/Http/Controllers/ExerciseController';
 import { nativeSelectClassName } from '@/components/exercise-form';
+import { PageDescription } from '@/components/page-description';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -70,9 +71,9 @@ export default function ExercisesIndex({
 
             <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
                 <div className="flex items-start justify-between gap-4">
-                    <p className="text-sm text-muted-foreground">
+                    <PageDescription>
                         Search by name, filter by Muscle or equipment.
-                    </p>
+                    </PageDescription>
                     <Button asChild>
                         <Link href={ExerciseController.create()}>
                             <PlusIcon aria-hidden="true" />

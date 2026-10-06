@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { LogOut } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
+import { PageDescription } from '@/components/page-description';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
@@ -28,9 +29,9 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
 
     return (
         <div className="flex flex-col gap-8 px-4 py-6">
-            <p className="text-sm text-muted-foreground">
+            <PageDescription>
                 Manage your profile and account settings
-            </p>
+            </PageDescription>
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">

@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { AskForReviewForm } from '@/components/ask-for-review-form';
+import { PageDescription } from '@/components/page-description';
 import { WeeklyReviewLink } from '@/components/weekly-review-link';
 import { parentScreens } from '@/lib/parent-screens';
 import type { PageShell, WeeklyReviewSummary } from '@/types';
@@ -18,10 +19,10 @@ export default function ReviewsIndex({
             <Head title="Weekly Reviews" />
 
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
-                <p className="text-sm text-muted-foreground">
+                <PageDescription>
                     Reread earlier reviews and their advice, or ask for the
                     review of another Week.
-                </p>
+                </PageDescription>
 
                 <AskForReviewForm defaultDay={currentWeek} />
 

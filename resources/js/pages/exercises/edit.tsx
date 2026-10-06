@@ -2,6 +2,7 @@ import { Form, Head } from '@inertiajs/react';
 import ExerciseController from '@/actions/App/Http/Controllers/ExerciseController';
 import ExerciseForm from '@/components/exercise-form';
 import Heading from '@/components/heading';
+import { PageDescription } from '@/components/page-description';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -30,9 +31,7 @@ export default function EditExercise({
 
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-10 p-4">
                 <div>
-                    <p className="text-sm text-muted-foreground">
-                        {exercise.name}
-                    </p>
+                    <PageDescription>{exercise.name}</PageDescription>
 
                     <ExerciseForm
                         exercise={exercise}

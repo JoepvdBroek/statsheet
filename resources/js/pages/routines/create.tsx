@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import RoutineController from '@/actions/App/Http/Controllers/RoutineController';
+import { PageDescription } from '@/components/page-description';
 import RoutineForm from '@/components/routine-form';
 import { parentScreens } from '@/lib/parent-screens';
 import type { Exercise, PageShell } from '@/types';
@@ -14,9 +15,9 @@ export default function CreateRoutine({
             <Head title="New Routine" />
 
             <div className="mx-auto w-full max-w-2xl p-4">
-                <p className="text-sm text-muted-foreground">
+                <PageDescription>
                     A reusable plan of Exercises, each with a Target per Set.
-                </p>
+                </PageDescription>
 
                 <RoutineForm
                     exercises={exercises}

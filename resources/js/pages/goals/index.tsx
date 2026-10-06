@@ -1,6 +1,7 @@
 import { Form, Head } from '@inertiajs/react';
 import GoalController from '@/actions/App/Http/Controllers/GoalController';
 import InputError from '@/components/input-error';
+import { PageDescription } from '@/components/page-description';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,11 +21,11 @@ export default function GoalsIndex({ goals }: { goals: GoalInForce[] }) {
             <Head title="Goals" />
 
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
-                <p className="text-sm text-muted-foreground">
+                <PageDescription>
                     An optional weekly minimum Volume per Muscle. A change
                     applies from this Week; earlier Weeks keep the Goal they
                     had.
-                </p>
+                </PageDescription>
 
                 <ul className="flex flex-col gap-2">
                     {goals.map((goal) => (

@@ -1,5 +1,6 @@
 import { Head, InfiniteScroll, Link, usePage } from '@inertiajs/react';
 import WorkoutController from '@/actions/App/Http/Controllers/WorkoutController';
+import { PageDescription } from '@/components/page-description';
 import { StartEmptyWorkoutButton } from '@/components/start-empty-workout-button';
 import { Badge } from '@/components/ui/badge';
 import { formatDateTime } from '@/lib/utils';
@@ -19,9 +20,9 @@ export default function WorkoutsIndex({
             <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
                 <StartEmptyWorkoutButton />
 
-                <p className="text-sm text-muted-foreground">
+                <PageDescription>
                     Every Workout you logged, newest first.
-                </p>
+                </PageDescription>
 
                 {workouts.data.length === 0 ? (
                     <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">

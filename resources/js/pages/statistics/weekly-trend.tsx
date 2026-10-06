@@ -1,5 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { nativeSelectClassName } from '@/components/exercise-form';
+import { PageDescription } from '@/components/page-description';
 import { TrendChart } from '@/components/statsheet/trend-chart';
 import { parentScreens } from '@/lib/parent-screens';
 import { capitalize, formatDate } from '@/lib/utils';
@@ -33,10 +34,10 @@ export default function WeeklyTrend({
 
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <p className="text-sm text-muted-foreground">
+                    <PageDescription>
                         Volume per Week against the Goal in force that Week,
                         this Week included.
-                    </p>
+                    </PageDescription>
                     <select
                         aria-label="Muscle"
                         className={nativeSelectClassName}
