@@ -6,7 +6,6 @@ export type NavItem = {
     title: string;
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: LucideIcon | null;
-    isActive?: boolean;
 };
 
 /** One of the bottom tab bar's sections. */
