@@ -11,7 +11,8 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
-            sidebarOpen: boolean;
+            /** The owner's Workout in progress, or null when none is running. */
+            workoutInProgressId: number | null;
             [key: string]: unknown;
         };
     }
