@@ -21,8 +21,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Estimated 1RM is Epley's weight × (1 + reps / 30), for Sets of at most 12 reps.
  * For a Bodyweight Exercise, heaviest and reps-at-weight use the added load, while Estimated 1RM and set tonnage use
  * the Workout's Bodyweight plus the added load, a missing Bodyweight counting as 0.
+ * Expected 1RM is the best Estimated 1RM of earlier Workouts, each lowered by 1% per week of its age beyond 3 weeks, by
+ * at most 15%. Intensity and Average Weight use the same load as Estimated 1RM.
  *
- * @phpstan-type MeasuredSet array{id: int, exercise_id: int, workout: Workout, reps: int, added_load: float, warm_up: bool, e1rm: float|null, tonnage: float}
+ * @phpstan-type MeasuredSet array{id: int, exercise_id: int, workout: Workout, reps: int, added_load: float, load: float, warm_up: bool, e1rm: float|null, tonnage: float}
  * @phpstan-type Measure 'heaviest'|'e1rm'|'reps'|'tonnage'
  */
 class ExerciseProgress
@@ -33,6 +35,21 @@ class ExerciseProgress
      * @var list<Measure>
      */
     private const array MEASURES = ['heaviest', 'e1rm', 'reps', 'tonnage'];
+
+    /**
+     * The weeks an Estimated 1RM counts in full towards the Expected 1RM.
+     */
+    private const int EXPECTED_1RM_GRACE_WEEKS = 3;
+
+    /**
+     * The share of an Estimated 1RM the Expected 1RM drops per week past the grace weeks.
+     */
+    private const float EXPECTED_1RM_DECAY_PER_WEEK = 0.01;
+
+    /**
+     * The largest share of an Estimated 1RM the Expected 1RM drops, however old it is.
+     */
+    private const float EXPECTED_1RM_MAX_DECAY = 0.15;
 
     /**
      * @param  list<MeasuredSet>  $doneSets  The Exercise's done Sets, in the order they were performed
@@ -196,9 +213,10 @@ class ExerciseProgress
     /**
      * The Exercise's done Sets in its 10 most recent Workouts, newest first, for looking back at past performances.
      * Warm-up Sets are listed but never the top Set, which is the first Set with the Workout's best Estimated 1RM.
-     * Each lists the Personal Records its Sets beat, in the order of the measures.
+     * Each has the Intensity of its heaviest non-warm-up Set, empty without an Expected 1RM, and its Average Weight,
+     * empty without non-warm-up Sets. Each lists the Personal Records its Sets beat, in the order of the measures.
      *
-     * @return list<array{workout_id: int, started_at: string, routine: string|null, e1rm: float|null, new_records: list<Measure>, sets: list<array{reps: int, weight: float, warm_up: bool, top: bool}>}>
+     * @return list<array{workout_id: int, started_at: string, routine: string|null, e1rm: float|null, intensity: int|null, average_weight: float|null, new_records: list<Measure>, sets: list<array{reps: int, weight: float, warm_up: bool, top: bool}>}>
      */
     public function recentPerformances(): array
     {
@@ -207,7 +225,11 @@ class ExerciseProgress
 
         foreach (array_slice(array_reverse($this->perWorkoutSets($this->doneSets)), 0, 10) as $sets) {
             $workout = $sets[0]['workout'];
-            $best = $this->best(array_column($this->qualifying($sets), 'e1rm'));
+            $working = $this->qualifying($sets);
+            $best = $this->best(array_column($working, 'e1rm'));
+            $heaviest = $this->best(array_column($working, 'load'));
+            $expected = $this->expected1rm($workout);
+            $reps = array_sum(array_column($working, 'reps'));
             $top = null;
 
             foreach ($sets as $index => $set) {
@@ -223,6 +245,10 @@ class ExerciseProgress
                 'started_at' => $workout->started_at->toIso8601String(),
                 'routine' => $workout->routine?->name,
                 'e1rm' => $best,
+                'intensity' => $heaviest !== null && $expected !== null && $expected > 0
+                    ? (int) round($heaviest / $expected * 100)
+                    : null,
+                'average_weight' => $reps > 0 ? round(array_sum(array_column($working, 'tonnage')) / $reps, 2) : null,
                 'new_records' => array_values(array_intersect(
                     self::MEASURES,
                     array_merge(...array_map(fn (array $set) => $newRecords[$set['id']] ?? [], $sets)),
@@ -237,6 +263,27 @@ class ExerciseProgress
         }
 
         return $performances;
+    }
+
+    /**
+     * The Exercise's Expected 1RM at the start of the Workout: the best Estimated 1RM of the non-warm-up Sets of
+     * Workouts started before it, each lowered by its age. Empty when none has an Estimated 1RM.
+     */
+    private function expected1rm(Workout $workout): ?float
+    {
+        $expected = [];
+
+        foreach ($this->qualifying($this->doneSets) as $set) {
+            if ($set['e1rm'] === null || ! $set['workout']->started_at->lt($workout->started_at)) {
+                continue;
+            }
+
+            $weeksOld = $set['workout']->started_at->diffInDays($workout->started_at) / 7;
+            $decay = min(self::EXPECTED_1RM_MAX_DECAY, max(0, $weeksOld - self::EXPECTED_1RM_GRACE_WEEKS) * self::EXPECTED_1RM_DECAY_PER_WEEK);
+            $expected[] = $set['e1rm'] * (1 - $decay);
+        }
+
+        return $this->best($expected);
     }
 
     /**
@@ -339,6 +386,7 @@ class ExerciseProgress
             'workout' => $performed->workout,
             'reps' => $set->actual_reps,
             'added_load' => $addedLoad,
+            'load' => $load,
             'warm_up' => $set->is_warm_up,
             'e1rm' => $set->actual_reps <= 12 ? round($load * (1 + $set->actual_reps / 30), 2) : null,
             'tonnage' => round($set->actual_reps * $load, 2),

@@ -9,6 +9,7 @@ use App\Models\Workout;
 use App\Models\WorkoutSet;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Concerns\PerformsExercises;
 use Tests\TestCase;
 
@@ -204,6 +205,8 @@ class ExerciseProgressTest extends TestCase
                     'started_at' => $newer->started_at->toIso8601String(),
                     'routine' => 'Pull day',
                     'e1rm' => 120,
+                    'intensity' => 101,
+                    'average_weight' => 86.67,
                     'new_records' => ['heaviest', 'e1rm'],
                     'sets' => [
                         ['reps' => 5, 'weight' => 0, 'warm_up' => true, 'top' => false],
@@ -216,6 +219,8 @@ class ExerciseProgressTest extends TestCase
                     'started_at' => $older->started_at->toIso8601String(),
                     'routine' => null,
                     'e1rm' => 98.8,
+                    'intensity' => null,
+                    'average_weight' => 78,
                     'new_records' => ['reps', 'tonnage'],
                     'sets' => [
                         ['reps' => 8, 'weight' => 0, 'warm_up' => false, 'top' => true],
@@ -223,6 +228,50 @@ class ExerciseProgressTest extends TestCase
                     ],
                 ],
             ])
+            ->etc()
+        );
+    }
+
+    #[DataProvider('ageOfTheEarlierBest')]
+    public function test_intensity_drops_the_earlier_estimated_1rm_by_1_percent_per_week_after_3_weeks_by_at_most_15_percent(string $earlierBestAgo, int $intensity)
+    {
+        $this->freezeSecond();
+        $bench = Exercise::factory()->create();
+        $this->perform($this->workout($bench->user, $earlierBestAgo), $bench, [$this->doneSet(6, '100.00')]);
+        $this->perform($this->workout($bench->user, '-1 day'), $bench, [$this->doneSet(5, '100.00')]);
+
+        $response = $this->actingAs($bench->user)->get(route('exercises.show', $bench));
+
+        $response->assertInertia(fn (Assert $page) => $page->where('recent.0.intensity', $intensity)->etc());
+    }
+
+    /**
+     * When the earlier Set with an Estimated 1RM of 120 kg was done, and the Intensity of a 100 kg Set a day ago.
+     *
+     * @return array<string, array{string, int}>
+     */
+    public static function ageOfTheEarlierBest(): array
+    {
+        return [
+            'within the 3 weeks of grace' => ['-22 days', 83],
+            '7 weeks past the grace' => ['-71 days', 90],
+            'at most 15% lower' => ['-31 weeks', 98],
+        ];
+    }
+
+    public function test_a_recent_estimated_1rm_sets_the_intensity_once_an_older_higher_one_has_decayed_below_it()
+    {
+        $this->freezeSecond();
+        $bench = Exercise::factory()->create();
+        $this->perform($this->workout($bench->user, '-30 weeks'), $bench, [$this->doneSet(1, '140.00')]);
+        $this->perform($this->workout($bench->user, '-2 weeks'), $bench, [$this->doneSet(1, '125.00')]);
+        $this->perform($this->workout($bench->user, '-1 day'), $bench, [$this->doneSet(5, '100.00')]);
+
+        $response = $this->actingAs($bench->user)->get(route('exercises.show', $bench));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('recent.0.intensity', 77)
+            ->where('recent.1.intensity', 102)
             ->etc()
         );
     }

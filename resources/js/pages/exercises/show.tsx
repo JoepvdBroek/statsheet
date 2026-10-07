@@ -179,6 +179,13 @@ export default function ShowExercise({
                         <h2 id="recent" className="text-base font-medium">
                             Recent performances
                         </h2>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            % is the heaviest set's Intensity: its weight as a
+                            share of your Expected 1RM, your best earlier
+                            Estimated 1RM lowered 1% a week after 3 weeks (at
+                            most 15%). Avg is the Average Weight per rep.
+                            {bodyweight ? ' Both add your Bodyweight.' : null}
+                        </p>
                         {recent.map((performance) => (
                             <HistoryEntry
                                 key={performance.workout_id}
@@ -192,6 +199,16 @@ export default function ShowExercise({
                                     performance.e1rm === null
                                         ? undefined
                                         : formatKg(performance.e1rm)
+                                }
+                                intensity={
+                                    performance.intensity === null
+                                        ? undefined
+                                        : String(performance.intensity)
+                                }
+                                averageWeight={
+                                    performance.average_weight === null
+                                        ? undefined
+                                        : formatKg(performance.average_weight)
                                 }
                                 bodyweight={bodyweight}
                                 prs={performance.new_records}
