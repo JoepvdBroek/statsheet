@@ -22,6 +22,7 @@ export default function ExercisePicker({
     /** The Exercises to offer; undefined while a deferred prop loads. */
     exercises?: Exercise[];
     onPick: (exercise: Exercise) => void;
+    /** Why some Exercises aren't offered; shown when the search finds none. */
     description: string;
 }) {
     const [open, setOpen] = useState(false);
@@ -45,9 +46,11 @@ export default function ExercisePicker({
                     Add Exercise
                 </Button>
             </DialogTrigger>
-            <DialogContent className="flex max-h-[85dvh] flex-col">
+            <DialogContent className="top-[calc(env(safe-area-inset-top)+1rem)] flex max-h-[85dvh] translate-y-0 flex-col sm:top-[50%] sm:translate-y-[-50%]">
                 <DialogTitle>Add Exercise</DialogTitle>
-                <DialogDescription>{description}</DialogDescription>
+                <DialogDescription className="sr-only">
+                    {description}
+                </DialogDescription>
 
                 <div className="relative">
                     <SearchIcon
@@ -72,9 +75,10 @@ export default function ExercisePicker({
                             ))}
                         </div>
                     ) : matches.length === 0 ? (
-                        <p className="px-2 py-6 text-center text-sm text-muted-foreground">
-                            No Exercises match.
-                        </p>
+                        <div className="flex flex-col gap-1 px-2 py-6 text-center text-sm text-muted-foreground">
+                            <p>No Exercises match.</p>
+                            <p>{description}</p>
+                        </div>
                     ) : (
                         <ul className="flex flex-col">
                             {matches.map((exercise) => (
