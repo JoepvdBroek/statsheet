@@ -80,6 +80,18 @@ _Avoid_: PB, max
 A set's weight × (1 + reps / 30) (Epley), computed for sets of at most 12 reps.
 _Avoid_: 1RM, max
 
+**Expected 1RM**:
+What one Exercise's one-rep max is likely to be at the start of a Workout: the best Estimated 1RM of the non-warm-up Sets of earlier Workouts, each lowered by 1% per week of its age beyond 3 weeks, by at most 15%. An Exercise without such a Set has none.
+_Avoid_: Realistic 1RM, current max
+
+**Intensity**:
+A non-warm-up Set's weight as a percentage of the Exercise's Expected 1RM at the start of its Workout. For a Bodyweight Exercise the weight is Bodyweight plus added load. Above 100% when the Set beats what was expected.
+_Avoid_: %1RM, %e1RM, relative intensity
+
+**Average Weight**:
+The weight of an average rep of one Exercise in one Workout: the tonnage of its done, non-warm-up Sets divided by their reps, in kg. For a Bodyweight Exercise the weight is Bodyweight plus added load.
+_Avoid_: Average intensity, average load
+
 ### AI
 
 **Weekly Review**:
