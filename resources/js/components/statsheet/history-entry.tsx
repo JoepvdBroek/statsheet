@@ -19,6 +19,10 @@ type HistoryEntryProps = React.ComponentProps<'article'> & {
     sets: HistorySet[];
     /** Pre-formatted best Estimated 1RM of the session ("102.7"). */
     e1rm?: string;
+    /** Pre-formatted Intensity of the session's heaviest Set ("86"), as a percentage of the Expected 1RM. */
+    intensity?: string;
+    /** Pre-formatted Average Weight of the session ("94"). */
+    averageWeight?: string;
     /** Personal Records set in this session. */
     prs?: ('heaviest' | 'e1rm' | 'reps' | 'tonnage')[];
     bodyweight?: boolean;
@@ -33,6 +37,8 @@ function HistoryEntry({
     workout,
     sets,
     e1rm,
+    intensity,
+    averageWeight,
     prs = [],
     bodyweight = false,
     className,
@@ -65,10 +71,32 @@ function HistoryEntry({
                         </span>
                     ) : null}
                 </div>
-                {e1rm ? (
-                    <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-                        e1RM{' '}
-                        <span className="text-sm text-foreground">{e1rm}</span>
+                {e1rm || intensity || averageWeight ? (
+                    <span className="flex shrink-0 items-baseline gap-1.5 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+                        {e1rm ? (
+                            <span>
+                                e1RM{' '}
+                                <span className="text-sm text-foreground">
+                                    {e1rm}
+                                </span>
+                            </span>
+                        ) : null}
+                        {intensity ? (
+                            <span title="Intensity of the heaviest set">
+                                <span className="text-sm text-foreground">
+                                    {intensity}
+                                </span>
+                                %
+                            </span>
+                        ) : null}
+                        {averageWeight ? (
+                            <span title="Average Weight">
+                                avg{' '}
+                                <span className="text-sm text-foreground">
+                                    {averageWeight}
+                                </span>
+                            </span>
+                        ) : null}
                     </span>
                 ) : null}
             </div>

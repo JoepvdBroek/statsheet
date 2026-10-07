@@ -47,6 +47,10 @@ export type ExercisePerformance = {
     routine: string | null;
     /** The Workout's best Estimated 1RM in kg. */
     e1rm: number | null;
+    /** The Intensity of its heaviest non-warm-up Set, as a whole percentage of the Expected 1RM; empty without an Expected 1RM. */
+    intensity: number | null;
+    /** The Average Weight in kg of its non-warm-up Sets; includes Bodyweight for a Bodyweight Exercise. */
+    average_weight: number | null;
     /** The Personal Records its Sets beat. */
     new_records: PersonalRecordMeasure[];
     /** In order; weight is the added load for a Bodyweight Exercise. */
