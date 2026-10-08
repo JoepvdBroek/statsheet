@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @property int $id
@@ -68,6 +69,55 @@ class WorkoutExercise extends Model
             'target_weight' => $target['weight'] ?? null,
             'kind' => $copied?->kind === SetKind::Drop ? SetKind::Drop : SetKind::Working,
         ]);
+    }
+
+    /**
+     * Give the Exercise a Set per planned Set, Pre-filled from the same Set when the Exercise was last performed before
+     * this Workout: that Set's kind and carried-over Target, or the planned kind and Target when it has none.
+     *
+     * @param  list<array{target_reps: int|null, target_weight: string|null, kind: SetKind}>  $plan
+     */
+    public function preFill(array $plan): void
+    {
+        $lastTime = $this->exercise->lastPerformance($this->workout->started_at)?->sets;
+
+        foreach ($plan as $position => $planned) {
+            $lastTimeSet = $lastTime?->get($position);
+            $carriedOver = $lastTimeSet?->carriedOverTarget();
+
+            $this->sets()->create([
+                'position' => $position,
+                ...($carriedOver === null ? $planned : [
+                    'target_reps' => $carriedOver['reps'],
+                    'target_weight' => $carriedOver['weight'],
+                    'kind' => $lastTimeSet->kind,
+                ]),
+            ]);
+        }
+    }
+
+    /**
+     * Swap in another Exercise in this place: its Sets keep their count and kinds as the plan, Pre-filled for it.
+     */
+    public function swapFor(Exercise $exercise): void
+    {
+        DB::transaction(function () use ($exercise) {
+            $plan = $this->sets()->get()
+                ->map(fn (WorkoutSet $set) => ['target_reps' => null, 'target_weight' => null, 'kind' => $set->kind])
+                ->all();
+
+            $this->sets()->delete();
+            $this->exercise()->associate($exercise)->save();
+            $this->preFill($plan);
+        });
+    }
+
+    /**
+     * Whether any of its Sets is done.
+     */
+    public function hasDoneSet(): bool
+    {
+        return $this->sets()->whereNotNull('actual_reps')->exists();
     }
 
     /**

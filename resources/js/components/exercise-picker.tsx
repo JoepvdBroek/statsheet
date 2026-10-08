@@ -7,25 +7,57 @@ import {
     DialogContent,
     DialogDescription,
     DialogTitle,
-    DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Exercise } from '@/types';
 
-/** An Add Exercise button opening a searchable list of the owner's Exercises. */
-export default function ExercisePicker({
-    exercises,
-    onPick,
-    description,
-}: {
+type ExercisePickerProps = {
     /** The Exercises to offer; undefined while a deferred prop loads. */
     exercises?: Exercise[];
     onPick: (exercise: Exercise) => void;
     /** Why some Exercises aren't offered; shown when the search finds none. */
     description: string;
-}) {
+};
+
+/** An Add Exercise button opening a searchable list of the owner's Exercises. */
+export default function ExercisePicker(props: ExercisePickerProps) {
     const [open, setOpen] = useState(false);
+
+    return (
+        <>
+            <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => setOpen(true)}
+            >
+                <PlusIcon aria-hidden="true" />
+                Add Exercise
+            </Button>
+            <ExercisePickerDialog
+                {...props}
+                title="Add Exercise"
+                open={open}
+                onOpenChange={setOpen}
+            />
+        </>
+    );
+}
+
+/** A searchable list of the owner's Exercises in a dialog, opened by its caller. */
+export function ExercisePickerDialog({
+    exercises,
+    onPick,
+    description,
+    title,
+    open,
+    onOpenChange,
+}: ExercisePickerProps & {
+    title: string;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}) {
     const [search, setSearch] = useState('');
     const query = search.trim().toLowerCase();
     const matches = (exercises ?? []).filter((exercise) =>
@@ -36,18 +68,12 @@ export default function ExercisePicker({
         <Dialog
             open={open}
             onOpenChange={(isOpen) => {
-                setOpen(isOpen);
+                onOpenChange(isOpen);
                 setSearch('');
             }}
         >
-            <DialogTrigger asChild>
-                <Button type="button" variant="outline" size="lg">
-                    <PlusIcon aria-hidden="true" />
-                    Add Exercise
-                </Button>
-            </DialogTrigger>
             <DialogContent className="top-[calc(env(safe-area-inset-top)+1rem)] flex max-h-[85dvh] translate-y-0 flex-col sm:top-[50%] sm:translate-y-[-50%]">
-                <DialogTitle>Add Exercise</DialogTitle>
+                <DialogTitle>{title}</DialogTitle>
                 <DialogDescription className="sr-only">
                     {description}
                 </DialogDescription>
@@ -87,7 +113,7 @@ export default function ExercisePicker({
                                         type="button"
                                         onClick={() => {
                                             onPick(exercise);
-                                            setOpen(false);
+                                            onOpenChange(false);
                                             setSearch('');
                                         }}
                                         className="flex w-full flex-col items-start gap-1.5 rounded-lg px-2 py-2.5 text-left outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
