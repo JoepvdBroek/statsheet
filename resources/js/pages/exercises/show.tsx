@@ -215,7 +215,7 @@ export default function ShowExercise({
                                 sets={performance.sets.map((set) => ({
                                     reps: set.reps,
                                     weight: set.weight,
-                                    warmup: set.warm_up,
+                                    kind: set.kind,
                                     top: set.top,
                                 }))}
                             />

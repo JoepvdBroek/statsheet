@@ -3,6 +3,7 @@
 namespace Tests\Feature\Routines;
 
 use App\Enums\Muscle;
+use App\Enums\SetKind;
 use App\Models\Exercise;
 use App\Models\Routine;
 use App\Models\RoutineExercise;
@@ -29,11 +30,12 @@ class RoutineManagementTest extends TestCase
                 'name' => 'Push day',
                 'exercises' => [
                     ['exercise_id' => $dip->id, 'sets' => [
-                        ['target_reps' => 10, 'target_weight' => 0, 'is_warm_up' => false],
+                        ['target_reps' => 10, 'target_weight' => 0, 'kind' => 'working'],
                     ]],
                     ['exercise_id' => $bench->id, 'sets' => [
-                        ['target_reps' => 10, 'target_weight' => 40, 'is_warm_up' => true],
-                        ['target_reps' => 8, 'target_weight' => 82.5, 'is_warm_up' => false],
+                        ['target_reps' => 10, 'target_weight' => 40, 'kind' => 'warm_up'],
+                        ['target_reps' => 8, 'target_weight' => 82.5, 'kind' => 'working'],
+                        ['target_reps' => 6, 'target_weight' => 60, 'kind' => 'drop'],
                     ]],
                 ],
             ]);
@@ -48,8 +50,8 @@ class RoutineManagementTest extends TestCase
         $this->assertSame('Push day', $routine->name);
         $this->assertNull($routine->archived_at);
         $this->assertSame([
-            ['exercise' => 'Dip', 'sets' => [[10, '0.00', false]]],
-            ['exercise' => 'Bench press', 'sets' => [[10, '40.00', true], [8, '82.50', false]]],
+            ['exercise' => 'Dip', 'sets' => [[10, '0.00', SetKind::Working]]],
+            ['exercise' => 'Bench press', 'sets' => [[10, '40.00', SetKind::WarmUp], [8, '82.50', SetKind::Working], [6, '60.00', SetKind::Drop]]],
         ], $this->plan($routine->refresh()));
     }
 
@@ -63,8 +65,8 @@ class RoutineManagementTest extends TestCase
                 'name' => 'Pull day',
                 'exercises' => [
                     ['exercise_id' => $exercise->id, 'sets' => [
-                        ['target_reps' => 1, 'target_weight' => 0, 'is_warm_up' => false],
-                        ['target_reps' => 5, 'target_weight' => '101.25', 'is_warm_up' => false],
+                        ['target_reps' => 1, 'target_weight' => 0, 'kind' => 'working'],
+                        ['target_reps' => 5, 'target_weight' => '101.25', 'kind' => 'working'],
                     ]],
                 ],
             ]);
@@ -72,7 +74,7 @@ class RoutineManagementTest extends TestCase
         $response->assertSessionHasNoErrors();
 
         $this->assertSame(
-            [['exercise' => $exercise->name, 'sets' => [[1, '0.00', false], [5, '101.25', false]]]],
+            [['exercise' => $exercise->name, 'sets' => [[1, '0.00', SetKind::Working], [5, '101.25', SetKind::Working]]]],
             $this->plan($exercise->user->routines()->sole()),
         );
     }
@@ -89,6 +91,7 @@ class RoutineManagementTest extends TestCase
             'negative weight' => [['target_weight' => -2.5], 'exercises.0.sets.0.target_weight', 'The target weight field must be at least 0.'],
             'three decimals' => [['target_weight' => 80.125], 'exercises.0.sets.0.target_weight', 'The target weight field must have 0-2 decimal places.'],
             'no weight' => [['target_weight' => null], 'exercises.0.sets.0.target_weight', 'The target weight field is required.'],
+            'unknown kind' => [['kind' => 'superset'], 'exercises.0.sets.0.kind', 'The selected kind is invalid.'],
         ];
     }
 
@@ -107,7 +110,7 @@ class RoutineManagementTest extends TestCase
                 'name' => 'Leg day',
                 'exercises' => [
                     ['exercise_id' => $exercise->id, 'sets' => [
-                        [...['target_reps' => 5, 'target_weight' => 100, 'is_warm_up' => false], ...$overrides],
+                        [...['target_reps' => 5, 'target_weight' => 100, 'kind' => 'working'], ...$overrides],
                     ]],
                 ],
             ]);
@@ -155,7 +158,7 @@ class RoutineManagementTest extends TestCase
             ->post(route('routines.store'), [
                 'name' => 'Leg day',
                 'exercises' => [['exercise_id' => $exercise->id, 'sets' => [
-                    ['target_reps' => 5, 'target_weight' => 100, 'is_warm_up' => false],
+                    ['target_reps' => 5, 'target_weight' => 100, 'kind' => 'working'],
                 ]]],
             ]);
 
@@ -173,7 +176,7 @@ class RoutineManagementTest extends TestCase
             ->post(route('routines.store'), [
                 'name' => 'Leg day',
                 'exercises' => [['exercise_id' => $exercise->id, 'sets' => [
-                    ['target_reps' => 5, 'target_weight' => 100, 'is_warm_up' => false],
+                    ['target_reps' => 5, 'target_weight' => 100, 'kind' => 'working'],
                 ]]],
             ]);
 
@@ -214,8 +217,8 @@ class RoutineManagementTest extends TestCase
                         'muscles' => [['muscle' => 'lats', 'role' => 'primary']],
                     ],
                     'sets' => [
-                        ['target_reps' => 5, 'target_weight' => 0, 'is_warm_up' => true],
-                        ['target_reps' => 8, 'target_weight' => 12.5, 'is_warm_up' => false],
+                        ['target_reps' => 5, 'target_weight' => 0, 'kind' => 'warm_up'],
+                        ['target_reps' => 8, 'target_weight' => 12.5, 'kind' => 'working'],
                     ],
                 ]],
             ])
@@ -238,11 +241,11 @@ class RoutineManagementTest extends TestCase
                 'name' => 'Push day B',
                 'exercises' => [
                     ['exercise_id' => $press->id, 'sets' => [
-                        ['target_reps' => 6, 'target_weight' => 50, 'is_warm_up' => false],
+                        ['target_reps' => 6, 'target_weight' => 50, 'kind' => 'working'],
                     ]],
                     ['exercise_id' => $kept->id, 'sets' => [
-                        ['target_reps' => 12, 'target_weight' => 20, 'is_warm_up' => true],
-                        ['target_reps' => 10, 'target_weight' => 30, 'is_warm_up' => false],
+                        ['target_reps' => 12, 'target_weight' => 20, 'kind' => 'warm_up'],
+                        ['target_reps' => 10, 'target_weight' => 30, 'kind' => 'working'],
                     ]],
                 ],
             ]);
@@ -256,8 +259,8 @@ class RoutineManagementTest extends TestCase
 
         $this->assertSame('Push day B', $routine->name);
         $this->assertSame([
-            ['exercise' => 'Overhead press', 'sets' => [[6, '50.00', false]]],
-            ['exercise' => $kept->name, 'sets' => [[12, '20.00', true], [10, '30.00', false]]],
+            ['exercise' => 'Overhead press', 'sets' => [[6, '50.00', SetKind::Working]]],
+            ['exercise' => $kept->name, 'sets' => [[12, '20.00', SetKind::WarmUp], [10, '30.00', SetKind::Working]]],
         ], $this->plan($routine));
         $this->assertDatabaseCount('routine_exercises', 2);
         $this->assertDatabaseCount('routine_sets', 3);
@@ -274,13 +277,13 @@ class RoutineManagementTest extends TestCase
             ->put(route('routines.update', $routine), [
                 'name' => $routine->name,
                 'exercises' => [['exercise_id' => $archived->id, 'sets' => [
-                    ['target_reps' => 5, 'target_weight' => 100, 'is_warm_up' => false],
+                    ['target_reps' => 5, 'target_weight' => 100, 'kind' => 'working'],
                 ]]],
             ]);
 
         $response->assertSessionHasNoErrors();
 
-        $this->assertSame([['exercise' => $archived->name, 'sets' => [[5, '100.00', false]]]], $this->plan($routine->refresh()));
+        $this->assertSame([['exercise' => $archived->name, 'sets' => [[5, '100.00', SetKind::Working]]]], $this->plan($routine->refresh()));
     }
 
     public function test_exercise_archived_after_planning_cannot_be_added_a_second_time()
@@ -288,7 +291,7 @@ class RoutineManagementTest extends TestCase
         $archived = Exercise::factory()->archived()->create();
         $routine = Routine::factory()->for($archived->user)->create();
         RoutineExercise::factory()->for($routine)->for($archived)->has(RoutineSet::factory(), 'sets')->create();
-        $set = ['target_reps' => 5, 'target_weight' => 100, 'is_warm_up' => false];
+        $set = ['target_reps' => 5, 'target_weight' => 100, 'kind' => 'working'];
 
         $response = $this
             ->actingAs($routine->user)
@@ -326,13 +329,13 @@ class RoutineManagementTest extends TestCase
     /**
      * The Routine's plan as Exercise names with [reps, weight, warm-up] per Set, in order.
      *
-     * @return array<int, array{exercise: string, sets: array<int, array{0: int, 1: string, 2: bool}>}>
+     * @return array<int, array{exercise: string, sets: array<int, array{0: int, 1: string, 2: SetKind}>}>
      */
     private function plan(Routine $routine): array
     {
         return $routine->exercises->map(fn ($planned) => [
             'exercise' => $planned->exercise->name,
-            'sets' => $planned->sets->map(fn ($set) => [$set->target_reps, $set->target_weight, $set->is_warm_up])->all(),
+            'sets' => $planned->sets->map(fn ($set) => [$set->target_reps, $set->target_weight, $set->kind])->all(),
         ])->all();
     }
 }

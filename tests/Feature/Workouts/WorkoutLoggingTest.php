@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Workouts;
 
+use App\Enums\SetKind;
 use App\Models\Exercise;
 use App\Models\User;
 use App\Models\Workout;
@@ -183,20 +184,35 @@ class WorkoutLoggingTest extends TestCase
         $this->assertSame(8, $set->refresh()->actual_reps);
     }
 
-    public function test_the_warm_up_flag_can_be_toggled_on_any_set()
+    public function test_the_kind_of_any_set_can_be_changed()
     {
         $set = $this->setOf(WorkoutSet::factory()->done());
         $actualReps = $set->actual_reps;
 
         $this->actingAs($this->owner($set));
 
-        $this->patch(route('workouts.sets.update', [$this->workout($set), $set]), ['is_warm_up' => true])
+        $this->patch(route('workouts.sets.update', [$this->workout($set), $set]), ['kind' => 'warm_up'])
             ->assertSessionHasNoErrors();
-        $this->assertTrue($set->refresh()->is_warm_up);
+        $this->assertSame(SetKind::WarmUp, $set->refresh()->kind);
         $this->assertSame($actualReps, $set->actual_reps);
 
-        $this->patch(route('workouts.sets.update', [$this->workout($set), $set]), ['is_warm_up' => false]);
-        $this->assertFalse($set->refresh()->is_warm_up);
+        $this->patch(route('workouts.sets.update', [$this->workout($set), $set]), ['kind' => 'drop']);
+        $this->assertSame(SetKind::Drop, $set->refresh()->kind);
+
+        $this->patch(route('workouts.sets.update', [$this->workout($set), $set]), ['kind' => 'working']);
+        $this->assertSame(SetKind::Working, $set->refresh()->kind);
+    }
+
+    public function test_an_unknown_kind_is_rejected()
+    {
+        $set = $this->setOf(WorkoutSet::factory()->drop());
+
+        $response = $this
+            ->actingAs($this->owner($set))
+            ->patch(route('workouts.sets.update', [$this->workout($set), $set]), ['kind' => 'superset']);
+
+        $response->assertSessionHasErrors(['kind' => 'The selected kind is invalid.']);
+        $this->assertSame(SetKind::Drop, $set->refresh()->kind);
     }
 
     public function test_the_logging_screen_shows_each_sets_target_actual_and_status()
@@ -212,7 +228,7 @@ class WorkoutLoggingTest extends TestCase
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('workout.exercises.0.exercise.id', $exercise->exercise_id)
-            ->where('workout.exercises.0.sets.0.is_warm_up', true)
+            ->where('workout.exercises.0.sets.0.kind', 'warm_up')
             ->where('workout.exercises.0.sets.0.done', true)
             ->where('workout.exercises.0.sets.0.meets_target', true)
             ->where('workout.exercises.0.sets.1.target_reps', 8)

@@ -189,7 +189,9 @@ function primaryMuscles(routine: Routine): string[] {
     const workingSets = new Map<string, number>();
 
     for (const planned of routine.exercises) {
-        const count = planned.sets.filter((set) => !set.is_warm_up).length;
+        const count = planned.sets.filter(
+            (set) => set.kind === 'working',
+        ).length;
 
         for (const trained of planned.exercise.muscles) {
             if (trained.role === 'primary') {

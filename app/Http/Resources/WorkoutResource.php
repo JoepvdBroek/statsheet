@@ -19,7 +19,7 @@ class WorkoutResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @return array{id: int, status: string, started_at: string, finished_at: string|null, routine: array{id: int, name: string, archived: bool}|null, bodyweight: float|null, note: string|null, exercises: array<int, array{id: int, exercise: array<string, mixed>, sets: array<int, array{id: int, target_reps: int|null, target_weight: float|null, actual_reps: int|null, actual_weight: float|null, is_warm_up: bool, done: bool, meets_target: bool, new_records: list<Measure>}>}>}
+     * @return array{id: int, status: string, started_at: string, finished_at: string|null, routine: array{id: int, name: string, archived: bool}|null, bodyweight: float|null, note: string|null, exercises: array<int, array{id: int, exercise: array<string, mixed>, sets: array<int, array{id: int, target_reps: int|null, target_weight: float|null, actual_reps: int|null, actual_weight: float|null, kind: string, done: bool, meets_target: bool, new_records: list<Measure>}>}>}
      */
     public function toArray(Request $request): array
     {
@@ -48,7 +48,7 @@ class WorkoutResource extends JsonResource
                             'target_weight' => $set->target_weight === null ? null : (float) $set->target_weight,
                             'actual_reps' => $set->actual_reps,
                             'actual_weight' => $set->actual_weight === null ? null : (float) $set->actual_weight,
-                            'is_warm_up' => $set->is_warm_up,
+                            'kind' => $set->kind->value,
                             'done' => $set->isDone(),
                             'meets_target' => $set->meetsTarget(),
                             'new_records' => $newRecords[$set->id] ?? [],

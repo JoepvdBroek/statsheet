@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\SetKind;
 use App\Models\Routine;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -23,10 +24,10 @@ class RoutineRequest extends FormRequest
             'exercises.*' => ['array:exercise_id,sets'],
             'exercises.*.exercise_id' => ['required', 'integer', Rule::exists('exercises', 'id')->where('user_id', $this->user()->id)],
             'exercises.*.sets' => ['required', 'array', 'min:1'],
-            'exercises.*.sets.*' => ['array:target_reps,target_weight,is_warm_up'],
+            'exercises.*.sets.*' => ['array:target_reps,target_weight,kind'],
             'exercises.*.sets.*.target_reps' => ['required', 'integer', 'min:1', 'max:999'],
             'exercises.*.sets.*.target_weight' => ['required', 'numeric', 'min:0', 'max:9999.99', 'decimal:0,2'],
-            'exercises.*.sets.*.is_warm_up' => ['boolean'],
+            'exercises.*.sets.*.kind' => [Rule::enum(SetKind::class)],
         ];
     }
 
@@ -54,13 +55,14 @@ class RoutineRequest extends FormRequest
         return [
             'exercises.*.sets.*.target_reps' => 'target reps',
             'exercises.*.sets.*.target_weight' => 'target weight',
+            'exercises.*.sets.*.kind' => 'kind',
         ];
     }
 
     /**
      * The validated plan: Exercises in order, each with its Sets in order.
      *
-     * @return list<array{exercise_id: int, sets: list<array{target_reps: int, target_weight: string, is_warm_up: bool}>}>
+     * @return list<array{exercise_id: int, sets: list<array{target_reps: int, target_weight: string, kind: SetKind}>}>
      */
     public function plannedExercises(): array
     {
@@ -69,7 +71,7 @@ class RoutineRequest extends FormRequest
             'sets' => array_map(fn (array $set) => [
                 'target_reps' => (int) $set['target_reps'],
                 'target_weight' => number_format((float) $set['target_weight'], 2, '.', ''),
-                'is_warm_up' => filter_var($set['is_warm_up'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'kind' => SetKind::tryFrom($set['kind'] ?? '') ?? SetKind::Working,
             ], array_values($planned['sets'])),
         ], array_values($this->validated('exercises', [])));
     }

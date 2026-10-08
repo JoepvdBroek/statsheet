@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Enums\MuscleRole;
+use App\Enums\SetKind;
 use App\Models\User;
 use App\Models\WorkoutSet;
 use Carbon\CarbonImmutable;
@@ -102,7 +103,7 @@ class VolumeCalculator
             ->where('workouts.started_at', '>=', $from->utc())
             ->where('workouts.started_at', '<', $until->utc())
             ->whereNotNull('workout_sets.actual_reps')
-            ->where('workout_sets.is_warm_up', false)
+            ->where('workout_sets.kind', '!=', SetKind::WarmUp->value)
             ->select('workouts.started_at', 'exercise_muscles.muscle')
             ->selectRaw(
                 'SUM(workout_sets.actual_reps'

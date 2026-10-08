@@ -17,6 +17,23 @@ class ExerciseProgressTest extends TestCase
 {
     use PerformsExercises, RefreshDatabase;
 
+    public function test_a_drop_set_counts_toward_personal_records()
+    {
+        $squat = Exercise::factory()->create();
+        $this->perform($this->workout($squat->user, '-1 week'), $squat, [
+            $this->doneSet(5, '100.00'),
+            $this->doneSet(12, '80.00')->drop(),
+        ]);
+
+        $response = $this->actingAs($squat->user)->get(route('exercises.show', $squat));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('records.tonnage', 960)
+            ->where('records.reps_at_weight', [['weight' => 80, 'reps' => 12], ['weight' => 100, 'reps' => 5]])
+            ->etc()
+        );
+    }
+
     public function test_the_heaviest_weight_and_estimated_1rm_leave_out_warm_up_and_not_done_sets()
     {
         $squat = Exercise::factory()->create();
@@ -209,9 +226,9 @@ class ExerciseProgressTest extends TestCase
                     'average_weight' => 86.67,
                     'new_records' => ['heaviest', 'e1rm'],
                     'sets' => [
-                        ['reps' => 5, 'weight' => 0, 'warm_up' => true, 'top' => false],
-                        ['reps' => 12, 'weight' => 0, 'warm_up' => false, 'top' => false],
-                        ['reps' => 6, 'weight' => 20, 'warm_up' => false, 'top' => true],
+                        ['reps' => 5, 'weight' => 0, 'kind' => 'warm_up', 'top' => false],
+                        ['reps' => 12, 'weight' => 0, 'kind' => 'working', 'top' => false],
+                        ['reps' => 6, 'weight' => 20, 'kind' => 'working', 'top' => true],
                     ],
                 ],
                 [
@@ -223,8 +240,8 @@ class ExerciseProgressTest extends TestCase
                     'average_weight' => 78,
                     'new_records' => ['reps', 'tonnage'],
                     'sets' => [
-                        ['reps' => 8, 'weight' => 0, 'warm_up' => false, 'top' => true],
-                        ['reps' => 13, 'weight' => 0, 'warm_up' => false, 'top' => false],
+                        ['reps' => 8, 'weight' => 0, 'kind' => 'working', 'top' => true],
+                        ['reps' => 13, 'weight' => 0, 'kind' => 'working', 'top' => false],
                     ],
                 ],
             ])

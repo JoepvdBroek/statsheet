@@ -1,6 +1,11 @@
 import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import type { VisitOptions } from '@inertiajs/core';
-import { FlameIcon, HistoryIcon } from 'lucide-react';
+import {
+    CornerDownRightIcon,
+    DumbbellIcon,
+    FlameIcon,
+    HistoryIcon,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import WorkoutController from '@/actions/App/Http/Controllers/WorkoutController';
 import WorkoutExerciseController from '@/actions/App/Http/Controllers/WorkoutExerciseController';
@@ -36,6 +41,7 @@ import { index } from '@/routes/workouts';
 import type {
     Exercise,
     PageShell,
+    SetKind,
     Workout,
     WorkoutExercise,
     WorkoutRoutine,
@@ -292,7 +298,7 @@ function PerformedExercise({
     isLast: boolean;
 }) {
     const { exercise, sets } = performed;
-    const workingSets = sets.filter((set) => !set.is_warm_up);
+    const workingSets = sets.filter((set) => set.kind === 'working');
     const route = { workout: workoutId, exercise: performed.id };
 
     return (
@@ -348,7 +354,11 @@ function PerformedExercise({
                     index={
                         sets
                             .slice(0, setPosition + 1)
-                            .filter((other) => !other.is_warm_up).length
+                            .filter((other) => other.kind === 'working').length
+                    }
+                    followsCountingSet={
+                        setPosition > 0 &&
+                        sets[setPosition - 1].kind !== 'warm_up'
                     }
                     bodyweight={exercise.is_bodyweight}
                     position={setPosition}
@@ -367,6 +377,7 @@ function LoggedSet({
     workoutId,
     set,
     index,
+    followsCountingSet,
     bodyweight,
     position,
     isLast,
@@ -374,6 +385,8 @@ function LoggedSet({
     workoutId: number;
     set: WorkoutSet;
     index: number;
+    /** Whether the Set before it is a Working or Drop Set, which a Drop Set needs to drop from. */
+    followsCountingSet: boolean;
     bodyweight: boolean;
     position: number;
     isLast: boolean;
@@ -486,16 +499,16 @@ function LoggedSet({
         );
     };
 
-    const toggleWarmUp = () =>
+    const changeKind = (kind: SetKind) =>
         router.patch(
             WorkoutSetController.update.url(route),
-            { is_warm_up: !set.is_warm_up },
+            { kind },
             {
                 ...visit,
                 optimistic: (props) =>
                     withSetChanges(props, set.id, {
-                        is_warm_up: !set.is_warm_up,
-                        ...(set.is_warm_up ? {} : { new_records: [] }),
+                        kind,
+                        ...(kind === 'warm_up' ? { new_records: [] } : {}),
                     }),
             },
         );
@@ -512,7 +525,7 @@ function LoggedSet({
                 done={set.done}
                 onDoneChange={(done) => (done ? markDone() : markNotDone())}
                 met={set.done ? set.meets_target : undefined}
-                warmup={set.is_warm_up}
+                kind={set.kind}
                 bodyweight={bodyweight}
                 pr={set.new_records.length > 0}
                 invalid={{
@@ -521,12 +534,30 @@ function LoggedSet({
                 }}
                 menu={
                     <>
-                        <DropdownMenuItem onSelect={toggleWarmUp}>
-                            <FlameIcon aria-hidden="true" />
-                            {set.is_warm_up
-                                ? 'Make a working set'
-                                : 'Make a warm-up set'}
-                        </DropdownMenuItem>
+                        {set.kind !== 'working' ? (
+                            <DropdownMenuItem
+                                onSelect={() => changeKind('working')}
+                            >
+                                <DumbbellIcon aria-hidden="true" />
+                                Make a working set
+                            </DropdownMenuItem>
+                        ) : null}
+                        {set.kind !== 'warm_up' ? (
+                            <DropdownMenuItem
+                                onSelect={() => changeKind('warm_up')}
+                            >
+                                <FlameIcon aria-hidden="true" />
+                                Make a warm-up set
+                            </DropdownMenuItem>
+                        ) : null}
+                        {set.kind !== 'drop' && followsCountingSet ? (
+                            <DropdownMenuItem
+                                onSelect={() => changeKind('drop')}
+                            >
+                                <CornerDownRightIcon aria-hidden="true" />
+                                Make a drop set
+                            </DropdownMenuItem>
+                        ) : null}
                         <DropdownMenuSeparator />
                         <MoveRemoveItems
                             removeLabel="Remove set"

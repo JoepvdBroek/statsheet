@@ -7,11 +7,25 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import type { SetKind } from '@/types';
 
 type SetValues = { reps: number | null; weight: number | null };
 
+/** The set-number cell: W for a Warm-up Set, D for a Drop Set, otherwise the Working Set's number. */
+function setMark(kind: SetKind, index: number) {
+    return kind === 'warm_up' ? 'W' : kind === 'drop' ? 'D' : index;
+}
+
+function setName(kind: SetKind, index: number) {
+    return kind === 'warm_up'
+        ? 'Warm-up set'
+        : kind === 'drop'
+          ? 'Drop set'
+          : `Set ${index}`;
+}
+
 type SetRowProps = Omit<React.ComponentProps<'div'>, 'onChange'> & {
-    /** 1-based position among the exercise's working sets. Ignored for warm-ups (shown as W). */
+    /** 1-based position among the exercise's Working Sets. Ignored for warm-ups (W) and drop sets (D). */
     index: number;
     /** Planned reps × weight (pre-filled at workout start). */
     target?: SetValues;
@@ -23,15 +37,15 @@ type SetRowProps = Omit<React.ComponentProps<'div'>, 'onChange'> & {
     done?: boolean;
     defaultDone?: boolean;
     onDoneChange?: (done: boolean) => void;
-    /** Warm-up sets are logged but never count toward Volume, Goals or PRs. */
-    warmup?: boolean;
+    /** Warm-up sets are logged but never count toward Volume, Goals or PRs; drop sets count like working sets. */
+    kind?: SetKind;
     /** Bodyweight Exercise: the weight field is the added load. */
     bodyweight?: boolean;
     /** This set set a Personal Record. */
     pr?: boolean;
     /** The server's verdict on meeting the Target. Falls back to meetsTarget until the server has answered. */
     met?: boolean;
-    /** Menu items, e.g. Warm-up or Remove, opened by tapping the set number. */
+    /** Menu items, e.g. Warm-up, Drop set or Remove, opened by tapping the set number. */
     menu?: React.ReactNode;
     /** Marks the fields that failed validation. */
     invalid?: { reps?: boolean; weight?: boolean };
@@ -118,7 +132,7 @@ function SetRow({
     done: doneProp,
     defaultDone = false,
     onDoneChange,
-    warmup = false,
+    kind = 'working',
     bodyweight = false,
     pr = false,
     met: metProp,
@@ -139,6 +153,7 @@ function SetRow({
         onDoneChange,
     );
     const met = metProp ?? meetsTarget(actual, target);
+    const warmup = kind === 'warm_up';
 
     const toggle = () => {
         if (readOnly) return;
@@ -154,7 +169,7 @@ function SetRow({
             role="row"
             data-slot="set-row"
             data-done={done}
-            data-warmup={warmup}
+            data-kind={kind}
             data-met={done ? met : undefined}
             className={cn(
                 'grid h-12 grid-cols-[2rem_minmax(0,1fr)_4.5rem_3.75rem_2.5rem] items-center gap-2 px-1',
@@ -166,19 +181,17 @@ function SetRow({
             <span
                 role="cell"
                 className="flex items-center justify-center gap-0.5 text-sm tabular-nums"
-                aria-label={
-                    menu ? undefined : warmup ? 'Warm-up set' : `Set ${index}`
-                }
+                aria-label={menu ? undefined : setName(kind, index)}
             >
                 {menu ? (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button
                                 type="button"
-                                aria-label={`${warmup ? 'Warm-up set' : `Set ${index}`} actions`}
+                                aria-label={`${setName(kind, index)} actions`}
                                 className="flex h-10 w-8 items-center justify-center gap-0.5 rounded-md underline decoration-dotted underline-offset-4 outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
                             >
-                                {warmup ? 'W' : index}
+                                {setMark(kind, index)}
                                 {pr ? (
                                     <TrophyIcon
                                         aria-label="Personal Record"
@@ -193,7 +206,7 @@ function SetRow({
                     </DropdownMenu>
                 ) : (
                     <>
-                        {warmup ? 'W' : index}
+                        {setMark(kind, index)}
                         {pr ? (
                             <TrophyIcon
                                 aria-label="Personal Record"
@@ -304,14 +317,15 @@ const plannedGrid =
     'grid grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem_2.5rem] items-center gap-2 px-1';
 
 type PlannedSetRowProps = Omit<React.ComponentProps<'div'>, 'onChange'> & {
-    /** 1-based position among the exercise's working sets. Ignored for warm-ups (shown as W). */
+    /** 1-based position among the exercise's Working Sets. Ignored for warm-ups (W) and drop sets (D). */
     index: number;
     /** The planned reps × weight. */
     target: SetValues;
     onTargetChange: (target: SetValues) => void;
-    /** Warm-up sets are planned too, but never count toward Volume, Goals or PRs. */
-    warmup?: boolean;
-    onWarmupChange: (warmup: boolean) => void;
+    /** Warm-up sets are planned too, but never count toward Volume, Goals or PRs. Drop sets are set from the actions. */
+    kind?: SetKind;
+    /** The W toggle makes the set a Warm-up Set, or a Working Set again. */
+    onKindChange: (kind: SetKind) => void;
     /** Bodyweight Exercise: the weight field is the added load. */
     bodyweight?: boolean;
     /** Marks the fields that failed validation. */
@@ -320,24 +334,26 @@ type PlannedSetRowProps = Omit<React.ComponentProps<'div'>, 'onChange'> & {
     actions?: React.ReactNode;
 };
 
-/** A Set in a Routine: an editable Target and Warm-up flag, with no Actual. */
+/** A Set in a Routine: an editable Target and kind, with no Actual. */
 function PlannedSetRow({
     index,
     target,
     onTargetChange,
-    warmup = false,
-    onWarmupChange,
+    kind = 'working',
+    onKindChange,
     bodyweight = false,
     invalid = {},
     actions,
     className,
     ...props
 }: PlannedSetRowProps) {
+    const warmup = kind === 'warm_up';
+
     return (
         <div
             role="row"
             data-slot="planned-set-row"
-            data-warmup={warmup}
+            data-kind={kind}
             className={cn(
                 plannedGrid,
                 'h-12',
@@ -349,9 +365,9 @@ function PlannedSetRow({
             <span
                 role="cell"
                 className="text-center text-sm tabular-nums"
-                aria-label={warmup ? 'Warm-up set' : `Set ${index}`}
+                aria-label={setName(kind, index)}
             >
-                {warmup ? 'W' : index}
+                {setMark(kind, index)}
             </span>
             <span role="cell">
                 <SetField
@@ -384,7 +400,7 @@ function PlannedSetRow({
                 role="cell"
                 aria-pressed={warmup}
                 aria-label="Warm-up set"
-                onClick={() => onWarmupChange(!warmup)}
+                onClick={() => onKindChange(warmup ? 'working' : 'warm_up')}
                 className={cn(
                     'flex size-10 items-center justify-center rounded-full border-[1.5px] text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
                     warmup

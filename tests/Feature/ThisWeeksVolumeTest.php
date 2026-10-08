@@ -36,7 +36,7 @@ class ThisWeeksVolumeTest extends TestCase
         );
     }
 
-    public function test_warm_up_and_not_done_sets_are_left_out()
+    public function test_warm_up_and_not_done_sets_are_left_out_while_drop_sets_count()
     {
         $this->travelTo('2026-09-30 12:00:00');
         $owner = User::factory()->create();
@@ -45,13 +45,14 @@ class ThisWeeksVolumeTest extends TestCase
         $this->perform($workout, $squat, [
             $this->doneSet(10, '60.00')->warmUp(),
             $this->doneSet(5, '100.00'),
+            $this->doneSet(6, '80.00')->drop(),
             WorkoutSet::factory()->state(['target_reps' => 5, 'target_weight' => '100.00'])->notDone(),
         ]);
 
         $response = $this->actingAs($owner)->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page
-            ->where('thisWeek.muscles', [['muscle' => 'quadriceps', 'volume' => 500, 'goal' => null, 'met' => null]])
+            ->where('thisWeek.muscles', [['muscle' => 'quadriceps', 'volume' => 980, 'goal' => null, 'met' => null]])
         );
     }
 

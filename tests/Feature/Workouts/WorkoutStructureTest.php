@@ -2,12 +2,15 @@
 
 namespace Tests\Feature\Workouts;
 
+use App\Enums\SetKind;
 use App\Models\Exercise;
 use App\Models\Workout;
 use App\Models\WorkoutExercise;
 use App\Models\WorkoutSet;
+use Database\Factories\WorkoutSetFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class WorkoutStructureTest extends TestCase
@@ -52,7 +55,7 @@ class WorkoutStructureTest extends TestCase
         $this->assertNull($set->target_reps);
         $this->assertNull($set->target_weight);
         $this->assertFalse($set->isDone());
-        $this->assertFalse($set->is_warm_up);
+        $this->assertSame(SetKind::Working, $set->kind);
     }
 
     public function test_the_same_exercise_can_be_added_twice()
@@ -146,23 +149,94 @@ class WorkoutStructureTest extends TestCase
         $response->assertSessionHasErrors(['position' => 'The position field must be at least 0.']);
     }
 
-    public function test_adding_a_set_appends_one_without_a_target()
+    /**
+     * @return array<string, array{0: array{int|null, string|null, int|null, string|null}, 1: array{int|null, string|null}}>
+     */
+    public static function setsBefore(): array
     {
-        $workout = Workout::factory()->withExercises(1, 2)->create();
-        $exercise = $workout->exercises[0];
+        return [
+            'done: its Actual' => [[8, '100.00', 6, '102.50'], [6, '102.50']],
+            'not done: its Target' => [[8, '100.00', null, null], [8, '100.00']],
+            'neither: no Target' => [[null, null, null, null], [null, null]],
+        ];
+    }
+
+    /**
+     * @param  array{int|null, string|null, int|null, string|null}  $before
+     * @param  array{int|null, string|null}  $expectedTarget
+     */
+    #[DataProvider('setsBefore')]
+    public function test_adding_a_set_appends_a_working_set_targeting_the_set_before_it(array $before, array $expectedTarget)
+    {
+        $exercise = $this->performedWith([
+            WorkoutSet::factory()->state([
+                'target_reps' => $before[0],
+                'target_weight' => $before[1],
+                'actual_reps' => $before[2],
+                'actual_weight' => $before[3],
+            ]),
+        ]);
 
         $response = $this
-            ->actingAs($workout->user)
-            ->post(route('workouts.sets.store', [$workout, $exercise]));
+            ->actingAs($exercise->workout->user)
+            ->post(route('workouts.sets.store', [$exercise->workout, $exercise]));
 
-        $response->assertRedirect(route('workouts.show', $workout));
+        $response->assertRedirect(route('workouts.show', $exercise->workout));
 
         $sets = $exercise->sets()->get();
-        $this->assertCount(3, $sets);
-        $this->assertSame(2, $sets[2]->position);
-        $this->assertNull($sets[2]->target_reps);
-        $this->assertNull($sets[2]->target_weight);
-        $this->assertFalse($sets[2]->isDone());
+        $this->assertCount(2, $sets);
+        $this->assertSame(1, $sets[1]->position);
+        $this->assertSame([...$expectedTarget, SetKind::Working], [$sets[1]->target_reps, $sets[1]->target_weight, $sets[1]->kind]);
+        $this->assertFalse($sets[1]->isDone());
+    }
+
+    public function test_a_set_added_after_a_drop_set_is_a_drop_set()
+    {
+        $exercise = $this->performedWith([
+            WorkoutSet::factory()->state(['target_reps' => 8, 'target_weight' => '100.00'])->done(),
+            WorkoutSet::factory()->withoutTarget()->drop()->state(['actual_reps' => 6, 'actual_weight' => '80.00']),
+        ]);
+
+        $this->actingAs($exercise->workout->user)->post(route('workouts.sets.store', [$exercise->workout, $exercise]));
+
+        $added = $exercise->sets()->get()->last();
+        $this->assertSame([6, '80.00', SetKind::Drop], [$added->target_reps, $added->target_weight, $added->kind]);
+    }
+
+    public function test_a_set_added_after_warm_ups_copies_the_last_set_that_is_not_a_warm_up()
+    {
+        $exercise = $this->performedWith([
+            WorkoutSet::factory()->state(['target_reps' => 5, 'target_weight' => '100.00'])->drop(),
+            WorkoutSet::factory()->state(['target_reps' => 10, 'target_weight' => '40.00'])->warmUp(),
+        ]);
+
+        $this->actingAs($exercise->workout->user)->post(route('workouts.sets.store', [$exercise->workout, $exercise]));
+
+        $added = $exercise->sets()->get()->last();
+        $this->assertSame([5, '100.00', SetKind::Drop], [$added->target_reps, $added->target_weight, $added->kind]);
+    }
+
+    public function test_a_set_added_after_only_warm_ups_copies_the_last_one_as_a_working_set()
+    {
+        $exercise = $this->performedWith([
+            WorkoutSet::factory()->state(['target_reps' => 10, 'target_weight' => '40.00'])->warmUp(),
+            WorkoutSet::factory()->state(['target_reps' => 5, 'target_weight' => '60.00'])->warmUp(),
+        ]);
+
+        $this->actingAs($exercise->workout->user)->post(route('workouts.sets.store', [$exercise->workout, $exercise]));
+
+        $added = $exercise->sets()->get()->last();
+        $this->assertSame([5, '60.00', SetKind::Working], [$added->target_reps, $added->target_weight, $added->kind]);
+    }
+
+    public function test_the_first_set_added_has_no_target()
+    {
+        $exercise = $this->performedWith([]);
+
+        $this->actingAs($exercise->workout->user)->post(route('workouts.sets.store', [$exercise->workout, $exercise]));
+
+        $added = $exercise->sets()->sole();
+        $this->assertSame([0, null, null, SetKind::Working], [$added->position, $added->target_reps, $added->target_weight, $added->kind]);
     }
 
     public function test_removing_a_set_keeps_the_others()
@@ -211,5 +285,21 @@ class WorkoutStructureTest extends TestCase
         $this->assertModelExists($otherSet);
         $this->assertSame(1, WorkoutSet::count());
         $this->assertSame(1, WorkoutExercise::count());
+    }
+
+    /**
+     * An Exercise in a Workout in progress, with the given Sets in order.
+     *
+     * @param  list<WorkoutSetFactory>  $sets
+     */
+    private function performedWith(array $sets): WorkoutExercise
+    {
+        $exercise = WorkoutExercise::factory()->for(Workout::factory())->create(['position' => 0]);
+
+        foreach ($sets as $position => $set) {
+            $set->for($exercise)->create(['position' => $position]);
+        }
+
+        return $exercise;
     }
 }

@@ -54,12 +54,12 @@ class WorkoutLogTest extends TestCase
                 'note' => 'Bad sleep.',
                 'exercises' => [
                     ['exercise' => 'Bench press', 'bodyweight_exercise' => false, 'sets' => [
-                        ['target_reps' => 10, 'target_weight' => 60, 'actual_reps' => 10, 'actual_weight' => 60, 'warm_up' => true],
-                        ['target_reps' => 5, 'target_weight' => 100, 'actual_reps' => 5, 'actual_weight' => 100, 'warm_up' => false],
-                        ['target_reps' => 5, 'target_weight' => 100, 'actual_reps' => null, 'actual_weight' => null, 'warm_up' => false],
+                        ['target_reps' => 10, 'target_weight' => 60, 'actual_reps' => 10, 'actual_weight' => 60, 'kind' => 'warm_up'],
+                        ['target_reps' => 5, 'target_weight' => 100, 'actual_reps' => 5, 'actual_weight' => 100, 'kind' => 'working'],
+                        ['target_reps' => 5, 'target_weight' => 100, 'actual_reps' => null, 'actual_weight' => null, 'kind' => 'working'],
                     ]],
                     ['exercise' => 'Dip', 'bodyweight_exercise' => true, 'sets' => [
-                        ['target_reps' => 8, 'target_weight' => 10, 'actual_reps' => 8, 'actual_weight' => 10, 'warm_up' => false],
+                        ['target_reps' => 8, 'target_weight' => 10, 'actual_reps' => 8, 'actual_weight' => 10, 'kind' => 'working'],
                     ]],
                 ],
             ]],
@@ -72,7 +72,7 @@ class WorkoutLogTest extends TestCase
                 'note' => null,
                 'exercises' => [
                     ['exercise' => 'Bench press', 'bodyweight_exercise' => false, 'sets' => [
-                        ['target_reps' => null, 'target_weight' => null, 'actual_reps' => 3, 'actual_weight' => 105, 'warm_up' => false],
+                        ['target_reps' => null, 'target_weight' => null, 'actual_reps' => 3, 'actual_weight' => 105, 'kind' => 'working'],
                     ]],
                 ],
             ]],

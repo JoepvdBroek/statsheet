@@ -1,10 +1,11 @@
 import type { Exercise } from './exercise';
+import type { SetKind } from './workout';
 
 export type RoutineSet = {
     target_reps: number;
     /** kg, up to two decimals; the added load for a Bodyweight Exercise. */
     target_weight: number;
-    is_warm_up: boolean;
+    kind: SetKind;
 };
 
 export type RoutineExercise = {

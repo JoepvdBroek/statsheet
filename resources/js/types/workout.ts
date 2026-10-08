@@ -1,22 +1,25 @@
 import type { Exercise, PersonalRecordMeasure } from './exercise';
 
+/** What a Set is. A Warm-up Set never counts; a Drop Set follows the Set before it at a lower weight, without rest, and counts like a Working Set. */
+export type SetKind = 'working' | 'warm_up' | 'drop';
+
 /** The Routine a Workout was started from. */
 export type WorkoutRoutine = { id: number; name: string; archived: boolean };
 
 export type WorkoutSet = {
     id: number;
-    /** Empty for a Set added during the Workout. */
+    /** Empty for a Set added during the Workout with nothing before it to copy. */
     target_reps: number | null;
     /** kg; the added load for a Bodyweight Exercise. */
     target_weight: number | null;
     actual_reps: number | null;
     actual_weight: number | null;
-    is_warm_up: boolean;
+    kind: SetKind;
     /** A Set is done exactly when it has an Actual. */
     done: boolean;
     /** The server's verdict: done, with reps and weight at or above the Target (or no Target). */
     meets_target: boolean;
-    /** The Personal Records this Set beat, judged against every earlier done working Set of its Exercise. Empty for the first, a warm-up or a not-done Set. */
+    /** The Personal Records this Set beat, judged against every earlier done non-warm-up Set of its Exercise. Empty for the first, a warm-up or a not-done Set. */
     new_records: PersonalRecordMeasure[];
 };
 

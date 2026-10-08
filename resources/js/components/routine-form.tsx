@@ -1,5 +1,6 @@
 import { useForm } from '@inertiajs/react';
 import type { UrlMethodPair } from '@inertiajs/core';
+import { CornerDownRightIcon, DumbbellIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import ExercisePicker from '@/components/exercise-picker';
 import InputError from '@/components/input-error';
@@ -7,16 +8,17 @@ import { ItemMenu } from '@/components/item-menu';
 import { ExerciseCard } from '@/components/statsheet/exercise-card';
 import { PlannedSetRow } from '@/components/statsheet/set-row';
 import { Button } from '@/components/ui/button';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { Exercise, Routine } from '@/types';
+import type { Exercise, Routine, SetKind } from '@/types';
 
 type PlannedSet = {
     /** Client-only identity, so React keeps rows apart while they move. */
     key: string;
     target_reps: number | null;
     target_weight: number | null;
-    is_warm_up: boolean;
+    kind: SetKind;
 };
 
 type PlannedExercise = {
@@ -133,16 +135,20 @@ export default function RoutineForm({
                         key: newKey(),
                         target_reps: null,
                         target_weight: null,
-                        is_warm_up: false,
+                        kind: 'working',
                     },
                 ],
             },
         ]);
 
-    /** A new Set repeats the last working Set's Target, so a plan of 3 × 8 × 80 takes two taps. */
+    /**
+     * A new Set repeats the last non-warm-up Set's Target, so a plan of 3 × 8 × 80 takes two taps.
+     * After a Drop Set it is another Drop Set, otherwise a Working Set.
+     */
     const addSet = (exerciseIndex: number) =>
         setSets(exerciseIndex, (sets) => {
-            const last = sets.findLast((set) => !set.is_warm_up) ?? sets.at(-1);
+            const last =
+                sets.findLast((set) => set.kind !== 'warm_up') ?? sets.at(-1);
 
             return [
                 ...sets,
@@ -150,7 +156,7 @@ export default function RoutineForm({
                     key: newKey(),
                     target_reps: last?.target_reps ?? null,
                     target_weight: last?.target_weight ?? null,
-                    is_warm_up: false,
+                    kind: last?.kind === 'drop' ? 'drop' : 'working',
                 },
             ];
         });
@@ -166,7 +172,7 @@ export default function RoutineForm({
                         sets: planned.sets.map((set) => ({
                             target_reps: set.target_reps,
                             target_weight: set.target_weight,
-                            is_warm_up: set.is_warm_up,
+                            kind: set.kind,
                         })),
                     })),
                 }));
@@ -240,8 +246,12 @@ export default function RoutineForm({
                                     const workingSetNumber = planned.sets
                                         .slice(0, setIndex + 1)
                                         .filter(
-                                            (other) => !other.is_warm_up,
+                                            (other) => other.kind === 'working',
                                         ).length;
+                                    const followsCountingSet =
+                                        setIndex > 0 &&
+                                        planned.sets[setIndex - 1].kind !==
+                                            'warm_up';
 
                                     return (
                                         <PlannedSetRow
@@ -264,14 +274,12 @@ export default function RoutineForm({
                                                     },
                                                 )
                                             }
-                                            warmup={set.is_warm_up}
-                                            onWarmupChange={(isWarmUp) =>
+                                            kind={set.kind}
+                                            onKindChange={(kind) =>
                                                 updateSet(
                                                     exerciseIndex,
                                                     setIndex,
-                                                    {
-                                                        is_warm_up: isWarmUp,
-                                                    },
+                                                    { kind },
                                                 )
                                             }
                                             invalid={{
@@ -320,7 +328,39 @@ export default function RoutineForm({
                                                                 ),
                                                         )
                                                     }
-                                                />
+                                                >
+                                                    {set.kind === 'drop' ? (
+                                                        <DropdownMenuItem
+                                                            onSelect={() =>
+                                                                updateSet(
+                                                                    exerciseIndex,
+                                                                    setIndex,
+                                                                    {
+                                                                        kind: 'working',
+                                                                    },
+                                                                )
+                                                            }
+                                                        >
+                                                            <DumbbellIcon aria-hidden="true" />
+                                                            Make a working set
+                                                        </DropdownMenuItem>
+                                                    ) : followsCountingSet ? (
+                                                        <DropdownMenuItem
+                                                            onSelect={() =>
+                                                                updateSet(
+                                                                    exerciseIndex,
+                                                                    setIndex,
+                                                                    {
+                                                                        kind: 'drop',
+                                                                    },
+                                                                )
+                                                            }
+                                                        >
+                                                            <CornerDownRightIcon aria-hidden="true" />
+                                                            Make a drop set
+                                                        </DropdownMenuItem>
+                                                    ) : null}
+                                                </ItemMenu>
                                             }
                                         />
                                     );

@@ -28,7 +28,8 @@ class WorkoutLog extends WeekRangeTool
         return 'The Workouts in each Week of a range of at most '.static::MAX_WEEKS.' Weeks, keyed by the Week\'s Monday, oldest first: '
             .'start time in the owner\'s timezone, whether still in progress, the Routine it was started from, the Bodyweight in kg, the Workout Note, '
             .'and each Exercise with its Sets in order. A Set has a Target and an Actual in reps and kg (for a Bodyweight Exercise the added load); '
-            .'a Set without an Actual was not done, and a Warm-up Set never counts.';
+            .'a Set without an Actual was not done. A Set\'s kind is working, warm_up or drop: '
+            .'a Warm-up Set never counts, and a Drop Set was done straight after the Set before it at a lower weight, without rest, and counts like a working Set.';
     }
 
     /**
@@ -76,7 +77,7 @@ class WorkoutLog extends WeekRangeTool
                     'target_weight' => $set->target_weight === null ? null : (float) $set->target_weight,
                     'actual_reps' => $set->actual_reps,
                     'actual_weight' => $set->actual_weight === null ? null : (float) $set->actual_weight,
-                    'warm_up' => $set->is_warm_up,
+                    'kind' => $set->kind->value,
                 ])->all(),
             ])->all(),
         ];
