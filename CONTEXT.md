@@ -34,8 +34,12 @@ The reps × weight a set aims for. In a Routine it is the plan; in a Workout it 
 **Actual**:
 The reps × weight actually performed in a set of a Workout. A set *meets its target* when both its reps and its weight are at or above the Target.
 
+**Swap**:
+Replacing an Exercise in a Workout with another in the same place, before any of its Sets is done. The new Exercise keeps the set count and is Pre-filled with the swapped-out Sets as its plan. The Workout does not remember the Exercise swapped out.
+_Avoid_: Replace, substitute
+
 **Pre-fill**:
-The Targets a new Workout gets at start, per set position, from the most recent Workout containing that exercise. That set's Actual is used if it met its target (or had no Target); otherwise that set's Target carries over; with no such earlier set, the Routine's Target is used.
+The Targets and set kinds a Workout's Sets get from the plan, per set position, when the Workout starts from a Routine or an Exercise is Swapped in: from the most recent earlier Workout containing that exercise. That set's kind is kept, and its Actual is used if it met its target (or had no Target); otherwise that set's Target carries over. With no such earlier set, the plan's kind and Target are used: the Routine's at start; on a Swap, the swapped-out Set's kind and no Target.
 _Avoid_: Auto-fill, suggestion
 
 ### Exercises and muscles

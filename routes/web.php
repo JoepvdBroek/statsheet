@@ -44,6 +44,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::scopeBindings()->group(function () {
         Route::post('workouts/{workout}/exercises', [WorkoutExerciseController::class, 'store'])->name('workouts.exercises.store');
         Route::put('workouts/{workout}/exercises/{exercise}/position', [WorkoutExerciseController::class, 'move'])->name('workouts.exercises.move');
+        Route::post('workouts/{workout}/exercises/{exercise}/swap', [WorkoutExerciseController::class, 'swap'])->name('workouts.exercises.swap');
         Route::delete('workouts/{workout}/exercises/{exercise}', [WorkoutExerciseController::class, 'destroy'])->name('workouts.exercises.destroy');
 
         Route::post('workouts/{workout}/exercises/{exercise}/sets', [WorkoutSetController::class, 'store'])->name('workouts.sets.store');

@@ -1,6 +1,7 @@
 import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import type { VisitOptions } from '@inertiajs/core';
 import {
+    ArrowLeftRightIcon,
     CornerDownRightIcon,
     DumbbellIcon,
     FlameIcon,
@@ -10,7 +11,9 @@ import { useEffect, useRef, useState } from 'react';
 import WorkoutController from '@/actions/App/Http/Controllers/WorkoutController';
 import WorkoutExerciseController from '@/actions/App/Http/Controllers/WorkoutExerciseController';
 import WorkoutSetController from '@/actions/App/Http/Controllers/WorkoutSetController';
-import ExercisePicker from '@/components/exercise-picker';
+import ExercisePicker, {
+    ExercisePickerDialog,
+} from '@/components/exercise-picker';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { ItemMenu, MoveRemoveItems } from '@/components/item-menu';
@@ -135,6 +138,7 @@ export default function ShowWorkout({
                                 key={performed.id}
                                 workoutId={workout.id}
                                 performed={performed}
+                                exercises={exercises}
                                 position={position}
                                 isLast={
                                     position === workout.exercises.length - 1
@@ -289,15 +293,19 @@ function DeleteWorkout({ workout }: { workout: Workout }) {
 function PerformedExercise({
     workoutId,
     performed,
+    exercises,
     position,
     isLast,
 }: {
     workoutId: number;
     performed: WorkoutExercise;
+    /** The Exercises a Swap can pick from; undefined while they load. */
+    exercises?: Exercise[];
     position: number;
     isLast: boolean;
 }) {
     const { exercise, sets } = performed;
+    const [swapping, setSwapping] = useState(false);
     const workingSets = sets.filter((set) => set.kind === 'working');
     const route = { workout: workoutId, exercise: performed.id };
 
@@ -343,9 +351,32 @@ function PerformedExercise({
                             structureVisit,
                         );
                     }}
-                />
+                >
+                    {sets.some((set) => set.done) ? null : (
+                        <DropdownMenuItem onSelect={() => setSwapping(true)}>
+                            <ArrowLeftRightIcon aria-hidden="true" />
+                            Swap Exercise
+                        </DropdownMenuItem>
+                    )}
+                </ItemMenu>
             }
         >
+            <ExercisePickerDialog
+                title={`Swap ${exercise.name}`}
+                exercises={exercises?.filter(
+                    (other) => other.id !== exercise.id,
+                )}
+                onPick={(picked) =>
+                    router.post(
+                        WorkoutExerciseController.swap.url(route),
+                        { exercise_id: picked.id },
+                        structureVisit,
+                    )
+                }
+                description="Archived Exercises aren't offered. Restore one first to log it."
+                open={swapping}
+                onOpenChange={setSwapping}
+            />
             {sets.map((set, setPosition) => (
                 <LoggedSet
                     key={set.id}
