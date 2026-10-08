@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\SetKind;
 use App\Models\Exercise;
 use App\Models\Workout;
 use App\Models\WorkoutExercise;
@@ -24,7 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Expected 1RM is the best Estimated 1RM of earlier Workouts, each lowered by 1% per week of its age beyond 3 weeks, by
  * at most 15%. Intensity and Average Weight use the same load as Estimated 1RM.
  *
- * @phpstan-type MeasuredSet array{id: int, exercise_id: int, workout: Workout, reps: int, added_load: float, load: float, warm_up: bool, e1rm: float|null, tonnage: float}
+ * @phpstan-type MeasuredSet array{id: int, exercise_id: int, workout: Workout, reps: int, added_load: float, load: float, kind: SetKind, e1rm: float|null, tonnage: float}
  * @phpstan-type Measure 'heaviest'|'e1rm'|'reps'|'tonnage'
  */
 class ExerciseProgress
@@ -216,7 +217,7 @@ class ExerciseProgress
      * Each has the Intensity of its heaviest non-warm-up Set, empty without an Expected 1RM, and its Average Weight,
      * empty without non-warm-up Sets. Each lists the Personal Records its Sets beat, in the order of the measures.
      *
-     * @return list<array{workout_id: int, started_at: string, routine: string|null, e1rm: float|null, intensity: int|null, average_weight: float|null, new_records: list<Measure>, sets: list<array{reps: int, weight: float, warm_up: bool, top: bool}>}>
+     * @return list<array{workout_id: int, started_at: string, routine: string|null, e1rm: float|null, intensity: int|null, average_weight: float|null, new_records: list<Measure>, sets: list<array{reps: int, weight: float, kind: string, top: bool}>}>
      */
     public function recentPerformances(): array
     {
@@ -233,7 +234,7 @@ class ExerciseProgress
             $top = null;
 
             foreach ($sets as $index => $set) {
-                if ($best !== null && ! $set['warm_up'] && $set['e1rm'] === $best) {
+                if ($best !== null && $set['kind']->counts() && $set['e1rm'] === $best) {
                     $top = $index;
 
                     break;
@@ -256,7 +257,7 @@ class ExerciseProgress
                 'sets' => array_map(fn (array $set, int $index) => [
                     'reps' => $set['reps'],
                     'weight' => $set['added_load'],
-                    'warm_up' => $set['warm_up'],
+                    'kind' => $set['kind']->value,
                     'top' => $index === $top,
                 ], $sets, array_keys($sets)),
             ];
@@ -314,7 +315,7 @@ class ExerciseProgress
      */
     private function qualifying(array $sets): array
     {
-        return array_values(array_filter($sets, fn (array $set) => ! $set['warm_up']));
+        return array_values(array_filter($sets, fn (array $set) => $set['kind']->counts()));
     }
 
     /**
@@ -387,7 +388,7 @@ class ExerciseProgress
             'reps' => $set->actual_reps,
             'added_load' => $addedLoad,
             'load' => $load,
-            'warm_up' => $set->is_warm_up,
+            'kind' => $set->kind,
             'e1rm' => $set->actual_reps <= 12 ? round($load * (1 + $set->actual_reps / 30), 2) : null,
             'tonnage' => round($set->actual_reps * $load, 2),
         ];

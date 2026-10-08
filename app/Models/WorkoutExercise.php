@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\HasPosition;
+use App\Enums\SetKind;
 use Database\Factories\WorkoutExerciseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
@@ -51,12 +52,21 @@ class WorkoutExercise extends Model
     }
 
     /**
-     * Add a Set after the others. Sets added during a Workout have no Target.
+     * Add a Set after the others, copying the last non-warm-up Set (or the last Set when all are Warm-ups):
+     * its Target is that Set's Actual when done, otherwise its Target, and it is a Drop Set after a Drop Set,
+     * otherwise a Working Set. The first Set has no Target.
      */
     public function addSet(): WorkoutSet
     {
+        $sets = $this->sets()->get();
+        $copied = $sets->last(fn (WorkoutSet $set) => $set->kind->counts()) ?? $sets->last();
+        $target = $copied?->targetForNextSet();
+
         return $this->sets()->create([
-            'position' => ($this->sets()->max('position') ?? -1) + 1,
+            'position' => ($sets->max('position') ?? -1) + 1,
+            'target_reps' => $target['reps'] ?? null,
+            'target_weight' => $target['weight'] ?? null,
+            'kind' => $copied?->kind === SetKind::Drop ? SetKind::Drop : SetKind::Working,
         ]);
     }
 

@@ -1,12 +1,15 @@
+import { CornerDownRightIcon } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 import { PRBadge } from '@/components/statsheet/pr-badge';
+import type { SetKind } from '@/types';
 
 type HistorySet = {
     reps: number;
     weight: number;
-    warmup?: boolean;
+    /** Warm-ups are shown dashed and never the top Set; a drop set gets a drop mark. Working when left out. */
+    kind?: SetKind;
     /** The server's top Set of the Workout. When any Set carries it, it replaces the client-side `epley` pick. */
     top?: boolean;
 };
@@ -44,7 +47,7 @@ function HistoryEntry({
     className,
     ...props
 }: HistoryEntryProps) {
-    const working = sets.filter((s) => !s.warmup);
+    const working = sets.filter((s) => s.kind !== 'warm_up');
     const top = sets.some((s) => s.top !== undefined)
         ? (sets.find((s) => s.top) ?? null)
         : working.reduce<HistorySet | null>(
@@ -105,21 +108,29 @@ function HistoryEntry({
                     <li
                         key={i}
                         className={cn(
-                            'inline-flex h-7 items-center rounded-full px-2.5 text-sm tabular-nums',
-                            s.warmup
+                            'inline-flex h-7 items-center gap-0.5 rounded-full px-2.5 text-sm tabular-nums',
+                            s.kind === 'warm_up'
                                 ? 'border border-dashed border-border text-muted-foreground'
                                 : s === top
                                   ? 'bg-secondary text-foreground ring-1 ring-primary/60'
                                   : 'bg-secondary text-foreground',
                         )}
                         title={
-                            s.warmup
+                            s.kind === 'warm_up'
                                 ? 'Warm-up'
                                 : s === top
                                   ? 'Top set'
-                                  : undefined
+                                  : s.kind === 'drop'
+                                    ? 'Drop set'
+                                    : undefined
                         }
                     >
+                        {s.kind === 'drop' ? (
+                            <CornerDownRightIcon
+                                aria-label="Drop set"
+                                className="size-3 text-muted-foreground"
+                            />
+                        ) : null}
                         {s.reps} ×{' '}
                         {bodyweight
                             ? `BW${s.weight ? `+${s.weight}` : ''}`

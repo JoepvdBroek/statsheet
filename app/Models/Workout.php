@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\SetKind;
 use Carbon\CarbonImmutable;
 use Database\Factories\WorkoutFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -122,10 +123,10 @@ class Workout extends Model
     }
 
     /**
-     * The Workout's Exercises in order as a Routine plans them, each Set with its planned Target and Warm-up flag.
+     * The Workout's Exercises in order as a Routine plans them, each Set with its planned Target and kind.
      * Sets with neither a Target nor an Actual are dropped, and so is an Exercise left without Sets.
      *
-     * @return list<array{exercise_id: int, sets: list<array{target_reps: int, target_weight: string, is_warm_up: bool}>}>
+     * @return list<array{exercise_id: int, sets: list<array{target_reps: int, target_weight: string, kind: SetKind}>}>
      */
     public function plannedExercises(): array
     {
@@ -136,7 +137,7 @@ class Workout extends Model
                     ->map(fn (WorkoutSet $set) => ($target = $set->plannedTarget()) === null ? null : [
                         'target_reps' => $target['reps'],
                         'target_weight' => $target['weight'],
-                        'is_warm_up' => $set->is_warm_up,
+                        'kind' => $set->kind,
                     ])
                     ->filter()
                     ->all()),

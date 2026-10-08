@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\HasPosition;
+use App\Enums\SetKind;
 use Database\Factories\WorkoutSetFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
@@ -20,9 +21,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $target_weight Target weight in kg; added load for a Bodyweight Exercise
  * @property int|null $actual_reps
  * @property string|null $actual_weight Actual weight in kg; added load for a Bodyweight Exercise
- * @property bool $is_warm_up Whether the Set is a Warm-up Set, which never counts
+ * @property SetKind $kind Whether the Set is a Working, Warm-up or Drop Set; a Warm-up Set never counts
  */
-#[Fillable(['position', 'target_reps', 'target_weight', 'actual_reps', 'actual_weight', 'is_warm_up'])]
+#[Fillable(['position', 'target_reps', 'target_weight', 'actual_reps', 'actual_weight', 'kind'])]
 #[WithoutTimestamps]
 class WorkoutSet extends Model
 {
@@ -35,7 +36,7 @@ class WorkoutSet extends Model
      * @var array<string, mixed>
      */
     protected $attributes = [
-        'is_warm_up' => false,
+        'kind' => SetKind::Working->value,
     ];
 
     /**
@@ -50,7 +51,7 @@ class WorkoutSet extends Model
             'target_weight' => 'decimal:2',
             'actual_reps' => 'integer',
             'actual_weight' => 'decimal:2',
-            'is_warm_up' => 'boolean',
+            'kind' => SetKind::class,
         ];
     }
 
@@ -120,6 +121,25 @@ class WorkoutSet extends Model
 
         if ($this->isDone()) {
             return ['reps' => $this->actual_reps, 'weight' => $this->actual_weight];
+        }
+
+        return null;
+    }
+
+    /**
+     * The Target a Set added after this one during the Workout copies: its Actual when done, otherwise its Target.
+     * Empty when it has neither.
+     *
+     * @return array{reps: int, weight: string}|null
+     */
+    public function targetForNextSet(): ?array
+    {
+        if ($this->isDone()) {
+            return ['reps' => $this->actual_reps, 'weight' => $this->actual_weight];
+        }
+
+        if ($this->target_reps !== null) {
+            return ['reps' => $this->target_reps, 'weight' => $this->target_weight];
         }
 
         return null;

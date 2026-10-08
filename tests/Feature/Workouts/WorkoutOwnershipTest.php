@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Workouts;
 
+use App\Enums\SetKind;
 use App\Models\User;
 use App\Models\Workout;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,7 +62,7 @@ class WorkoutOwnershipTest extends TestCase
                 'position' => 0,
                 'actual_reps' => 5,
                 'actual_weight' => 50,
-                'is_warm_up' => true,
+                'kind' => 'warm_up',
             ]);
 
         $response->assertNotFound();
@@ -73,6 +74,6 @@ class WorkoutOwnershipTest extends TestCase
         $this->assertDatabaseCount('workout_sets', 4);
         $this->assertSame(1, $set->refresh()->position);
         $this->assertFalse($set->isDone());
-        $this->assertFalse($set->is_warm_up);
+        $this->assertSame(SetKind::Working, $set->kind);
     }
 }

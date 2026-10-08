@@ -1,3 +1,5 @@
+import type { SetKind } from './workout';
+
 export type MuscleRole = 'primary' | 'secondary';
 
 export type ExerciseMuscle = {
@@ -54,5 +56,5 @@ export type ExercisePerformance = {
     /** The Personal Records its Sets beat. */
     new_records: PersonalRecordMeasure[];
     /** In order; weight is the added load for a Bodyweight Exercise. */
-    sets: { reps: number; weight: number; warm_up: boolean; top: boolean }[];
+    sets: { reps: number; weight: number; kind: SetKind; top: boolean }[];
 };

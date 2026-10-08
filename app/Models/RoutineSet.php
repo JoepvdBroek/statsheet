@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\SetKind;
 use Database\Factories\RoutineSetFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
@@ -15,9 +16,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $position 0-based place among the Exercise's Sets
  * @property int $target_reps
  * @property string $target_weight Target weight in kg; added load for a Bodyweight Exercise
- * @property bool $is_warm_up Whether the Set is a Warm-up Set, which never counts
+ * @property SetKind $kind Whether the Set is a Working, Warm-up or Drop Set; a Warm-up Set never counts
  */
-#[Fillable(['position', 'target_reps', 'target_weight', 'is_warm_up'])]
+#[Fillable(['position', 'target_reps', 'target_weight', 'kind'])]
 #[WithoutTimestamps]
 class RoutineSet extends Model
 {
@@ -30,7 +31,7 @@ class RoutineSet extends Model
      * @var array<string, mixed>
      */
     protected $attributes = [
-        'is_warm_up' => false,
+        'kind' => SetKind::Working->value,
     ];
 
     /**
@@ -43,7 +44,7 @@ class RoutineSet extends Model
         return [
             'target_reps' => 'integer',
             'target_weight' => 'decimal:2',
-            'is_warm_up' => 'boolean',
+            'kind' => SetKind::class,
         ];
     }
 

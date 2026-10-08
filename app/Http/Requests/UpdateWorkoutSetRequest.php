@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\SetKind;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateWorkoutSetRequest extends FormRequest
 {
@@ -19,7 +21,7 @@ class UpdateWorkoutSetRequest extends FormRequest
         return [
             'actual_reps' => ['required_with:actual_weight', 'integer', 'min:1', 'max:999'],
             'actual_weight' => ['required_with:actual_reps', 'numeric', 'min:0', 'max:9999.99', 'decimal:0,2'],
-            'is_warm_up' => ['sometimes', 'boolean'],
+            'kind' => ['sometimes', Rule::enum(SetKind::class)],
         ];
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\SetKind;
 use App\Models\Exercise;
 use App\Models\Routine;
 use App\Models\RoutineExercise;
@@ -79,9 +80,9 @@ class StartWorkout
     }
 
     /**
-     * The Target and Warm-up flag of a Set: carried over from the same Set last time when it has one, otherwise the Routine's.
+     * The Target and kind of a Set: carried over from the same Set last time when it has one, otherwise the Routine's.
      *
-     * @return array{target_reps: int, target_weight: string, is_warm_up: bool}
+     * @return array{target_reps: int, target_weight: string, kind: SetKind}
      */
     private function preFill(RoutineSet $plannedSet, ?WorkoutSet $lastTime): array
     {
@@ -91,14 +92,14 @@ class StartWorkout
             return [
                 'target_reps' => $plannedSet->target_reps,
                 'target_weight' => $plannedSet->target_weight,
-                'is_warm_up' => $plannedSet->is_warm_up,
+                'kind' => $plannedSet->kind,
             ];
         }
 
         return [
             'target_reps' => $carriedOver['reps'],
             'target_weight' => $carriedOver['weight'],
-            'is_warm_up' => $lastTime->is_warm_up,
+            'kind' => $lastTime->kind,
         ];
     }
 }

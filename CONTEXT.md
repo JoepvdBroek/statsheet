@@ -29,7 +29,7 @@ _Avoid_: Last performed, last used
 One planned or performed round of an exercise within a Workout, recording a **Target** and an **Actual**. A set without an Actual is *not done*.
 
 **Target**:
-The reps × weight a set aims for. In a Routine it is the plan; in a Workout it is what was pre-filled when the Workout started.
+The reps × weight a set aims for. In a Routine it is the plan; in a Workout it is what was pre-filled when the Workout started, or, for a Set added during the Workout, copied from the Set before it (its Actual if done, otherwise its Target).
 
 **Actual**:
 The reps × weight actually performed in a set of a Workout. A set *meets its target* when both its reps and its weight are at or above the Target.
@@ -56,6 +56,13 @@ _Avoid_: Muscle group, body part
 
 **Warm-up Set**:
 A Set marked as preparation. It is logged but never counts toward Volume, Goals or Personal Records.
+
+**Working Set**:
+A Set that is neither a Warm-up Set nor a Drop Set. The sets of an Exercise are counted and numbered by its Working Sets.
+
+**Drop Set**:
+A Set done straight after the previous Set of the same Exercise, at a lower weight, without rest. The heavy Set it drops from is not itself a Drop Set. A Set is never both a Warm-up Set and a Drop Set. A Drop Set counts like any other non-warm-up Set.
+_Avoid_: Strip set, descending set
 
 **Bodyweight**:
 The owner's single current body weight, copied into each Workout when it starts. It adds to the load of Bodyweight Exercise sets. It is not a measurement history.

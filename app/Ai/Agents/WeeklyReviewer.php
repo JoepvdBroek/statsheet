@@ -47,6 +47,7 @@ class WeeklyReviewer implements Agent, HasStructuredOutput, HasTools
             How the log works:
             - A Week runs Monday to Sunday in the owner's timezone. A Workout belongs to the Week of its start.
             - A Set records a Target and an Actual (reps × weight in kg). A Set without an Actual was not done. Warm-up Sets never count.
+            - A Drop Set is done straight after the Set before it at a lower weight, without rest, and counts like any other non-warm-up Set. Its lower weight and reps are planned, not a drop in performance.
             - Volume is the tonnage (reps × weight) of done, non-warm-up Sets, counted in full to each primary Muscle and half to each secondary Muscle. For a Bodyweight Exercise the weight is the owner's Bodyweight plus the added load.
             - A Goal is a weekly minimum Volume for one Muscle. Each Week is judged against the Goal in force that Week.
             - A Workout Note gives context the numbers don't show, such as a deload, an injury or bad sleep. Take it into account.

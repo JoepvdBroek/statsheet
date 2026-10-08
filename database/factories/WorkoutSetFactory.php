@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\SetKind;
 use App\Models\WorkoutExercise;
 use App\Models\WorkoutSet;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -25,7 +26,7 @@ class WorkoutSetFactory extends Factory
             'target_weight' => fake()->numberBetween(4, 60) * 2.5,
             'actual_reps' => null,
             'actual_weight' => null,
-            'is_warm_up' => false,
+            'kind' => SetKind::Working,
         ];
     }
 
@@ -79,7 +80,17 @@ class WorkoutSetFactory extends Factory
     public function warmUp(): static
     {
         return $this->state(fn (array $attributes) => [
-            'is_warm_up' => true,
+            'kind' => SetKind::WarmUp,
+        ]);
+    }
+
+    /**
+     * Indicate that the Set is a Drop Set.
+     */
+    public function drop(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'kind' => SetKind::Drop,
         ]);
     }
 }

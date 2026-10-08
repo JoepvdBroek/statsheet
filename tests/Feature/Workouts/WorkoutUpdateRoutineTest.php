@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Workouts;
 
+use App\Enums\SetKind;
 use App\Models\Exercise;
 use App\Models\Routine;
 use App\Models\RoutineExercise;
@@ -39,8 +40,8 @@ class WorkoutUpdateRoutineTest extends TestCase
         $this->assertSame('Push day', $routine->refresh()->name);
         $this->assertSame(
             [
-                [$press->id, [[8, '40.00', false], [6, '42.50', false]]],
-                [$squat->id, [[5, '100.00', true]]],
+                [$press->id, [[8, '40.00', SetKind::Working], [6, '42.50', SetKind::Working]]],
+                [$squat->id, [[5, '100.00', SetKind::WarmUp]]],
             ],
             $this->plan($routine),
         );
@@ -58,7 +59,7 @@ class WorkoutUpdateRoutineTest extends TestCase
 
         $this->actingAs($workout->user)->put(route('workouts.routine.update', $workout));
 
-        $this->assertSame([[$curl->id, [[12, '15.00', false], [15, '7.50', true]]]], $this->plan($workout->routine));
+        $this->assertSame([[$curl->id, [[12, '15.00', SetKind::Working], [15, '7.50', SetKind::WarmUp]]]], $this->plan($workout->routine));
     }
 
     public function test_sets_with_neither_a_target_nor_an_actual_are_dropped_with_an_exercise_left_without_sets()
@@ -75,7 +76,7 @@ class WorkoutUpdateRoutineTest extends TestCase
 
         $this->actingAs($workout->user)->put(route('workouts.routine.update', $workout));
 
-        $this->assertSame([[$rowing->id, [[10, '60.00', false]]]], $this->plan($workout->routine));
+        $this->assertSame([[$rowing->id, [[10, '60.00', SetKind::Working]]]], $this->plan($workout->routine));
     }
 
     public function test_the_workout_page_names_the_routine_to_update_only_when_it_has_one()
@@ -160,16 +161,16 @@ class WorkoutUpdateRoutineTest extends TestCase
     }
 
     /**
-     * The Routine's planned Exercises in order, each with its Sets as [Target reps, Target weight, warm-up].
+     * The Routine's planned Exercises in order, each with its Sets as [Target reps, Target weight, kind].
      *
-     * @return list<array{int, list<array{int, string, bool}>}>
+     * @return list<array{int, list<array{int, string, SetKind}>}>
      */
     private function plan(Routine $routine): array
     {
         return $routine->exercises()->with('sets')->get()
             ->map(fn (RoutineExercise $planned) => [
                 $planned->exercise_id,
-                $planned->sets->map(fn (RoutineSet $set) => [$set->target_reps, $set->target_weight, $set->is_warm_up])->all(),
+                $planned->sets->map(fn (RoutineSet $set) => [$set->target_reps, $set->target_weight, $set->kind])->all(),
             ])
             ->all();
     }

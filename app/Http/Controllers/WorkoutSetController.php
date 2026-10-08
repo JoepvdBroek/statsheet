@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\SetKind;
 use App\Http\Requests\MarkWorkoutSetDoneRequest;
 use App\Http\Requests\RepositionRequest;
 use App\Http\Requests\UpdateWorkoutSetRequest;
@@ -14,7 +15,7 @@ use Illuminate\Routing\Attributes\Controllers\Authorize;
 class WorkoutSetController extends Controller
 {
     /**
-     * Add a Set, without a Target, to the end of an Exercise in the Workout.
+     * Add a Set to the end of an Exercise in the Workout, copying the Set before it.
      */
     #[Authorize('update', 'workout')]
     public function store(Workout $workout, WorkoutExercise $exercise): RedirectResponse
@@ -25,13 +26,13 @@ class WorkoutSetController extends Controller
     }
 
     /**
-     * Correct a Set's Actual, or mark or unmark it as a Warm-up Set.
+     * Correct a Set's Actual, or change whether it is a Working, Warm-up or Drop Set.
      */
     #[Authorize('update', 'workout')]
     public function update(UpdateWorkoutSetRequest $request, Workout $workout, WorkoutSet $set): RedirectResponse
     {
-        if ($request->has('is_warm_up')) {
-            $set->is_warm_up = $request->boolean('is_warm_up');
+        if ($request->has('kind')) {
+            $set->kind = $request->enum('kind', SetKind::class);
         }
 
         if ($actual = $request->actual()) {

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\SetKind;
 use App\Models\RoutineExercise;
 use App\Models\RoutineSet;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -23,7 +24,7 @@ class RoutineSetFactory extends Factory
             'position' => 0,
             'target_reps' => fake()->numberBetween(5, 12),
             'target_weight' => fake()->numberBetween(0, 60) * 2.5,
-            'is_warm_up' => false,
+            'kind' => SetKind::Working,
         ];
     }
 
@@ -33,7 +34,17 @@ class RoutineSetFactory extends Factory
     public function warmUp(): static
     {
         return $this->state(fn (array $attributes) => [
-            'is_warm_up' => true,
+            'kind' => SetKind::WarmUp,
+        ]);
+    }
+
+    /**
+     * Indicate that the Set is a Drop Set.
+     */
+    public function drop(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'kind' => SetKind::Drop,
         ]);
     }
 }

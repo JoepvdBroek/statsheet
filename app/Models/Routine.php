@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\SetKind;
 use Carbon\CarbonImmutable;
 use Database\Factories\RoutineFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -127,7 +128,7 @@ class Routine extends Model
     /**
      * Replace the planned Exercises and their Sets, keeping the given order.
      *
-     * @param  list<array{exercise_id: int, sets: list<array{target_reps: int, target_weight: string, is_warm_up: bool}>}>  $exercises
+     * @param  list<array{exercise_id: int, sets: list<array{target_reps: int, target_weight: string, kind: SetKind}>}>  $exercises
      */
     public function syncExercises(array $exercises): void
     {

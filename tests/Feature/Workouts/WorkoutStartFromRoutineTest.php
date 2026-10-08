@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Workouts;
 
+use App\Enums\SetKind;
 use App\Models\Exercise;
 use App\Models\Routine;
 use App\Models\RoutineExercise;
@@ -25,8 +26,8 @@ class WorkoutStartFromRoutineTest extends TestCase
         $this->freezeSecond();
         $owner = User::factory()->create(['bodyweight' => '82.40']);
         $routine = Routine::factory()->for($owner)->create();
-        $squat = $this->plan($routine, [[5, '100.00', true], [5, '140.00', false]]);
-        $press = $this->plan($routine, [[8, '40.00', false], [8, '40.00', false], [6, '42.50', false]]);
+        $squat = $this->plan($routine, [[5, '100.00', SetKind::WarmUp], [5, '140.00', SetKind::Working]]);
+        $press = $this->plan($routine, [[8, '40.00', SetKind::Working], [8, '40.00', SetKind::Working], [6, '42.50', SetKind::Working]]);
 
         $response = $this->actingAs($owner)->post(route('routines.start', $routine));
 
@@ -39,8 +40,8 @@ class WorkoutStartFromRoutineTest extends TestCase
         $this->assertSame('82.40', $workout->bodyweight);
         $this->assertSame(
             [
-                [$squat->id, [[5, '100.00', true], [5, '140.00', false]]],
-                [$press->id, [[8, '40.00', false], [8, '40.00', false], [6, '42.50', false]]],
+                [$squat->id, [[5, '100.00', SetKind::WarmUp], [5, '140.00', SetKind::Working]]],
+                [$press->id, [[8, '40.00', SetKind::Working], [8, '40.00', SetKind::Working], [6, '42.50', SetKind::Working]]],
             ],
             $this->plannedSets($workout),
         );
@@ -72,7 +73,7 @@ class WorkoutStartFromRoutineTest extends TestCase
     public function test_a_set_pre_fills_from_the_same_set_last_time(array $lastTime, array $expectedTarget)
     {
         $routine = Routine::factory()->create();
-        $squat = $this->plan($routine, [[3, '100.00', false]]);
+        $squat = $this->plan($routine, [[3, '100.00', SetKind::Working]]);
         $this->perform($this->finishedWorkout($routine->user, '-2 days'), $squat, [
             WorkoutSet::factory()->state([
                 'target_reps' => $lastTime[0],
@@ -84,26 +85,26 @@ class WorkoutStartFromRoutineTest extends TestCase
 
         $this->actingAs($routine->user)->post(route('routines.start', $routine));
 
-        $this->assertSame([[$squat->id, [[...$expectedTarget, false]]]], $this->plannedSets($this->workoutInProgress($routine->user)));
+        $this->assertSame([[$squat->id, [[...$expectedTarget, SetKind::Working]]]], $this->plannedSets($this->workoutInProgress($routine->user)));
     }
 
     public function test_a_set_with_no_set_at_its_position_last_time_pre_fills_with_the_routines_target()
     {
         $routine = Routine::factory()->create();
-        $squat = $this->plan($routine, [[3, '100.00', false], [3, '110.00', false]]);
+        $squat = $this->plan($routine, [[3, '100.00', SetKind::Working], [3, '110.00', SetKind::Working]]);
         $this->perform($this->finishedWorkout($routine->user, '-2 days'), $squat, [
             WorkoutSet::factory()->state(['target_reps' => 5, 'target_weight' => '140.00'])->done(),
         ]);
 
         $this->actingAs($routine->user)->post(route('routines.start', $routine));
 
-        $this->assertSame([[$squat->id, [[5, '140.00', false], [3, '110.00', false]]]], $this->plannedSets($this->workoutInProgress($routine->user)));
+        $this->assertSame([[$squat->id, [[5, '140.00', SetKind::Working], [3, '110.00', SetKind::Working]]]], $this->plannedSets($this->workoutInProgress($routine->user)));
     }
 
     public function test_set_n_is_the_nth_set_last_time_even_after_earlier_sets_were_removed()
     {
         $routine = Routine::factory()->create();
-        $squat = $this->plan($routine, [[3, '100.00', false], [3, '110.00', false]]);
+        $squat = $this->plan($routine, [[3, '100.00', SetKind::Working], [3, '110.00', SetKind::Working]]);
         $owner = $routine->user;
         $this->perform($this->finishedWorkout($owner, '-2 days'), $squat, [
             WorkoutSet::factory()->state(['target_reps' => 5, 'target_weight' => '140.00'])->done(),
@@ -117,13 +118,13 @@ class WorkoutStartFromRoutineTest extends TestCase
 
         $this->post(route('routines.start', $routine));
 
-        $this->assertSame([[$squat->id, [[5, '145.00', false], [5, '150.00', false]]]], $this->plannedSets($this->workoutInProgress($owner)));
+        $this->assertSame([[$squat->id, [[5, '145.00', SetKind::Working], [5, '150.00', SetKind::Working]]]], $this->plannedSets($this->workoutInProgress($owner)));
     }
 
     public function test_the_routine_decides_the_set_count_even_when_last_time_had_more_sets()
     {
         $routine = Routine::factory()->create();
-        $squat = $this->plan($routine, [[3, '100.00', false]]);
+        $squat = $this->plan($routine, [[3, '100.00', SetKind::Working]]);
         $this->perform($this->finishedWorkout($routine->user, '-2 days'), $squat, [
             WorkoutSet::factory()->state(['target_reps' => 5, 'target_weight' => '140.00'])->done(),
             WorkoutSet::factory()->state(['target_reps' => 5, 'target_weight' => '150.00'])->done(),
@@ -131,13 +132,13 @@ class WorkoutStartFromRoutineTest extends TestCase
 
         $this->actingAs($routine->user)->post(route('routines.start', $routine));
 
-        $this->assertSame([[$squat->id, [[5, '140.00', false]]]], $this->plannedSets($this->workoutInProgress($routine->user)));
+        $this->assertSame([[$squat->id, [[5, '140.00', SetKind::Working]]]], $this->plannedSets($this->workoutInProgress($routine->user)));
     }
 
-    public function test_the_warm_up_flag_comes_from_the_set_that_supplied_the_target()
+    public function test_the_kind_comes_from_the_set_that_supplied_the_target()
     {
         $routine = Routine::factory()->create();
-        $squat = $this->plan($routine, [[3, '100.00', false], [3, '110.00', true]]);
+        $squat = $this->plan($routine, [[3, '100.00', SetKind::Working], [3, '110.00', SetKind::Drop]]);
         $this->perform($this->finishedWorkout($routine->user, '-2 days'), $squat, [
             WorkoutSet::factory()->state(['target_reps' => 5, 'target_weight' => '60.00'])->done()->warmUp(),
             WorkoutSet::factory()->withoutTarget()->notDone(),
@@ -145,7 +146,7 @@ class WorkoutStartFromRoutineTest extends TestCase
 
         $this->actingAs($routine->user)->post(route('routines.start', $routine));
 
-        $this->assertSame([[$squat->id, [[5, '60.00', true], [3, '110.00', true]]]], $this->plannedSets($this->workoutInProgress($routine->user)));
+        $this->assertSame([[$squat->id, [[5, '60.00', SetKind::WarmUp], [3, '110.00', SetKind::Drop]]]], $this->plannedSets($this->workoutInProgress($routine->user)));
     }
 
     /**
@@ -163,7 +164,7 @@ class WorkoutStartFromRoutineTest extends TestCase
     public function test_pre_fill_uses_the_most_recent_workout_containing_the_exercise_whichever_routine_it_came_from(bool $fromAnotherRoutine)
     {
         $routine = Routine::factory()->create();
-        $squat = $this->plan($routine, [[3, '100.00', false]]);
+        $squat = $this->plan($routine, [[3, '100.00', SetKind::Working]]);
         $owner = $routine->user;
         $this->perform($this->finishedWorkout($owner, '-9 days', $routine), $squat, [
             WorkoutSet::factory()->state(['target_reps' => 5, 'target_weight' => '140.00'])->done(),
@@ -178,13 +179,13 @@ class WorkoutStartFromRoutineTest extends TestCase
 
         $this->actingAs($owner)->post(route('routines.start', $routine));
 
-        $this->assertSame([[$squat->id, [[5, '145.00', false]]]], $this->plannedSets($this->workoutInProgress($owner)));
+        $this->assertSame([[$squat->id, [[5, '145.00', SetKind::Working]]]], $this->plannedSets($this->workoutInProgress($owner)));
     }
 
     public function test_pre_fill_uses_the_first_occurrence_of_the_exercise_in_the_most_recent_workout()
     {
         $routine = Routine::factory()->create();
-        $squat = $this->plan($routine, [[3, '100.00', false]]);
+        $squat = $this->plan($routine, [[3, '100.00', SetKind::Working]]);
         $mostRecent = $this->finishedWorkout($routine->user, '-2 days');
         $this->perform($mostRecent, $squat, [
             WorkoutSet::factory()->state(['target_reps' => 5, 'target_weight' => '140.00'])->done(),
@@ -195,19 +196,19 @@ class WorkoutStartFromRoutineTest extends TestCase
 
         $this->actingAs($routine->user)->post(route('routines.start', $routine));
 
-        $this->assertSame([[$squat->id, [[5, '140.00', false]]]], $this->plannedSets($this->workoutInProgress($routine->user)));
+        $this->assertSame([[$squat->id, [[5, '140.00', SetKind::Working]]]], $this->plannedSets($this->workoutInProgress($routine->user)));
     }
 
     public function test_an_exercise_planned_twice_does_not_pre_fill_from_the_workout_being_started()
     {
         $routine = Routine::factory()->create();
-        $squat = $this->plan($routine, [[3, '100.00', false]]);
-        $this->plan($routine, [[8, '60.00', false]], $squat);
+        $squat = $this->plan($routine, [[3, '100.00', SetKind::Working]]);
+        $this->plan($routine, [[8, '60.00', SetKind::Working]], $squat);
 
         $this->actingAs($routine->user)->post(route('routines.start', $routine));
 
         $this->assertSame(
-            [[$squat->id, [[3, '100.00', false]]], [$squat->id, [[8, '60.00', false]]]],
+            [[$squat->id, [[3, '100.00', SetKind::Working]]], [$squat->id, [[8, '60.00', SetKind::Working]]]],
             $this->plannedSets($this->workoutInProgress($routine->user)),
         );
     }
@@ -215,7 +216,7 @@ class WorkoutStartFromRoutineTest extends TestCase
     public function test_editing_or_archiving_the_routine_afterwards_leaves_the_workout_unchanged()
     {
         $routine = Routine::factory()->create();
-        $squat = $this->plan($routine, [[5, '140.00', false], [5, '140.00', false]]);
+        $squat = $this->plan($routine, [[5, '140.00', SetKind::Working], [5, '140.00', SetKind::Working]]);
         $press = Exercise::factory()->for($routine->user)->create();
         $this->actingAs($routine->user)->post(route('routines.start', $routine));
         $workout = $this->workoutInProgress($routine->user);
@@ -223,13 +224,13 @@ class WorkoutStartFromRoutineTest extends TestCase
         $this->put(route('routines.update', $routine), [
             'name' => 'Push day B',
             'exercises' => [['exercise_id' => $press->id, 'sets' => [
-                ['target_reps' => 8, 'target_weight' => 40, 'is_warm_up' => true],
+                ['target_reps' => 8, 'target_weight' => 40, 'kind' => 'warm_up'],
             ]]],
         ])->assertSessionHasNoErrors();
         $this->post(route('routines.archive', $routine));
 
         $this->assertTrue($workout->refresh()->routine->is($routine));
-        $this->assertSame([[$squat->id, [[5, '140.00', false], [5, '140.00', false]]]], $this->plannedSets($workout));
+        $this->assertSame([[$squat->id, [[5, '140.00', SetKind::Working], [5, '140.00', SetKind::Working]]]], $this->plannedSets($workout));
     }
 
     public function test_starting_while_a_workout_is_in_progress_creates_nothing_and_redirects_to_it()
@@ -259,9 +260,9 @@ class WorkoutStartFromRoutineTest extends TestCase
     }
 
     /**
-     * Plan an Exercise after the Routine's others, with Sets of [reps, weight, warm-up].
+     * Plan an Exercise after the Routine's others, with Sets of [reps, weight, kind].
      *
-     * @param  list<array{int, string, bool}>  $sets
+     * @param  list<array{int, string, SetKind}>  $sets
      */
     private function plan(Routine $routine, array $sets, ?Exercise $exercise = null): Exercise
     {
@@ -277,7 +278,7 @@ class WorkoutStartFromRoutineTest extends TestCase
                         'position' => $sequence->index,
                         'target_reps' => $sets[$sequence->index][0],
                         'target_weight' => $sets[$sequence->index][1],
-                        'is_warm_up' => $sets[$sequence->index][2],
+                        'kind' => $sets[$sequence->index][2],
                     ]),
                 'sets',
             )
@@ -303,16 +304,16 @@ class WorkoutStartFromRoutineTest extends TestCase
     }
 
     /**
-     * The started Workout's Exercises in order, each with its Sets as [Target reps, Target weight, warm-up].
+     * The started Workout's Exercises in order, each with its Sets as [Target reps, Target weight, kind].
      *
-     * @return list<array{int, list<array{int|null, string|null, bool}>}>
+     * @return list<array{int, list<array{int|null, string|null, SetKind}>}>
      */
     private function plannedSets(Workout $workout): array
     {
         return $workout->exercises()->with('sets')->get()
             ->map(fn (WorkoutExercise $performed) => [
                 $performed->exercise_id,
-                $performed->sets->map(fn (WorkoutSet $set) => [$set->target_reps, $set->target_weight, $set->is_warm_up])->all(),
+                $performed->sets->map(fn (WorkoutSet $set) => [$set->target_reps, $set->target_weight, $set->kind])->all(),
             ])
             ->all();
     }

@@ -18,7 +18,7 @@ class RoutineResource extends JsonResource
      *
      * The Last Done is included only when the Routines were queried withLastDone().
      *
-     * @return array{id: int, name: string, archived: bool, last_done?: string|null, exercises: array<int, array{exercise: array<string, mixed>, sets: array<int, array{target_reps: int, target_weight: float, is_warm_up: bool}>}>}
+     * @return array{id: int, name: string, archived: bool, last_done?: string|null, exercises: array<int, array{exercise: array<string, mixed>, sets: array<int, array{target_reps: int, target_weight: float, kind: string}>}>}
      */
     public function toArray(Request $request): array
     {
@@ -34,7 +34,7 @@ class RoutineResource extends JsonResource
                         ->map(fn (RoutineSet $set) => [
                             'target_reps' => $set->target_reps,
                             'target_weight' => (float) $set->target_weight,
-                            'is_warm_up' => $set->is_warm_up,
+                            'kind' => $set->kind->value,
                         ])
                         ->all(),
                 ])
