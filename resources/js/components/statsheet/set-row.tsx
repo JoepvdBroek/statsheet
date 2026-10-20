@@ -88,7 +88,7 @@ function SetField({
     placeholder,
     readOnly,
     done,
-    step,
+    isWeight = false,
     invalid = false,
 }: {
     value: number | null;
@@ -97,15 +97,17 @@ function SetField({
     placeholder: string;
     readOnly?: boolean;
     done: boolean;
-    step: string;
+    /** kg with up to two decimals, marked Dutch so Safari accepts the iPhone keypad's ","; otherwise whole reps. */
+    isWeight?: boolean;
     invalid?: boolean;
 }) {
     return (
         <input
             aria-label={label}
-            inputMode="decimal"
+            inputMode={isWeight ? 'decimal' : 'numeric'}
+            lang={isWeight ? 'nl' : undefined}
             type="number"
-            step={step}
+            step={isWeight ? '0.01' : '1'}
             min={0}
             readOnly={readOnly}
             placeholder={placeholder}
@@ -231,7 +233,7 @@ function SetRow({
                 onValue={(weight) => setActual({ ...actual, weight })}
                 readOnly={readOnly}
                 done={done}
-                step="0.5"
+                isWeight
                 invalid={invalid.weight}
             />
             <SetField
@@ -241,7 +243,6 @@ function SetRow({
                 onValue={(reps) => setActual({ ...actual, reps })}
                 readOnly={readOnly}
                 done={done}
-                step="1"
                 invalid={invalid.reps}
             />
             <button
@@ -380,7 +381,7 @@ function PlannedSetRow({
                     value={target.weight}
                     onValue={(weight) => onTargetChange({ ...target, weight })}
                     done={false}
-                    step="0.01"
+                    isWeight
                     invalid={invalid.weight}
                 />
             </span>
@@ -391,7 +392,6 @@ function PlannedSetRow({
                     value={target.reps}
                     onValue={(reps) => onTargetChange({ ...target, reps })}
                     done={false}
-                    step="1"
                     invalid={invalid.reps}
                 />
             </span>
