@@ -59,6 +59,7 @@ function GoalRow({ goal }: { goal: GoalInForce }) {
                                     name="weekly_minimum"
                                     type="number"
                                     inputMode="decimal"
+                                    lang="nl"
                                     min="0.01"
                                     step="0.01"
                                     defaultValue={goal.weekly_minimum ?? ''}

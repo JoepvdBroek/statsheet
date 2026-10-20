@@ -119,13 +119,14 @@ export default function Profile({
                                     id="bodyweight"
                                     type="number"
                                     inputMode="decimal"
+                                    lang="nl"
                                     step="0.01"
                                     min="0.01"
                                     max="999.99"
                                     className="mt-1 block w-full"
                                     defaultValue={auth.user.bodyweight ?? ''}
                                     name="bodyweight"
-                                    placeholder="e.g. 80.5"
+                                    placeholder="e.g. 80,5"
                                 />
 
                                 <p className="text-sm text-muted-foreground">
