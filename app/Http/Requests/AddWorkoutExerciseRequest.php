@@ -38,7 +38,7 @@ class AddWorkoutExerciseRequest extends FormRequest
     }
 
     /**
-     * The validated Exercise to add.
+     * The validated Exercise to add or swap in.
      */
     public function exercise(): Exercise
     {

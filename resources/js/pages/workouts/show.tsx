@@ -306,6 +306,7 @@ function PerformedExercise({
 }) {
     const { exercise, sets } = performed;
     const [swapping, setSwapping] = useState(false);
+    const hasDoneSet = sets.some((set) => set.done);
     const workingSets = sets.filter((set) => set.kind === 'working');
     const route = { workout: workoutId, exercise: performed.id };
 
@@ -338,7 +339,7 @@ function PerformedExercise({
                     }
                     onRemove={() => {
                         if (
-                            sets.some((set) => set.done) &&
+                            hasDoneSet &&
                             !window.confirm(
                                 `Remove ${exercise.name} and its logged Sets?`,
                             )
@@ -352,12 +353,10 @@ function PerformedExercise({
                         );
                     }}
                 >
-                    {sets.some((set) => set.done) ? null : (
-                        <DropdownMenuItem onSelect={() => setSwapping(true)}>
-                            <ArrowLeftRightIcon aria-hidden="true" />
-                            Swap Exercise
-                        </DropdownMenuItem>
-                    )}
+                    <DropdownMenuItem onSelect={() => setSwapping(true)}>
+                        <ArrowLeftRightIcon aria-hidden="true" />
+                        Swap Exercise
+                    </DropdownMenuItem>
                 </ItemMenu>
             }
         >
@@ -366,13 +365,22 @@ function PerformedExercise({
                 exercises={exercises?.filter(
                     (other) => other.id !== exercise.id,
                 )}
-                onPick={(picked) =>
+                onPick={(picked) => {
+                    if (
+                        hasDoneSet &&
+                        !window.confirm(
+                            `Swap ${exercise.name} for ${picked.name} and discard its logged Sets?`,
+                        )
+                    ) {
+                        return;
+                    }
+
                     router.post(
                         WorkoutExerciseController.swap.url(route),
                         { exercise_id: picked.id },
                         structureVisit,
-                    )
-                }
+                    );
+                }}
                 description="Archived Exercises aren't offered. Restore one first to log it."
                 open={swapping}
                 onOpenChange={setSwapping}

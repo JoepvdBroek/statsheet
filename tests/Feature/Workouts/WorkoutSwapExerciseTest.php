@@ -80,7 +80,7 @@ class WorkoutSwapExerciseTest extends TestCase
         $this->assertSame([[8, '24.00', SetKind::Working]], $this->sets($swapped->refresh()));
     }
 
-    public function test_an_exercise_with_a_done_set_cannot_be_swapped()
+    public function test_swapping_an_exercise_with_a_done_set_discards_its_actuals()
     {
         $workout = Workout::factory()->create();
         $swapped = $this->performedWith($workout, [$this->doneSet(12, '15.00'), WorkoutSet::factory()->state(['target_reps' => 12, 'target_weight' => '17.50'])]);
@@ -90,9 +90,15 @@ class WorkoutSwapExerciseTest extends TestCase
             ->actingAs($workout->user)
             ->post(route('workouts.exercises.swap', [$workout, $swapped]), ['exercise_id' => $dumbbellFly->id]);
 
-        $response->assertSessionHasErrors(['exercise_id' => 'Swap an Exercise only before any of its Sets is done.']);
-        $this->assertNotSame($dumbbellFly->id, $swapped->refresh()->exercise_id);
-        $this->assertSame([[12, '15.00', SetKind::Working], [12, '17.50', SetKind::Working]], $this->sets($swapped));
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('workouts.show', $workout));
+
+        $this->assertSame($dumbbellFly->id, $swapped->refresh()->exercise_id);
+        $this->assertSame(
+            [[null, null], [null, null]],
+            $swapped->sets()->get()->map(fn (WorkoutSet $set) => [$set->actual_reps, $set->actual_weight])->all(),
+        );
     }
 
     public function test_another_users_exercise_cannot_be_swapped_in()

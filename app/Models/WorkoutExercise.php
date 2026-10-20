@@ -97,7 +97,7 @@ class WorkoutExercise extends Model
     }
 
     /**
-     * Swap in another Exercise in this place: its Sets keep their count and kinds as the plan, Pre-filled for it.
+     * Swap in another Exercise in this place: its Sets keep their count and kinds as the plan, Pre-filled for it, and logged Actuals are discarded.
      */
     public function swapFor(Exercise $exercise): void
     {
@@ -110,14 +110,6 @@ class WorkoutExercise extends Model
             $this->exercise()->associate($exercise)->save();
             $this->preFill($plan);
         });
-    }
-
-    /**
-     * Whether any of its Sets is done.
-     */
-    public function hasDoneSet(): bool
-    {
-        return $this->sets()->whereNotNull('actual_reps')->exists();
     }
 
     /**
