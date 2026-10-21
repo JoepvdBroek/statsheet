@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AddWorkoutExerciseRequest;
 use App\Http\Requests\RepositionRequest;
-use App\Http\Requests\SwapWorkoutExerciseRequest;
 use App\Models\Workout;
 use App\Models\WorkoutExercise;
 use Illuminate\Http\RedirectResponse;
@@ -35,10 +34,10 @@ class WorkoutExerciseController extends Controller
     }
 
     /**
-     * Swap another of the owner's Exercises in use into an Exercise's place, keeping its set count and kinds as the plan.
+     * Swap another of the owner's Exercises in use into an Exercise's place, keeping its set count and kinds as the plan and discarding logged Actuals.
      */
     #[Authorize('update', 'workout')]
-    public function swap(SwapWorkoutExerciseRequest $request, Workout $workout, WorkoutExercise $exercise): RedirectResponse
+    public function swap(AddWorkoutExerciseRequest $request, Workout $workout, WorkoutExercise $exercise): RedirectResponse
     {
         $exercise->swapFor($request->exercise());
 
