@@ -57,11 +57,9 @@ function GoalRow({ goal }: { goal: GoalInForce }) {
                                 <Input
                                     id={inputId}
                                     name="weekly_minimum"
-                                    type="number"
+                                    type="text"
                                     inputMode="decimal"
-                                    lang="nl"
-                                    min="0.01"
-                                    step="0.01"
+                                    autoComplete="off"
                                     defaultValue={goal.weekly_minimum ?? ''}
                                     placeholder="No Goal"
                                     aria-invalid={

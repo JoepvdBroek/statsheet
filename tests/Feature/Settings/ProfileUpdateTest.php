@@ -62,6 +62,23 @@ class ProfileUpdateTest extends TestCase
         $this->assertSame('America/New_York', $user->timezone);
     }
 
+    public function test_bodyweight_with_a_decimal_comma_is_saved()
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patch(route('profile.update'), [
+                'name' => $user->name,
+                'email' => $user->email,
+                'bodyweight' => '82,5',
+                'timezone' => $user->timezone,
+            ]);
+
+        $response->assertSessionHasNoErrors();
+        $this->assertSame('82.50', $user->refresh()->bodyweight);
+    }
+
     public function test_bodyweight_can_be_cleared()
     {
         $user = User::factory()->withBodyweight('80.00')->create();

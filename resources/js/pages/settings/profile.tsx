@@ -117,12 +117,9 @@ export default function Profile({
 
                                 <Input
                                     id="bodyweight"
-                                    type="number"
+                                    type="text"
                                     inputMode="decimal"
-                                    lang="nl"
-                                    step="0.01"
-                                    min="0.01"
-                                    max="999.99"
+                                    autoComplete="off"
                                     className="mt-1 block w-full"
                                     defaultValue={auth.user.bodyweight ?? ''}
                                     name="bodyweight"
