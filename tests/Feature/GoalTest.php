@@ -115,6 +115,16 @@ class GoalTest extends TestCase
         $this->assertSame('2026-09-28', $goal->effective_week->toDateString());
     }
 
+    public function test_a_weekly_minimum_with_a_decimal_comma_is_saved()
+    {
+        $owner = User::factory()->create();
+
+        $response = $this->actingAs($owner)->put(route('goals.update', Muscle::Chest), ['weekly_minimum' => '6000,5']);
+
+        $response->assertSessionHasNoErrors();
+        $this->assertSame('6000.50', $owner->goals()->sole()->weekly_minimum);
+    }
+
     /**
      * A moment to look at the Stats hub, and the chest Goal in force then. Chest has 6,000 kg Volume every Week.
      *

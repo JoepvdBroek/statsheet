@@ -81,6 +81,15 @@ function useControlled<T>(
     ] as const;
 }
 
+/** A kg value while it is typed: digits with up to two decimals after a "." or ",". */
+const KG_DRAFT = /^\d*([.,]\d{0,2})?$/;
+
+/** The kg a draft stands for, reading a decimal comma (a Dutch keypad offers only ",") as a decimal point. */
+function parseKg(draft: string): number | null {
+    const normalized = draft.replace(',', '.');
+    return normalized === '' || normalized === '.' ? null : Number(normalized);
+}
+
 function SetField({
     value,
     onValue,
@@ -97,17 +106,46 @@ function SetField({
     placeholder: string;
     readOnly?: boolean;
     done: boolean;
-    /** kg with up to two decimals, marked Dutch so Safari accepts the iPhone keypad's ","; otherwise whole reps. */
+    /** kg with up to two decimals, typed with "." or ","; otherwise whole reps. */
     isWeight?: boolean;
     invalid?: boolean;
 }) {
+    /** The kg as typed while the field has focus, so "12," stays on screen until the next digit. */
+    const [draft, setDraft] = React.useState<string | null>(null);
+    const className = cn(
+        'h-10 w-full min-w-0 [appearance:textfield] rounded-md border bg-transparent px-1 text-center text-base tabular-nums transition-[color,box-shadow,border-color] outline-none placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+        done || readOnly ? 'border-transparent' : 'border-input',
+        'aria-invalid:border-destructive',
+    );
+
+    if (isWeight) {
+        return (
+            <input
+                aria-label={label}
+                inputMode="decimal"
+                type="text"
+                autoComplete="off"
+                readOnly={readOnly}
+                placeholder={placeholder}
+                aria-invalid={invalid || undefined}
+                value={draft ?? (value === null ? '' : String(value))}
+                onChange={(e) => {
+                    if (!KG_DRAFT.test(e.target.value)) return;
+                    setDraft(e.target.value);
+                    onValue(parseKg(e.target.value));
+                }}
+                onBlur={() => setDraft(null)}
+                className={className}
+            />
+        );
+    }
+
     return (
         <input
             aria-label={label}
-            inputMode={isWeight ? 'decimal' : 'numeric'}
-            lang={isWeight ? 'nl' : undefined}
+            inputMode="numeric"
             type="number"
-            step={isWeight ? '0.01' : '1'}
+            step="1"
             min={0}
             readOnly={readOnly}
             placeholder={placeholder}
@@ -116,11 +154,7 @@ function SetField({
             onChange={(e) =>
                 onValue(e.target.value === '' ? null : Number(e.target.value))
             }
-            className={cn(
-                'h-10 w-full min-w-0 [appearance:textfield] rounded-md border bg-transparent px-1 text-center text-base tabular-nums transition-[color,box-shadow,border-color] outline-none placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
-                done || readOnly ? 'border-transparent' : 'border-input',
-                'aria-invalid:border-destructive',
-            )}
+            className={className}
         />
     );
 }

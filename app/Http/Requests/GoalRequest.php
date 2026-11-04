@@ -8,6 +8,16 @@ use Illuminate\Foundation\Http\FormRequest;
 class GoalRequest extends FormRequest
 {
     /**
+     * Read a decimal comma, as typed on a Dutch keypad, as a decimal point.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('weekly_minimum'))) {
+            $this->merge(['weekly_minimum' => str_replace(',', '.', $this->input('weekly_minimum'))]);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
