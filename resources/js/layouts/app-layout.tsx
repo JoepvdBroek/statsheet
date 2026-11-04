@@ -1,4 +1,9 @@
 import { PageHeader } from '@/components/page-header';
+import {
+    PrototypePageSkeleton,
+    usePrototypeNavigation,
+} from '@/components/prototype-navigation-feedback';
+import { cn } from '@/lib/utils';
 import { TabBar } from '@/components/tab-bar';
 import type { AppLayoutProps } from '@/types';
 
@@ -13,11 +18,34 @@ export default function AppLayout({
     actions,
     children,
 }: AppLayoutProps) {
+    const nav = usePrototypeNavigation();
+    const waiting = nav.pending && nav.showWait ? nav.pending : null;
+    const skeleton = nav.variant === 'C' && waiting?.kind === 'page';
+    const reloading = waiting?.kind === 'reload';
+
     return (
         <div className="min-h-svh bg-background">
             <main className="mx-auto flex w-full max-w-160 flex-col pb-(--tab-bar-height)">
-                <PageHeader title={title} parent={parent} actions={actions} />
-                {children}
+                {skeleton ? (
+                    <PrototypePageSkeleton />
+                ) : (
+                    <>
+                        <PageHeader
+                            title={title}
+                            parent={parent}
+                            actions={actions}
+                        />
+                        <div
+                            className={cn(
+                                'transition-opacity',
+                                reloading && 'pointer-events-none opacity-50',
+                            )}
+                            aria-busy={reloading || undefined}
+                        >
+                            {children}
+                        </div>
+                    </>
+                )}
             </main>
             <TabBar activeTab={tab} />
         </div>

@@ -94,7 +94,7 @@ function RoutineCard({
                                 Start workout
                             </a>
                         ) : onStart ? (
-                            <Button size="sm" onClick={onStart}>
+                            <Button size="sm" onClick={onStart} data-prototype-navigates>
                                 Start workout
                             </Button>
                         ) : null}

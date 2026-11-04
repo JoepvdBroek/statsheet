@@ -151,7 +151,7 @@ export default function ExerciseForm({
                 error={firstError('secondary_muscles')}
             />
 
-            <Button type="submit" size="lg" disabled={form.processing}>
+            <Button type="submit" size="lg" disabled={form.processing} data-prototype-navigates>
                 {submitLabel}
             </Button>
         </form>

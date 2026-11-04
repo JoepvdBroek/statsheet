@@ -183,6 +183,7 @@ export default function ShowWorkout({
                                     size="lg"
                                     className="h-12 w-full text-base"
                                     disabled={processing}
+                                    data-prototype-navigates
                                 >
                                     Finish workout
                                 </Button>
@@ -278,6 +279,7 @@ function DeleteWorkout({ workout }: { workout: Workout }) {
                                     type="submit"
                                     variant="destructive"
                                     disabled={processing}
+                                    data-prototype-navigates
                                 >
                                     Delete
                                 </Button>

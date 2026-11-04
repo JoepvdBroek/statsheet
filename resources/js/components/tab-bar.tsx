@@ -1,6 +1,10 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ChartLine, ClipboardList, Dumbbell } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import {
+    tabForPath,
+    usePrototypeNavigation,
+} from '@/components/prototype-navigation-feedback';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { hub as statsHub } from '@/routes/statistics';
@@ -14,6 +18,11 @@ type Tab = NavItem & { tab: AppTab; icon: LucideIcon; live?: boolean };
  */
 export function TabBar({ activeTab }: { activeTab: AppTab | null }) {
     const { workoutInProgressId } = usePage().props;
+    const nav = usePrototypeNavigation();
+    const shownTab =
+        nav.variant === 'C' && nav.pending?.kind !== 'reload' && nav.pending
+            ? tabForPath(nav.pending.targetPath)
+            : activeTab;
 
     const tabs: Tab[] = [
         {
@@ -42,7 +51,7 @@ export function TabBar({ activeTab }: { activeTab: AppTab | null }) {
         >
             <div className="mx-auto flex h-16 max-w-160 px-2 py-1">
                 {tabs.map((item) => {
-                    const active = item.tab === activeTab;
+                    const active = item.tab === shownTab;
 
                     return (
                         <Link

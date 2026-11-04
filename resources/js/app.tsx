@@ -1,4 +1,5 @@
 import { createInertiaApp } from '@inertiajs/react';
+import { PrototypeNavigationFeedback } from '@/components/prototype-navigation-feedback';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/app-layout';
@@ -25,6 +26,7 @@ void createInertiaApp({
             <TooltipProvider delayDuration={0}>
                 {app}
                 <Toaster />
+                <PrototypeNavigationFeedback />
             </TooltipProvider>
         );
     },

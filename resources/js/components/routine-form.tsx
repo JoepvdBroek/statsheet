@@ -386,7 +386,7 @@ export default function RoutineForm({
                 />
             </div>
 
-            <Button type="submit" size="lg" disabled={form.processing}>
+            <Button type="submit" size="lg" disabled={form.processing} data-prototype-navigates>
                 {submitLabel}
             </Button>
         </form>

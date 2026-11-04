@@ -10,6 +10,7 @@ export function StartEmptyWorkoutButton() {
             {({ processing }) => (
                 <Button
                     type="submit"
+                    data-prototype-navigates
                     variant="ghost"
                     className="h-11 w-full rounded-full border border-dashed"
                     disabled={processing}
