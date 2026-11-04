@@ -13,10 +13,9 @@ import { Spinner } from '@/components/ui/spinner';
 import type { AppTab } from '@/types';
 
 export const VARIANTS = {
-    A: 'Tapped element',
-    B: 'Overlay',
-    C: 'Shell + skeleton',
-    D: 'Bold bar',
+    A: 'Faithful',
+    B: 'Archetype',
+    C: 'Static text real',
 } as const;
 type Variant = keyof typeof VARIANTS;
 type Kind = 'page' | 'action' | 'reload';
@@ -26,6 +25,7 @@ type State = {
     delay: number;
     latency: number;
     bar: boolean;
+    pin: boolean;
     pending: null | {
         id: string;
         kind: Kind;
@@ -46,7 +46,8 @@ let state: State = {
     variant: stored('variant', 'A') as Variant,
     delay: Number(stored('delay', '150')),
     latency: Number(stored('latency', '800')),
-    bar: stored('bar', 'on') === 'on',
+    bar: stored('bar', 'off') === 'on',
+    pin: stored('pin', 'off') === 'on',
     pending: null,
     showWait: false,
     last: 'no navigation yet',
@@ -67,7 +68,7 @@ export function usePrototypeNavigation(): State {
 }
 
 function saveSetting(
-    key: 'variant' | 'delay' | 'latency' | 'bar',
+    key: 'variant' | 'delay' | 'latency' | 'bar' | 'pin',
     value: string,
 ) {
     localStorage.setItem(`prototype-nav:${key}`, value);
@@ -80,7 +81,7 @@ function saveSetting(
         [key]:
             key === 'variant'
                 ? value
-                : key === 'bar'
+                : key === 'bar' || key === 'pin'
                   ? value === 'on'
                   : Number(value),
     } as Partial<State>);
@@ -235,7 +236,7 @@ export function PrototypeNavigationFeedback() {
     }, []);
 
     useEffect(() => {
-        document.documentElement.dataset.protoVariant = nav.variant;
+        document.documentElement.dataset.protoVariant = 'C';
         document.documentElement.dataset.protoBar = nav.bar ? 'on' : 'off';
     }, [nav.variant, nav.bar]);
 
@@ -245,27 +246,12 @@ export function PrototypeNavigationFeedback() {
 
     const waiting = nav.pending && nav.showWait ? nav.pending : null;
     const triggerSpinner =
-        waiting &&
-        waiting.trigger &&
-        (nav.variant === 'A' || waiting.kind !== 'page');
+        waiting && waiting.trigger && waiting.kind !== 'page';
 
     return (
         <>
             <style>{css}</style>
             {triggerSpinner ? <SpinnerAt element={waiting.trigger!} /> : null}
-            {waiting && waiting.kind !== 'reload' && nav.variant === 'B' ? (
-                <div className="fixed inset-x-0 top-0 bottom-(--tab-bar-height) z-30 flex flex-col items-center justify-center gap-3 bg-background/70 backdrop-blur-[2px]">
-                    <Spinner className="size-8 text-primary" />
-                    <span className="text-sm text-muted-foreground">
-                        Loading…
-                    </span>
-                </div>
-            ) : null}
-            {waiting && waiting.kind !== 'reload' && nav.variant === 'D' ? (
-                <div className="fixed inset-x-0 top-0 z-50 h-1 overflow-hidden bg-primary/20">
-                    <div className="h-full w-2/5 animate-[proto-indeterminate_900ms_ease-in-out_infinite] bg-primary shadow-[0_0_8px_var(--primary)]" />
-                </div>
-            ) : null}
             <Switcher nav={nav} />
         </>
     );
@@ -379,7 +365,7 @@ function Switcher({ nav }: { nav: State }) {
                     </select>
                 </label>
                 <label>
-                    signal after{' '}
+                    blocks fade in after{' '}
                     <select
                         className={select}
                         value={nav.delay}
@@ -397,15 +383,15 @@ function Switcher({ nav }: { nav: State }) {
                 <label className="flex items-center gap-1">
                     <input
                         type="checkbox"
-                        checked={nav.bar}
+                        checked={nav.pin}
                         onChange={(event) =>
                             saveSetting(
-                                'bar',
+                                'pin',
                                 event.target.checked ? 'on' : 'off',
                             )
                         }
                     />
-                    Inertia bar
+                    Pin skeleton on this page
                 </label>
             </div>
             <div className="truncate text-center text-white/60">

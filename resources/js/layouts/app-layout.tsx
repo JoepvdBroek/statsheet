@@ -1,8 +1,7 @@
 import { PageHeader } from '@/components/page-header';
-import {
-    PrototypePageSkeleton,
-    usePrototypeNavigation,
-} from '@/components/prototype-navigation-feedback';
+import { usePage } from '@inertiajs/react';
+import { usePrototypeNavigation } from '@/components/prototype-navigation-feedback';
+import { PrototypeSkeletonPage } from '@/components/prototype-page-skeletons';
 import { cn } from '@/lib/utils';
 import { TabBar } from '@/components/tab-bar';
 import type { AppLayoutProps } from '@/types';
@@ -20,14 +19,42 @@ export default function AppLayout({
 }: AppLayoutProps) {
     const nav = usePrototypeNavigation();
     const waiting = nav.pending && nav.showWait ? nav.pending : null;
-    const skeleton = nav.variant === 'C' && waiting?.kind === 'page';
+    const { workoutInProgressId } = usePage().props;
+    const actionTarget = (path: string): string | null => {
+        if (/^\/routines\/\d+\/start$/.test(path) || path === '/workouts') {
+            return '/workouts/in-progress';
+        }
+
+        if (/^\/workouts\/\d+\/finish$/.test(path)) {
+            return '/';
+        }
+
+        if (/^\/workouts\/\d+$/.test(path)) {
+            return '/workouts';
+        }
+
+        return null;
+    };
+    const skeletonPath =
+        nav.pending?.kind === 'page'
+            ? nav.pending.targetPath
+            : nav.pending?.kind === 'action'
+              ? actionTarget(nav.pending.targetPath)
+              : nav.pin
+                ? window.location.pathname
+                : null;
     const reloading = waiting?.kind === 'reload';
 
     return (
         <div className="min-h-svh bg-background">
             <main className="mx-auto flex w-full max-w-160 flex-col pb-(--tab-bar-height)">
-                {skeleton ? (
-                    <PrototypePageSkeleton />
+                {skeletonPath ? (
+                    <PrototypeSkeletonPage
+                        path={skeletonPath}
+                        style={nav.variant}
+                        delay={nav.delay}
+                        workoutInProgressId={workoutInProgressId}
+                    />
                 ) : (
                     <>
                         <PageHeader

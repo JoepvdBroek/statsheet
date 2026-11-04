@@ -20,7 +20,7 @@ export function TabBar({ activeTab }: { activeTab: AppTab | null }) {
     const { workoutInProgressId } = usePage().props;
     const nav = usePrototypeNavigation();
     const shownTab =
-        nav.variant === 'C' && nav.pending?.kind !== 'reload' && nav.pending
+        nav.pending && nav.pending.kind !== 'reload'
             ? tabForPath(nav.pending.targetPath)
             : activeTab;
 
