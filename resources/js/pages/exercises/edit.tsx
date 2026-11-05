@@ -1,7 +1,12 @@
 import { Form, Head } from '@inertiajs/react';
 import ExerciseController from '@/actions/App/Http/Controllers/ExerciseController';
-import ExerciseForm from '@/components/exercise-form';
+import ExerciseForm, { ExerciseFormSkeleton } from '@/components/exercise-form';
 import Heading from '@/components/heading';
+import {
+    InertButton,
+    PageContent,
+    SkeletonBlock,
+} from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,15 +26,47 @@ export default function EditExercise({
     muscles,
     equipment,
 }: {
-    exercise: Exercise;
-    muscles: string[];
-    equipment: string[];
+    /** Every prop is undefined while an instant visit loads the page. */
+    exercise?: Exercise;
+    muscles?: string[];
+    equipment?: string[];
 }) {
+    if (
+        exercise === undefined ||
+        muscles === undefined ||
+        equipment === undefined
+    ) {
+        return (
+            <>
+                <Head title="Edit Exercise" />
+
+                <PageContent
+                    loading
+                    className="mx-auto flex w-full max-w-2xl flex-col gap-10 p-4"
+                >
+                    <div>
+                        <SkeletonBlock className="my-0.5 h-4 w-40" />
+
+                        <ExerciseFormSkeleton submitLabel="Save" />
+                    </div>
+
+                    <div className="space-y-4 border-t pt-6">
+                        <DeleteExerciseHeading />
+                        <InertButton variant="destructive">Delete</InertButton>
+                    </div>
+                </PageContent>
+            </>
+        );
+    }
+
     return (
         <>
             <Head title={`Edit ${exercise.name}`} />
 
-            <div className="mx-auto flex w-full max-w-2xl flex-col gap-10 p-4">
+            <PageContent
+                loading={false}
+                className="mx-auto flex w-full max-w-2xl flex-col gap-10 p-4"
+            >
                 <div>
                     <PageDescription>{exercise.name}</PageDescription>
 
@@ -43,11 +80,7 @@ export default function EditExercise({
                 </div>
 
                 <div className="space-y-4 border-t pt-6">
-                    <Heading
-                        variant="small"
-                        title="Delete Exercise"
-                        description="An Exercise a Routine or Workout uses is archived instead, so your history stays intact. You can restore it later."
-                    />
+                    <DeleteExerciseHeading />
 
                     <Dialog>
                         <DialogTrigger asChild>
@@ -85,8 +118,18 @@ export default function EditExercise({
                         </DialogContent>
                     </Dialog>
                 </div>
-            </div>
+            </PageContent>
         </>
+    );
+}
+
+function DeleteExerciseHeading() {
+    return (
+        <Heading
+            variant="small"
+            title="Delete Exercise"
+            description="An Exercise a Routine or Workout uses is archived instead, so your history stays intact. You can restore it later."
+        />
     );
 }
 

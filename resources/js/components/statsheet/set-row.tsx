@@ -1,6 +1,7 @@
 import { CheckIcon, TrophyIcon } from 'lucide-react';
 import * as React from 'react';
 
+import { SkeletonBlock } from '@/components/page-content';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -486,11 +487,42 @@ function PlannedSetRowHeader({
     );
 }
 
+/** A SetRow while its Set loads: grey mark, Target, fields and done toggle. */
+function SetRowSkeleton() {
+    return (
+        <div
+            role="row"
+            className="grid h-12 grid-cols-[2rem_minmax(0,1fr)_4.5rem_3.75rem_2.5rem] items-center gap-2 px-1"
+        >
+            <SkeletonBlock className="mx-auto size-6" />
+            <SkeletonBlock className="h-4 w-20" />
+            <SkeletonBlock className="h-10" />
+            <SkeletonBlock className="h-10" />
+            <SkeletonBlock className="size-10 rounded-full" />
+        </div>
+    );
+}
+
+/** A PlannedSetRow while its Set loads: grey mark, Target fields, warm-up toggle and actions. */
+function PlannedSetRowSkeleton() {
+    return (
+        <div role="row" className={cn(plannedGrid, 'h-12')}>
+            <SkeletonBlock className="mx-auto size-6" />
+            <SkeletonBlock className="h-10" />
+            <SkeletonBlock className="h-10" />
+            <SkeletonBlock className="size-10 rounded-full" />
+            <SkeletonBlock className="mx-auto size-8 rounded-full" />
+        </div>
+    );
+}
+
 export {
     PlannedSetRow,
     PlannedSetRowHeader,
+    PlannedSetRowSkeleton,
     SetRow,
     SetRowHeader,
+    SetRowSkeleton,
     meetsTarget,
 };
 export type { PlannedSetRowProps, SetRowProps, SetValues };

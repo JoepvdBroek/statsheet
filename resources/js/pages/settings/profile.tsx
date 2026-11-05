@@ -4,6 +4,7 @@ import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileCo
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import { PageContent, SkeletonBlock } from '@/components/page-content';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,9 +21,10 @@ export default function Profile({
     status,
     timezones,
 }: {
-    mustVerifyEmail: boolean;
+    /** Undefined, like timezones, while an instant visit loads the page; the fields come from the shared user. */
+    mustVerifyEmail?: boolean;
     status?: string;
-    timezones: string[];
+    timezones?: string[];
 }) {
     const { auth } = usePage<PageProps>().props;
 
@@ -30,7 +32,10 @@ export default function Profile({
         <>
             <Head title="Profile settings" />
 
-            <div className="space-y-6">
+            <PageContent
+                loading={timezones === undefined}
+                className="space-y-6"
+            >
                 <Heading
                     variant="small"
                     title="Profile"
@@ -141,22 +146,30 @@ export default function Profile({
                             <div className="grid gap-2">
                                 <Label htmlFor="timezone">Timezone</Label>
 
-                                <select
-                                    id="timezone"
-                                    className="mt-1 flex h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive md:text-sm"
-                                    defaultValue={auth.user.timezone}
-                                    name="timezone"
-                                    required
-                                    aria-invalid={
-                                        errors.timezone ? true : undefined
-                                    }
-                                >
-                                    {timezones.map((timezone) => (
-                                        <option key={timezone} value={timezone}>
-                                            {timezone}
-                                        </option>
-                                    ))}
-                                </select>
+                                {timezones === undefined ? (
+                                    // The select takes the owner's timezone once, when it mounts, so it waits for its options.
+                                    <SkeletonBlock className="mt-1 h-9" />
+                                ) : (
+                                    <select
+                                        id="timezone"
+                                        className="mt-1 flex h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive md:text-sm"
+                                        defaultValue={auth.user.timezone}
+                                        name="timezone"
+                                        required
+                                        aria-invalid={
+                                            errors.timezone ? true : undefined
+                                        }
+                                    >
+                                        {timezones.map((timezone) => (
+                                            <option
+                                                key={timezone}
+                                                value={timezone}
+                                            >
+                                                {timezone}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
 
                                 <p className="text-sm text-muted-foreground">
                                     Weeks run Monday to Sunday in this timezone.
@@ -179,7 +192,7 @@ export default function Profile({
                         </>
                     )}
                 </Form>
-            </div>
+            </PageContent>
 
             <DeleteUser />
         </>

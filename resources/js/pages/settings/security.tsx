@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import { PageContent } from '@/components/page-content';
 import PasswordInput from '@/components/password-input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -15,7 +16,8 @@ import type { PageShell } from '@/types';
 
 // oxfmt-ignore
 type Props = {
-    passwordRules: string;
+    /** Undefined, like the others, while an instant visit loads the page. */
+    passwordRules?: string;
 } & ManagePasskeysProps &
     ManageTwoFactorProps;
 
@@ -27,7 +29,10 @@ export default function Security(props: Props) {
         <>
             <Head title="Security settings" />
 
-            <div className="space-y-6">
+            <PageContent
+                loading={props.passwordRules === undefined}
+                className="space-y-6"
+            >
                 <Heading
                     variant="small"
                     title="Update password"
@@ -121,7 +126,7 @@ export default function Security(props: Props) {
                         </>
                     )}
                 </Form>
-            </div>
+            </PageContent>
 
             <ManageTwoFactor
                 canManageTwoFactor={props.canManageTwoFactor}

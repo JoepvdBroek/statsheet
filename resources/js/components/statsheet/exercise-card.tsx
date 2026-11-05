@@ -2,10 +2,13 @@ import { MoreHorizontalIcon, PlusIcon } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
+import { repeat, SkeletonBlock } from '@/components/page-content';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
 import {
     PlannedSetRowHeader,
+    PlannedSetRowSkeleton,
     SetRowHeader,
+    SetRowSkeleton,
 } from '@/components/statsheet/set-row';
 
 type ExerciseCardProps = React.ComponentProps<'section'> & {
@@ -140,5 +143,44 @@ function ExerciseCard({
     );
 }
 
-export { ExerciseCard };
+/** An ExerciseCard while its Exercise loads: grey name and Muscles, real column labels, 3 Set rows, and Add set. */
+function ExerciseCardSkeleton({ planning = false }: { planning?: boolean }) {
+    return (
+        <section
+            data-slot="exercise-card"
+            className="flex flex-col gap-3 rounded-xl border bg-card px-3 py-4 text-card-foreground"
+        >
+            <header className="flex items-start gap-3 px-1">
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <SkeletonBlock className="h-5 w-1/2" />
+                    <div className="flex gap-1.5">
+                        {repeat(2, (index) => (
+                            <SkeletonBlock
+                                key={index}
+                                className="h-6 w-16 rounded-full"
+                            />
+                        ))}
+                    </div>
+                </div>
+                {planning ? null : <SkeletonBlock className="h-5 w-8" />}
+            </header>
+            <div role="table" className="flex flex-col gap-1">
+                {planning ? <PlannedSetRowHeader /> : <SetRowHeader />}
+                {repeat(3, (index) =>
+                    planning ? (
+                        <PlannedSetRowSkeleton key={index} />
+                    ) : (
+                        <SetRowSkeleton key={index} />
+                    ),
+                )}
+            </div>
+            <span className="flex h-10 items-center justify-center gap-2 rounded-full text-sm text-foreground [&>svg]:size-4">
+                <PlusIcon aria-hidden="true" />
+                Add set
+            </span>
+        </section>
+    );
+}
+
+export { ExerciseCard, ExerciseCardSkeleton };
 export type { ExerciseCardProps };

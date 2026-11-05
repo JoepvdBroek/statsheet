@@ -8,7 +8,11 @@ import {
     TrendingUp,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { AskForReviewForm } from '@/components/ask-for-review-form';
+import {
+    AskForReviewForm,
+    AskForReviewFormSkeleton,
+} from '@/components/ask-for-review-form';
+import { PageContent, repeat, SkeletonBlock } from '@/components/page-content';
 import { StatBlock } from '@/components/statsheet/stat-block';
 import { WeeklyReviewLink } from '@/components/weekly-review-link';
 import { Button } from '@/components/ui/button';
@@ -74,31 +78,53 @@ export default function StatsHub({
     thisWeek,
     latestReview,
 }: {
-    /** This Week's Volume per Muscle, live: Sets in the Workout in progress count too. */
-    thisWeek: ThisWeek;
-    /** The Weekly Review of the most recent Week that has one. */
-    latestReview: WeeklyReview | null;
+    /** This Week's Volume per Muscle, live: Sets in the Workout in progress count too. Undefined while an instant visit loads the page. */
+    thisWeek?: ThisWeek;
+    /** The Weekly Review of the most recent Week that has one. Undefined while an instant visit loads the page. */
+    latestReview?: WeeklyReview | null;
 }) {
     return (
         <>
             <Head title="Stats" />
-            <div className="flex flex-col gap-4 p-4">
+            <PageContent
+                loading={thisWeek === undefined}
+                className="flex flex-col gap-4 p-4"
+            >
                 <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground">
                     <div className="flex items-start justify-between gap-4">
                         <div className="space-y-0.5">
                             <h2 className="text-base font-medium">This Week</h2>
-                            <p className="text-sm text-muted-foreground">
-                                Volume per Muscle since Monday{' '}
-                                {formatDate(thisWeek.starts_on)}, including the
-                                Workout in progress.
-                            </p>
+                            {thisWeek === undefined ? (
+                                <SkeletonBlock className="my-0.5 h-4 w-56" />
+                            ) : (
+                                <p className="text-sm text-muted-foreground">
+                                    Volume per Muscle since Monday{' '}
+                                    {formatDate(thisWeek.starts_on)}, including
+                                    the Workout in progress.
+                                </p>
+                            )}
                         </div>
                         <Button asChild variant="outline" size="sm">
                             <Link href={goalsIndex()}>Goals</Link>
                         </Button>
                     </div>
 
-                    {thisWeek.muscles.length === 0 ? (
+                    {thisWeek === undefined ? (
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3">
+                            {repeat(6, (index) => (
+                                <StatBlock
+                                    key={index}
+                                    size="sm"
+                                    value={
+                                        <SkeletonBlock className="my-1 h-6 w-20" />
+                                    }
+                                    label={
+                                        <SkeletonBlock className="my-0.5 h-3 w-16" />
+                                    }
+                                />
+                            ))}
+                        </div>
+                    ) : thisWeek.muscles.length === 0 ? (
                         <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
                             No Volume yet this Week. Mark a Set done to see it
                             here.
@@ -130,7 +156,7 @@ export default function StatsHub({
 
                 <WeeklyReviewCard
                     latestReview={latestReview}
-                    thisWeekStartsOn={thisWeek.starts_on}
+                    thisWeekStartsOn={thisWeek?.starts_on}
                 />
 
                 <nav aria-label="Statistics">
@@ -162,7 +188,7 @@ export default function StatsHub({
                         ))}
                     </ul>
                 </nav>
-            </div>
+            </PageContent>
         </>
     );
 }
@@ -171,8 +197,9 @@ function WeeklyReviewCard({
     latestReview,
     thisWeekStartsOn,
 }: {
-    latestReview: WeeklyReview | null;
-    thisWeekStartsOn: string;
+    /** Undefined, like the Week, while the page loads. */
+    latestReview?: WeeklyReview | null;
+    thisWeekStartsOn?: string;
 }) {
     return (
         <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground">
@@ -189,9 +216,17 @@ function WeeklyReviewCard({
                 </Button>
             </div>
 
-            {latestReview ? <WeeklyReviewLink review={latestReview} /> : null}
+            {latestReview === undefined ? (
+                <SkeletonBlock className="h-16 rounded-lg" />
+            ) : latestReview ? (
+                <WeeklyReviewLink review={latestReview} />
+            ) : null}
 
-            <AskForReviewForm defaultDay={thisWeekStartsOn} />
+            {thisWeekStartsOn === undefined ? (
+                <AskForReviewFormSkeleton />
+            ) : (
+                <AskForReviewForm defaultDay={thisWeekStartsOn} />
+            )}
         </section>
     );
 }

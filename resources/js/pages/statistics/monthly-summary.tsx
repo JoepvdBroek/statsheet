@@ -1,6 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 import Heading from '@/components/heading';
+import { PageContent, repeat, SkeletonBlock } from '@/components/page-content';
 import { StatBlock } from '@/components/statsheet/stat-block';
 import { Button } from '@/components/ui/button';
 import { parentScreens } from '@/lib/parent-screens';
@@ -30,28 +32,42 @@ export default function MonthlySummary({
     volume,
     goals,
 }: {
-    /** The month shown, as "2026-09". */
-    month: string;
+    /** The month shown, as "2026-09". Every prop is undefined while an instant visit loads the page. */
+    month?: string;
     /** The month before, as "2026-08". */
-    previousMonth: string;
+    previousMonth?: string;
     /** Empty for this month: later months have nothing to show yet. */
-    nextMonth: string | null;
+    nextMonth?: string | null;
     /** Workouts started in the month, in progress or not. */
-    workouts: number;
+    workouts?: number;
     /** Each Muscle with Volume in the month, most Volume first. */
-    volume: MuscleVolume[];
+    volume?: MuscleVolume[];
     /** Each Muscle with a Goal in force in one of the month's Weeks so far, by name. A Week belongs to the month of its Monday. */
-    goals: GoalWeeks[];
+    goals?: GoalWeeks[];
 }) {
+    if (
+        month === undefined ||
+        previousMonth === undefined ||
+        nextMonth === undefined ||
+        workouts === undefined ||
+        volume === undefined ||
+        goals === undefined
+    ) {
+        return <MonthlySummarySkeleton />;
+    }
+
     return (
         <>
             <Head title={`Monthly summary · ${formatMonth(month)}`} />
 
-            <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
+            <PageContent
+                loading={false}
+                className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4"
+            >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <Heading
                         title={formatMonth(month)}
-                        description="Volume, Workouts and Goals met in one calendar month."
+                        description={summaryDescription}
                     />
                     <nav
                         aria-label="Months"
@@ -90,15 +106,7 @@ export default function MonthlySummary({
                     />
                 </section>
 
-                <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground">
-                    <div className="space-y-0.5">
-                        <h2 className="text-base font-medium">Goals met</h2>
-                        <p className="text-sm text-muted-foreground">
-                            Weeks starting this month in which each Goal was
-                            met, judged against the Goal in force that Week.
-                        </p>
-                    </div>
-
+                <GoalsMetCard>
                     {goals.length === 0 ? (
                         <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
                             No Goal was in force in a Week starting this month
@@ -120,18 +128,9 @@ export default function MonthlySummary({
                             )}
                         </div>
                     )}
-                </section>
+                </GoalsMetCard>
 
-                <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground">
-                    <div className="space-y-0.5">
-                        <h2 className="text-base font-medium">
-                            Volume per Muscle
-                        </h2>
-                        <p className="text-sm text-muted-foreground">
-                            From the Workouts started this month.
-                        </p>
-                    </div>
-
+                <VolumeCard>
                     {volume.length === 0 ? (
                         <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
                             No Volume this month.
@@ -150,9 +149,96 @@ export default function MonthlySummary({
                             ))}
                         </div>
                     )}
-                </section>
-            </div>
+                </VolumeCard>
+            </PageContent>
         </>
+    );
+}
+
+const summaryDescription =
+    'Volume, Workouts and Goals met in one calendar month.';
+
+/** The summary while its month loads: real headings and descriptions, grey month, numbers and Muscles. */
+function MonthlySummarySkeleton() {
+    const statBlocks = (count: number) => (
+        <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3">
+            {repeat(count, (index) => (
+                <StatBlock
+                    key={index}
+                    size="sm"
+                    value={<SkeletonBlock className="my-1 h-6 w-20" />}
+                    label={<SkeletonBlock className="my-0.5 h-3 w-16" />}
+                />
+            ))}
+        </div>
+    );
+
+    return (
+        <>
+            <Head title="Monthly summary" />
+
+            <PageContent
+                loading
+                className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4"
+            >
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <header className="mb-8 space-y-0.5">
+                        <SkeletonBlock className="my-0.5 h-6 w-40" />
+                        <p className="text-sm text-muted-foreground">
+                            {summaryDescription}
+                        </p>
+                    </header>
+                    <div className="flex items-center gap-2">
+                        {repeat(2, (index) => (
+                            <SkeletonBlock
+                                key={index}
+                                className="h-8 w-28 rounded-full"
+                            />
+                        ))}
+                    </div>
+                </div>
+
+                <section className="rounded-xl border bg-card p-4 text-card-foreground">
+                    <StatBlock
+                        value={<SkeletonBlock className="my-1.5 h-11 w-16" />}
+                        label={<SkeletonBlock className="my-0.5 h-3 w-32" />}
+                    />
+                </section>
+
+                <GoalsMetCard>{statBlocks(4)}</GoalsMetCard>
+
+                <VolumeCard>{statBlocks(6)}</VolumeCard>
+            </PageContent>
+        </>
+    );
+}
+
+function GoalsMetCard({ children }: { children: ReactNode }) {
+    return (
+        <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground">
+            <div className="space-y-0.5">
+                <h2 className="text-base font-medium">Goals met</h2>
+                <p className="text-sm text-muted-foreground">
+                    Weeks starting this month in which each Goal was met, judged
+                    against the Goal in force that Week.
+                </p>
+            </div>
+            {children}
+        </section>
+    );
+}
+
+function VolumeCard({ children }: { children: ReactNode }) {
+    return (
+        <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground">
+            <div className="space-y-0.5">
+                <h2 className="text-base font-medium">Volume per Muscle</h2>
+                <p className="text-sm text-muted-foreground">
+                    From the Workouts started this month.
+                </p>
+            </div>
+            {children}
+        </section>
     );
 }
 

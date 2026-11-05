@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
+import { InertButton, repeat, SkeletonBlock } from '@/components/page-content';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
@@ -120,5 +121,34 @@ function RoutineCard({
     );
 }
 
-export { RoutineCard };
+/** A RoutineCard while its Routine loads: grey name, counts and Muscles, with its buttons' labels. */
+function RoutineCardSkeleton() {
+    return (
+        <article
+            data-slot="routine-card"
+            className="flex flex-col gap-4 rounded-xl border bg-card p-5 text-card-foreground"
+        >
+            <div className="flex flex-col gap-1">
+                <SkeletonBlock className="my-0.5 h-5 w-1/2" />
+                <SkeletonBlock className="my-0.5 h-4 w-2/3" />
+            </div>
+            <div className="flex gap-1.5">
+                {repeat(3, (index) => (
+                    <SkeletonBlock
+                        key={index}
+                        className="h-6 w-16 rounded-full"
+                    />
+                ))}
+            </div>
+            <div className="flex gap-2">
+                <InertButton size="sm">Start workout</InertButton>
+                <InertButton variant="ghost" size="sm">
+                    Edit
+                </InertButton>
+            </div>
+        </article>
+    );
+}
+
+export { RoutineCard, RoutineCardSkeleton };
 export type { RoutineCardProps };

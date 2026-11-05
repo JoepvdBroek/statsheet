@@ -1,8 +1,9 @@
 import { Form, Head } from '@inertiajs/react';
 import RoutineController from '@/actions/App/Http/Controllers/RoutineController';
 import Heading from '@/components/heading';
+import { PageContent, SkeletonBlock } from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
-import RoutineForm from '@/components/routine-form';
+import RoutineForm, { RoutineFormSkeleton } from '@/components/routine-form';
 import { Button } from '@/components/ui/button';
 import { parentScreens } from '@/lib/parent-screens';
 import type { Exercise, PageShell, Routine } from '@/types';
@@ -11,14 +12,37 @@ export default function EditRoutine({
     routine,
     exercises,
 }: {
-    routine: Routine;
+    /** Undefined while an instant visit loads the page. */
+    routine?: Routine;
     exercises?: Exercise[];
 }) {
+    if (routine === undefined) {
+        return (
+            <>
+                <Head title="Edit Routine" />
+
+                <PageContent
+                    loading
+                    className="mx-auto flex w-full max-w-2xl flex-col gap-10 p-4"
+                >
+                    <div>
+                        <SkeletonBlock className="my-0.5 h-4 w-32" />
+
+                        <RoutineFormSkeleton submitLabel="Save" />
+                    </div>
+                </PageContent>
+            </>
+        );
+    }
+
     return (
         <>
             <Head title={`Edit ${routine.name}`} />
 
-            <div className="mx-auto flex w-full max-w-2xl flex-col gap-10 p-4">
+            <PageContent
+                loading={false}
+                className="mx-auto flex w-full max-w-2xl flex-col gap-10 p-4"
+            >
                 <div>
                     <PageDescription>{routine.name}</PageDescription>
 
@@ -75,7 +99,7 @@ export default function EditRoutine({
                         </>
                     )}
                 </div>
-            </div>
+            </PageContent>
         </>
     );
 }

@@ -30,6 +30,19 @@
     --shadow-md: 1px 0 9px 2px rgb(0 0 0 / 0.04);
     --shadow-lg: 1px 0 9px 2px rgb(0 0 0 / 0.04);
 
+    /* A skeleton block shows 150 ms after its page draws without data, fading in and then pulsing. */
+    --animate-skeleton-in:
+        skeleton-in 180ms ease-out 150ms both,
+        pulse 2s cubic-bezier(0.4, 0, 0.6, 1) 330ms infinite;
+    /* With reduced motion it shows at 150 ms as well, without fading or pulsing. */
+    --animate-skeleton-appear: skeleton-in 0s 150ms both;
+
+    @keyframes skeleton-in {
+        from {
+            opacity: 0;
+        }
+    }
+
     --color-background: var(--background);
     --color-foreground: var(--foreground);
 

@@ -1,6 +1,12 @@
 import { Form, Head } from '@inertiajs/react';
 import GoalController from '@/actions/App/Http/Controllers/GoalController';
 import InputError from '@/components/input-error';
+import {
+    InertButton,
+    PageContent,
+    repeat,
+    SkeletonBlock,
+} from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,12 +21,20 @@ type GoalInForce = {
     weekly_minimum: number | null;
 };
 
-export default function GoalsIndex({ goals }: { goals: GoalInForce[] }) {
+export default function GoalsIndex({
+    goals,
+}: {
+    /** Undefined while an instant visit loads the page. */
+    goals?: GoalInForce[];
+}) {
     return (
         <>
             <Head title="Goals" />
 
-            <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
+            <PageContent
+                loading={goals === undefined}
+                className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4"
+            >
                 <PageDescription>
                     An optional weekly minimum Volume per Muscle. A change
                     applies from this Week; earlier Weeks keep the Goal they
@@ -28,11 +42,13 @@ export default function GoalsIndex({ goals }: { goals: GoalInForce[] }) {
                 </PageDescription>
 
                 <ul className="flex flex-col gap-2">
-                    {goals.map((goal) => (
-                        <GoalRow key={goal.muscle} goal={goal} />
-                    ))}
+                    {goals === undefined
+                        ? repeat(6, (index) => <GoalRowSkeleton key={index} />)
+                        : goals.map((goal) => (
+                              <GoalRow key={goal.muscle} goal={goal} />
+                          ))}
                 </ul>
-            </div>
+            </PageContent>
         </>
     );
 }
@@ -99,6 +115,19 @@ function GoalRow({ goal }: { goal: GoalInForce }) {
                         )}
                     </Form>
                 ) : null}
+            </div>
+        </li>
+    );
+}
+
+function GoalRowSkeleton() {
+    return (
+        <li className="flex flex-col gap-2 rounded-xl border bg-card px-4 py-3 text-card-foreground sm:flex-row sm:items-start sm:justify-between">
+            <SkeletonBlock className="mt-2.5 h-4 w-24" />
+            <div className="flex items-center gap-2">
+                <SkeletonBlock className="h-9 w-32" />
+                <span className="text-sm text-muted-foreground">kg</span>
+                <InertButton size="sm">Save</InertButton>
             </div>
         </li>
     );

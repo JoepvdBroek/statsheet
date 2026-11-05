@@ -1,6 +1,7 @@
 import { Form } from '@inertiajs/react';
 import WeeklyReviewController from '@/actions/App/Http/Controllers/WeeklyReviewController';
 import InputError from '@/components/input-error';
+import { InertButton, SkeletonBlock } from '@/components/page-content';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,5 +38,18 @@ export function AskForReviewForm({
                 </>
             )}
         </Form>
+    );
+}
+
+/** The form while the day it starts on loads: its date field takes that day once, when it mounts. */
+export function AskForReviewFormSkeleton() {
+    return (
+        <div className="flex flex-col gap-2">
+            <Label>A day in the Week</Label>
+            <div className="flex items-center gap-2">
+                <SkeletonBlock className="h-9 w-44" />
+                <InertButton>Ask for a review</InertButton>
+            </div>
+        </div>
     );
 }

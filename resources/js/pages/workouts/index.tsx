@@ -1,5 +1,6 @@
 import { Head, InfiniteScroll, Link, usePage } from '@inertiajs/react';
 import WorkoutController from '@/actions/App/Http/Controllers/WorkoutController';
+import { PageContent, repeat, SkeletonBlock } from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
 import { StartEmptyWorkoutButton } from '@/components/start-empty-workout-button';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +10,8 @@ import type { PageShell, WorkoutSummary } from '@/types';
 export default function WorkoutsIndex({
     workouts,
 }: {
-    workouts: { data: WorkoutSummary[] };
+    /** Undefined while an instant visit loads the page. */
+    workouts?: { data: WorkoutSummary[] };
 }) {
     const { auth } = usePage().props;
 
@@ -17,14 +19,23 @@ export default function WorkoutsIndex({
         <>
             <Head title="Workout history" />
 
-            <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
+            <PageContent
+                loading={workouts === undefined}
+                className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4"
+            >
                 <StartEmptyWorkoutButton />
 
                 <PageDescription>
                     Every Workout you logged, newest first.
                 </PageDescription>
 
-                {workouts.data.length === 0 ? (
+                {workouts === undefined ? (
+                    <ul className="flex flex-col gap-2">
+                        {repeat(6, (index) => (
+                            <WorkoutRowSkeleton key={index} />
+                        ))}
+                    </ul>
+                ) : workouts.data.length === 0 ? (
                     <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
                         No Workouts yet. Start an empty one above, or one from a
                         Routine.
@@ -45,7 +56,7 @@ export default function WorkoutsIndex({
                         ))}
                     </InfiniteScroll>
                 )}
-            </div>
+            </PageContent>
         </>
     );
 }
@@ -80,6 +91,15 @@ function WorkoutRow({
             {isInProgress(workout) ? (
                 <Badge className="shrink-0">In progress</Badge>
             ) : null}
+        </li>
+    );
+}
+
+function WorkoutRowSkeleton() {
+    return (
+        <li className="flex flex-col gap-0.5 rounded-xl border bg-card px-4 py-3 text-card-foreground">
+            <SkeletonBlock className="my-0.5 h-5 w-40" />
+            <SkeletonBlock className="my-0.5 h-4 w-24" />
         </li>
     );
 }

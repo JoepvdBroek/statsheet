@@ -21,8 +21,10 @@ export type ParentScreen = {
 export type PageShell = {
     /** The tab to highlight; null for screens outside the tabs, such as settings. */
     tab: AppTab | null;
-    /** Shown large on a tab screen, beside a back chevron on a detail screen. */
-    title: string;
+    /** Shown large on a tab screen, beside a back chevron on a detail screen. Undefined while it comes from props still loading. */
+    title: string | undefined;
+    /** For a title that comes from props: read to screen readers while they load, with a grey block shown instead. */
+    loadingTitle?: string;
     /** Only on detail screens. */
     parent?: ParentScreen;
     /** Buttons beside the title, such as New routine and the settings gear on home. */

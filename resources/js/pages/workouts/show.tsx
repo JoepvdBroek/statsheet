@@ -13,12 +13,22 @@ import WorkoutExerciseController from '@/actions/App/Http/Controllers/WorkoutExe
 import WorkoutSetController from '@/actions/App/Http/Controllers/WorkoutSetController';
 import ExercisePicker, {
     ExercisePickerDialog,
+    ExercisePickerSkeleton,
 } from '@/components/exercise-picker';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { ItemMenu, MoveRemoveItems } from '@/components/item-menu';
+import {
+    InertButton,
+    PageContent,
+    repeat,
+    SkeletonBlock,
+} from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
-import { ExerciseCard } from '@/components/statsheet/exercise-card';
+import {
+    ExerciseCard,
+    ExerciseCardSkeleton,
+} from '@/components/statsheet/exercise-card';
 import { PRBadge } from '@/components/statsheet/pr-badge';
 import { SetRow, meetsTarget } from '@/components/statsheet/set-row';
 import type { SetValues } from '@/components/statsheet/set-row';
@@ -38,12 +48,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { parentScreens } from '@/lib/parent-screens';
-import { formatDateTime, isInProgress } from '@/lib/utils';
+import { formatDateTime } from '@/lib/utils';
+import { showsWorkoutInProgress } from '@/lib/workout-page';
 import { index } from '@/routes/workouts';
 import type {
     Exercise,
-    PageShell,
     SetKind,
     Workout,
     WorkoutExercise,
@@ -84,38 +93,51 @@ function withSetChanges(
     };
 }
 
+/**
+ * A Workout: the Workout in progress to log, or a finished one.
+ * Its layout props come from workoutPageShell in app.tsx, since they depend on the page's address.
+ */
 export default function ShowWorkout({
     workout,
     exercises,
 }: {
-    workout: Workout;
+    /** Undefined while an instant visit loads the page. */
+    workout?: Workout;
     /** The owner's Exercises in use to add; undefined while the deferred prop loads. */
     exercises?: Exercise[];
 }) {
-    const { auth, errors } = usePage<{ errors: Errors }>().props;
-    const inProgress = isInProgress(workout);
+    const page = usePage<{ errors: Errors; workout?: Workout }>();
+    const { auth, errors } = page.props;
+    const inProgress = showsWorkoutInProgress(page);
     const timeZone = auth.user.timezone;
 
     return (
         <>
             <Head title="Workout" />
 
-            <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
+            <PageContent
+                loading={workout === undefined}
+                className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4"
+            >
                 <div className="flex flex-col gap-8">
                     <div className="flex items-start justify-between gap-4">
-                        <PageDescription>
-                            {[
-                                `Started ${formatDateTime(workout.started_at, timeZone)}`,
-                                workout.finished_at
-                                    ? `finished ${formatDateTime(workout.finished_at, timeZone)}`
-                                    : null,
-                                workout.bodyweight !== null
-                                    ? `Bodyweight ${workout.bodyweight} kg`
-                                    : null,
-                            ]
-                                .filter(Boolean)
-                                .join(' · ')}
-                        </PageDescription>
+                        {workout === undefined ? (
+                            <SkeletonBlock className="my-0.5 h-4 w-2/3" />
+                        ) : (
+                            <PageDescription>
+                                {[
+                                    `Started ${formatDateTime(workout.started_at, timeZone)}`,
+                                    workout.finished_at
+                                        ? `finished ${formatDateTime(workout.finished_at, timeZone)}`
+                                        : null,
+                                    workout.bodyweight !== null
+                                        ? `Bodyweight ${workout.bodyweight} kg`
+                                        : null,
+                                ]
+                                    .filter(Boolean)
+                                    .join(' · ')}
+                            </PageDescription>
+                        )}
                         {inProgress ? (
                             <Button variant="outline" size="sm" asChild>
                                 <Link href={index()}>
@@ -126,46 +148,63 @@ export default function ShowWorkout({
                         ) : null}
                     </div>
 
-                    <div className="flex flex-col gap-3">
-                        {workout.exercises.length === 0 ? (
-                            <p className="rounded-xl border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
-                                Add an Exercise to start logging.
-                            </p>
-                        ) : null}
+                    {workout === undefined ? (
+                        <div className="flex flex-col gap-3">
+                            {repeat(3, (index) => (
+                                <ExerciseCardSkeleton key={index} />
+                            ))}
+                            <ExercisePickerSkeleton />
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-3">
+                            {workout.exercises.length === 0 ? (
+                                <p className="rounded-xl border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
+                                    Add an Exercise to start logging.
+                                </p>
+                            ) : null}
 
-                        {workout.exercises.map((performed, position) => (
-                            <PerformedExercise
-                                key={performed.id}
-                                workoutId={workout.id}
-                                performed={performed}
+                            {workout.exercises.map((performed, position) => (
+                                <PerformedExercise
+                                    key={performed.id}
+                                    workoutId={workout.id}
+                                    performed={performed}
+                                    exercises={exercises}
+                                    position={position}
+                                    isLast={
+                                        position ===
+                                        workout.exercises.length - 1
+                                    }
+                                />
+                            ))}
+
+                            <ExercisePicker
                                 exercises={exercises}
-                                position={position}
-                                isLast={
-                                    position === workout.exercises.length - 1
+                                onPick={(exercise) =>
+                                    router.post(
+                                        WorkoutExerciseController.store.url(
+                                            workout.id,
+                                        ),
+                                        { exercise_id: exercise.id },
+                                        structureVisit,
+                                    )
                                 }
+                                description="Archived Exercises aren't offered. Restore one first to log it."
                             />
-                        ))}
-
-                        <ExercisePicker
-                            exercises={exercises}
-                            onPick={(exercise) =>
-                                router.post(
-                                    WorkoutExerciseController.store.url(
-                                        workout.id,
-                                    ),
-                                    { exercise_id: exercise.id },
-                                    structureVisit,
-                                )
-                            }
-                            description="Archived Exercises aren't offered. Restore one first to log it."
-                        />
-                        <InputError message={errors.exercise_id} />
-                    </div>
+                            <InputError message={errors.exercise_id} />
+                        </div>
+                    )}
                 </div>
 
-                <WorkoutNote key={workout.id} workout={workout} />
+                {workout === undefined ? (
+                    <div className="grid gap-2">
+                        <Label>Workout Note</Label>
+                        <SkeletonBlock className="h-20" />
+                    </div>
+                ) : (
+                    <WorkoutNote key={workout.id} workout={workout} />
+                )}
 
-                {workout.routine ? (
+                {workout?.routine ? (
                     <UpdateRoutine
                         workout={workout}
                         routine={workout.routine}
@@ -176,21 +215,32 @@ export default function ShowWorkout({
 
                 {inProgress ? (
                     <div className="sticky bottom-(--tab-bar-height) -mx-4 border-t bg-background/95 px-4 py-3 backdrop-blur">
-                        <Form {...WorkoutController.finish.form(workout.id)}>
-                            {({ processing }) => (
-                                <Button
-                                    type="submit"
-                                    size="lg"
-                                    className="h-12 w-full text-base"
-                                    disabled={processing}
-                                >
-                                    Finish workout
-                                </Button>
-                            )}
-                        </Form>
+                        {workout === undefined ? (
+                            <InertButton
+                                size="lg"
+                                className="h-12 w-full text-base"
+                            >
+                                Finish workout
+                            </InertButton>
+                        ) : (
+                            <Form
+                                {...WorkoutController.finish.form(workout.id)}
+                            >
+                                {({ processing }) => (
+                                    <Button
+                                        type="submit"
+                                        size="lg"
+                                        className="h-12 w-full text-base"
+                                        disabled={processing}
+                                    >
+                                        Finish workout
+                                    </Button>
+                                )}
+                            </Form>
+                        )}
                     </div>
                 ) : null}
-            </div>
+            </PageContent>
         </>
     );
 }
@@ -248,7 +298,7 @@ function UpdateRoutine({
     );
 }
 
-function DeleteWorkout({ workout }: { workout: Workout }) {
+function DeleteWorkout({ workout }: { workout?: Workout }) {
     return (
         <div className="space-y-4 border-t pt-6">
             <Heading
@@ -257,36 +307,46 @@ function DeleteWorkout({ workout }: { workout: Workout }) {
                 description="An accidental or test Workout can be deleted, so it no longer counts toward Volume, Goals or Personal Records."
             />
 
-            <Dialog>
-                <DialogTrigger asChild>
-                    <Button variant="destructive">Delete</Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogTitle>Delete this Workout?</DialogTitle>
-                    <DialogDescription>
-                        Its Exercises, Sets and Note are removed for good. This
-                        can't be undone.
-                    </DialogDescription>
-
-                    <Form {...WorkoutController.destroy.form(workout.id)}>
-                        {({ processing }) => (
-                            <DialogFooter className="gap-2">
-                                <DialogClose asChild>
-                                    <Button variant="secondary">Cancel</Button>
-                                </DialogClose>
-                                <Button
-                                    type="submit"
-                                    variant="destructive"
-                                    disabled={processing}
-                                >
-                                    Delete
-                                </Button>
-                            </DialogFooter>
-                        )}
-                    </Form>
-                </DialogContent>
-            </Dialog>
+            {workout === undefined ? (
+                <InertButton variant="destructive">Delete</InertButton>
+            ) : (
+                <DeleteWorkoutDialog workout={workout} />
+            )}
         </div>
+    );
+}
+
+function DeleteWorkoutDialog({ workout }: { workout: Workout }) {
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="destructive">Delete</Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogTitle>Delete this Workout?</DialogTitle>
+                <DialogDescription>
+                    Its Exercises, Sets and Note are removed for good. This
+                    can't be undone.
+                </DialogDescription>
+
+                <Form {...WorkoutController.destroy.form(workout.id)}>
+                    {({ processing }) => (
+                        <DialogFooter className="gap-2">
+                            <DialogClose asChild>
+                                <Button variant="secondary">Cancel</Button>
+                            </DialogClose>
+                            <Button
+                                type="submit"
+                                variant="destructive"
+                                disabled={processing}
+                            >
+                                Delete
+                            </Button>
+                        </DialogFooter>
+                    )}
+                </Form>
+            </DialogContent>
+        </Dialog>
     );
 }
 
@@ -715,13 +775,3 @@ function WorkoutNote({ workout }: { workout: Workout }) {
         </div>
     );
 }
-
-/** The Workout in progress is the Workout tab's own screen; a finished Workout is a detail of Workout history. */
-ShowWorkout.layout = ({ workout }: { workout: Workout }): PageShell =>
-    isInProgress(workout)
-        ? { tab: 'workout', title: 'Workout in progress' }
-        : {
-              tab: 'workout',
-              title: 'Workout',
-              parent: parentScreens.workoutHistory,
-          };
