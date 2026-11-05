@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/react';
 import type { UrlMethodPair } from '@inertiajs/core';
+import { whenPageVisitsSettle } from '@/lib/page-visits';
 
 /** How long a prefetched page may be used before it's fetched again. */
 const prefetchCacheFor = '30s';
@@ -8,21 +9,30 @@ const prefetchCacheFor = '30s';
 const mutationMethods = ['post', 'put', 'patch', 'delete'];
 
 /**
- * Prefetches the given pages once the current visit has settled. The wait is one macrotask: a page change swaps the
- * page synchronously and fires the visit's `success` in the microtasks after it, so a mutation's flush (see
- * {@link flushPrefetchesAfterMutations}) has already run and won't throw these fresh prefetches away. Returns a
- * function that cancels prefetches that haven't started yet.
+ * Prefetches the given pages once the current page's own props have arrived, so the prefetches never compete with
+ * the page's request: an instant visit shows its page at tap and fetches its props after. The wait starts with one
+ * macrotask, by which time the request of an instant visit has started, and then lasts until no page visit is in
+ * flight (see {@link whenPageVisitsSettle}). That also puts a mutation's flush (see
+ * {@link flushPrefetchesAfterMutations}) before these prefetches, so it won't throw them away. Returns a function
+ * that cancels prefetches that haven't started yet.
  */
 export function prefetchAfterVisit(
     hrefs: Array<string | UrlMethodPair>,
 ): () => void {
+    let cancelWait = () => {};
+
     const timer = window.setTimeout(() => {
-        for (const href of hrefs) {
-            router.prefetch(href, {}, { cacheFor: prefetchCacheFor });
-        }
+        cancelWait = whenPageVisitsSettle(() => {
+            for (const href of hrefs) {
+                router.prefetch(href, {}, { cacheFor: prefetchCacheFor });
+            }
+        });
     }, 0);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+        window.clearTimeout(timer);
+        cancelWait();
+    };
 }
 
 /**

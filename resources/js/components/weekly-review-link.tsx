@@ -9,11 +9,12 @@ const statusLabels: Record<ReviewStatus, string> = {
     failed: 'Failed',
 };
 
-/** A Weekly Review as a list entry: its Week, its status and the start of its summary, opening the review. */
+/** A Weekly Review as a list entry: its Week, its status and the start of its summary, opening the review at once, as an instant visit. */
 export function WeeklyReviewLink({ review }: { review: WeeklyReviewSummary }) {
     return (
         <Link
             href={show(review.id)}
+            component="reviews/show"
             className="flex flex-col gap-1 rounded-lg border bg-card p-3 text-sm text-card-foreground hover:bg-accent"
         >
             <span className="flex items-center justify-between gap-2">

@@ -4,6 +4,8 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import { focusHeadingOnPageChange } from '@/lib/page-heading-focus';
+import { trackPageVisits } from '@/lib/page-visits';
 import { flushPrefetchesAfterMutations } from '@/lib/prefetch';
 import { preloadPagesWhenIdle } from '@/lib/preload-pages';
 import { workoutPageShell } from '@/lib/workout-page';
@@ -33,12 +35,12 @@ void createInertiaApp({
             </TooltipProvider>
         );
     },
-    progress: {
-        color: '#3ddc91',
-    },
+    progress: false,
 });
 
 if (typeof window !== 'undefined') {
+    trackPageVisits();
+    focusHeadingOnPageChange();
     flushPrefetchesAfterMutations();
     preloadPagesWhenIdle();
 }

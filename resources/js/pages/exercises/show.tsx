@@ -71,7 +71,10 @@ export default function ShowExercise({
                         <Badge variant="outline">Archived</Badge>
                     ) : (
                         <Button variant="outline" size="sm" asChild>
-                            <Link href={ExerciseController.edit(exercise.id)}>
+                            <Link
+                                href={ExerciseController.edit(exercise.id)}
+                                component="exercises/edit"
+                            >
                                 <PencilIcon aria-hidden="true" />
                                 Edit
                             </Link>

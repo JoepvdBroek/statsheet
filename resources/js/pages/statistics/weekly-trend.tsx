@@ -1,9 +1,15 @@
 import { Head, router } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { nativeSelectClassName } from '@/components/exercise-form';
-import { PageContent, SkeletonBlock } from '@/components/page-content';
+import {
+    PageContent,
+    SkeletonBlock,
+    UpdatingContent,
+    UpdatingSelect,
+} from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
 import { TrendChart } from '@/components/statsheet/trend-chart';
+import { usePageReload } from '@/hooks/use-page-reload';
 import { parentScreens } from '@/lib/parent-screens';
 import { capitalize, formatDate } from '@/lib/utils';
 import { weeklyTrend } from '@/routes/statistics';
@@ -30,6 +36,8 @@ export default function WeeklyTrend({
     /** One per Week, oldest first, ending with this Week. */
     weeks?: TrendWeek[];
 }) {
+    const { updatingField, reloadOptions } = usePageReload<'muscle'>();
+
     if (muscle === undefined || muscles === undefined || weeks === undefined) {
         return (
             <WeeklyTrendContent
@@ -51,35 +59,47 @@ export default function WeeklyTrend({
         <WeeklyTrendContent
             loading={false}
             muscleSelect={
-                <select
-                    aria-label="Muscle"
-                    className={nativeSelectClassName}
-                    value={muscle}
-                    onChange={(event) =>
-                        router.get(
-                            weeklyTrend.url(),
-                            { muscle: event.target.value },
-                            { preserveScroll: true, replace: true },
-                        )
-                    }
+                <UpdatingSelect
+                    updating={updatingField === 'muscle'}
+                    className="w-full"
                 >
-                    {muscles.map((option) => (
-                        <option key={option} value={option}>
-                            {capitalize(option)}
-                        </option>
-                    ))}
-                </select>
+                    <select
+                        aria-label="Muscle"
+                        className={nativeSelectClassName}
+                        value={muscle}
+                        onChange={(event) =>
+                            router.get(
+                                weeklyTrend.url(),
+                                { muscle: event.target.value },
+                                {
+                                    preserveState: true,
+                                    preserveScroll: true,
+                                    replace: true,
+                                    ...reloadOptions('muscle'),
+                                },
+                            )
+                        }
+                    >
+                        {muscles.map((option) => (
+                            <option key={option} value={option}>
+                                {capitalize(option)}
+                            </option>
+                        ))}
+                    </select>
+                </UpdatingSelect>
             }
             chart={
-                <TrendChart
-                    title={`${capitalize(muscle)} Volume per Week`}
-                    unit="kg"
-                    points={weeks.map((week) => ({
-                        label: formatDate(week.starts_on),
-                        value: week.volume,
-                        goal: week.goal,
-                    }))}
-                />
+                <UpdatingContent updating={updatingField !== null}>
+                    <TrendChart
+                        title={`${capitalize(muscle)} Volume per Week`}
+                        unit="kg"
+                        points={weeks.map((week) => ({
+                            label: formatDate(week.starts_on),
+                            value: week.volume,
+                            goal: week.goal,
+                        }))}
+                    />
+                </UpdatingContent>
             }
         />
     );

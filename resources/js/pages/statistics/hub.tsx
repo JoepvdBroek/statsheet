@@ -38,7 +38,12 @@ type ThisWeek = {
     }[];
 };
 
-type HubRow = NavItem & { description: string; icon: LucideIcon };
+type HubRow = NavItem & {
+    description: string;
+    /** The view's page component, for the instant visit to it. */
+    component: string;
+    icon: LucideIcon;
+};
 
 /** The statistics views and their settings, each opened from a row on the hub. */
 const rows: HubRow[] = [
@@ -46,30 +51,35 @@ const rows: HubRow[] = [
         title: 'Weekly trend',
         description: "A Muscle's Volume per Week against its Goal",
         href: weeklyTrend(),
+        component: 'statistics/weekly-trend',
         icon: TrendingUp,
     },
     {
         title: 'Monthly summary',
         description: 'A month of Workouts, Volume and Goals met',
         href: monthlySummary(),
+        component: 'statistics/monthly-summary',
         icon: CalendarDays,
     },
     {
         title: 'Exercises',
         description: "Each Exercise's progress and history",
         href: exercisesIndex(),
+        component: 'exercises/index',
         icon: Dumbbell,
     },
     {
         title: 'Weekly Reviews',
         description: 'Earlier reviews and their advice',
         href: reviewsIndex(),
+        component: 'reviews/index',
         icon: MessageSquareText,
     },
     {
         title: 'Goals',
         description: 'A weekly minimum Volume per Muscle',
         href: goalsIndex(),
+        component: 'goals/index',
         icon: Goal,
     },
 ];
@@ -105,7 +115,9 @@ export default function StatsHub({
                             )}
                         </div>
                         <Button asChild variant="outline" size="sm">
-                            <Link href={goalsIndex()}>Goals</Link>
+                            <Link href={goalsIndex()} component="goals/index">
+                                Goals
+                            </Link>
                         </Button>
                     </div>
 
@@ -165,6 +177,7 @@ export default function StatsHub({
                             <li key={row.title}>
                                 <Link
                                     href={row.href}
+                                    component={row.component}
                                     className="flex min-h-14 items-center gap-3 px-4 py-3 outline-none hover:bg-accent focus-visible:bg-accent"
                                 >
                                     <row.icon
@@ -212,7 +225,9 @@ function WeeklyReviewCard({
                     </p>
                 </div>
                 <Button asChild variant="outline" size="sm">
-                    <Link href={reviewsIndex()}>All reviews</Link>
+                    <Link href={reviewsIndex()} component="reviews/index">
+                        All reviews
+                    </Link>
                 </Button>
             </div>
 

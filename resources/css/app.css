@@ -141,4 +141,9 @@
             'cv11' 1,
             'ss01' 1;
     }
+
+    /* A tapped link dims while its visit runs: Inertia marks the Link with data-loading. */
+    [data-loading] {
+        opacity: 0.6;
+    }
 }

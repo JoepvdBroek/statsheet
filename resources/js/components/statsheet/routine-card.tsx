@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
+import { LockedButton } from '@/components/locked-button';
 import { InertButton, repeat, SkeletonBlock } from '@/components/page-content';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -17,6 +18,8 @@ type RoutineCardProps = React.ComponentProps<'article'> & {
     archived?: boolean;
     /** Start workout is shown only when onStart or startHref is given. */
     onStart?: () => void;
+    /** Whether Start workout's request is running: the button locks with a spinner. */
+    starting?: boolean;
     /** Render Start workout as a link instead of a button. */
     startHref?: string;
     /** Render Edit as a link instead of a button. */
@@ -33,6 +36,7 @@ function RoutineCard({
     lastDone,
     archived = false,
     onStart,
+    starting = false,
     startHref,
     editHref,
     onEdit,
@@ -95,9 +99,13 @@ function RoutineCard({
                                 Start workout
                             </a>
                         ) : onStart ? (
-                            <Button size="sm" onClick={onStart}>
+                            <LockedButton
+                                size="sm"
+                                locked={starting}
+                                onClick={onStart}
+                            >
                                 Start workout
-                            </Button>
+                            </LockedButton>
                         ) : null}
                         {editHref ? (
                             <a

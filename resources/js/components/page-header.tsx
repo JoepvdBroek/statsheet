@@ -33,6 +33,7 @@ export function PageHeader({
                 <div className="flex items-center gap-1">
                     <Link
                         href={parent.href}
+                        component={parent.component}
                         aria-label={`Back to ${parent.title}`}
                         className="-ml-2.5 inline-flex size-11 items-center justify-center rounded-full text-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                     >
@@ -49,7 +50,10 @@ export function PageHeader({
             {hasTitle || actions ? (
                 <div className="flex items-center justify-between gap-3">
                     {hasTitle ? (
-                        <h1 className="text-2xl leading-[1.4] font-normal tracking-[0.04em]">
+                        <h1
+                            tabIndex={-1}
+                            className="text-2xl leading-[1.4] font-normal tracking-[0.04em] outline-none"
+                        >
                             {title || (
                                 <>
                                     <span className="sr-only">

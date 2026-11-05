@@ -78,6 +78,7 @@ export default function MonthlySummary({
                                 href={monthlySummary({
                                     query: { month: previousMonth },
                                 })}
+                                component="statistics/monthly-summary"
                             >
                                 <ChevronLeftIcon aria-hidden="true" />
                                 {formatMonth(previousMonth)}
@@ -89,6 +90,7 @@ export default function MonthlySummary({
                                     href={monthlySummary({
                                         query: { month: nextMonth },
                                     })}
+                                    component="statistics/monthly-summary"
                                 >
                                     {formatMonth(nextMonth)}
                                     <ChevronRightIcon aria-hidden="true" />

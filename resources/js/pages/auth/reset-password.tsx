@@ -1,11 +1,10 @@
 import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
 import { update } from '@/routes/password';
+import { LockedButton } from '@/components/locked-button';
 
 type Props = {
     token: string;
@@ -74,15 +73,14 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                             />
                         </div>
 
-                        <Button
+                        <LockedButton
                             type="submit"
                             className="mt-4 w-full"
-                            disabled={processing}
+                            locked={processing}
                             data-test="reset-password-button"
                         >
-                            {processing && <Spinner />}
                             Reset password
-                        </Button>
+                        </LockedButton>
                     </div>
                 )}
             </Form>

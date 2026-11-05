@@ -96,7 +96,7 @@ class WorkoutHistoryTest extends TestCase
         $this->assertFalse($workout->isInProgress());
     }
 
-    public function test_deleting_a_workout_removes_it_with_its_exercises_and_sets()
+    public function test_deleting_a_workout_removes_it_with_its_exercises_and_sets_and_lands_on_workout_history()
     {
         $workout = Workout::factory()->withExercises(2, 3)->finished()->create();
         $kept = Workout::factory()->for($workout->user)->withExercises(1, 2)->finished()->create();
@@ -104,7 +104,7 @@ class WorkoutHistoryTest extends TestCase
         $response = $this->actingAs($workout->user)->delete(route('workouts.destroy', $workout));
 
         $response
-            ->assertRedirect(route('home'))
+            ->assertRedirect(route('workouts.index'))
             ->assertInertiaFlash('toast.message', 'Workout deleted.');
 
         $this->assertModelMissing($workout);

@@ -13,11 +13,11 @@ import {
     ExerciseCardSkeleton,
 } from '@/components/statsheet/exercise-card';
 import { PlannedSetRow } from '@/components/statsheet/set-row';
-import { Button } from '@/components/ui/button';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { Exercise, Routine, SetKind } from '@/types';
+import { LockedButton } from '@/components/locked-button';
 
 type PlannedSet = {
     /** Client-only identity, so React keeps rows apart while they move. */
@@ -392,9 +392,9 @@ export default function RoutineForm({
                 />
             </div>
 
-            <Button type="submit" size="lg" disabled={form.processing}>
+            <LockedButton type="submit" size="lg" locked={form.processing}>
                 {submitLabel}
-            </Button>
+            </LockedButton>
         </form>
     );
 }

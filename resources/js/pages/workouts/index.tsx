@@ -73,6 +73,7 @@ function WorkoutRow({
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <Link
                     href={WorkoutController.show(workout.id)}
+                    component="workouts/show"
                     className="truncate rounded-sm font-medium underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 >
                     {formatDateTime(workout.started_at, timeZone)}

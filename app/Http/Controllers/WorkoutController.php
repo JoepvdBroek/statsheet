@@ -99,7 +99,7 @@ class WorkoutController extends Controller
     }
 
     /**
-     * Delete the Workout with its Exercises and Sets, so it no longer counts anywhere.
+     * Delete the Workout with its Exercises and Sets, so it no longer counts anywhere, and land on Workout history.
      */
     #[Authorize('delete', 'workout')]
     public function destroy(Workout $workout): RedirectResponse
@@ -108,6 +108,6 @@ class WorkoutController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Workout deleted.')]);
 
-        return to_route('home');
+        return to_route('workouts.index');
     }
 }

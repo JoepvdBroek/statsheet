@@ -15,6 +15,8 @@ export type AppTab = 'routines' | 'workout' | 'stats';
 export type ParentScreen = {
     title: string;
     href: NonNullable<InertiaLinkProps['href']>;
+    /** The screen's page component, for the instant visit back to it. */
+    component: string;
 };
 
 /** What every app page declares for the layout, as its layout props. */

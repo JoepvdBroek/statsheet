@@ -3,12 +3,12 @@ import type { UrlMethodPair } from '@inertiajs/core';
 import InputError from '@/components/input-error';
 import { InertButton, repeat, SkeletonBlock } from '@/components/page-content';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { capitalize, cn } from '@/lib/utils';
 import type { Exercise, MuscleRole } from '@/types';
+import { LockedButton } from '@/components/locked-button';
 
 export const nativeSelectClassName =
     'flex h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive md:text-sm';
@@ -165,9 +165,9 @@ export default function ExerciseForm({
                 error={firstError('secondary_muscles')}
             />
 
-            <Button type="submit" size="lg" disabled={form.processing}>
+            <LockedButton type="submit" size="lg" locked={form.processing}>
                 {submitLabel}
-            </Button>
+            </LockedButton>
         </form>
     );
 }

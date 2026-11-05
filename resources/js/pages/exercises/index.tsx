@@ -3,12 +3,21 @@ import { PlusIcon, SearchIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import ExerciseController from '@/actions/App/Http/Controllers/ExerciseController';
 import { nativeSelectClassName } from '@/components/exercise-form';
-import { PageContent, repeat, SkeletonBlock } from '@/components/page-content';
+import {
+    PageContent,
+    repeat,
+    SkeletonBlock,
+    UpdatingContent,
+    UpdatingSelect,
+} from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
+import { QuietSpinner } from '@/components/quiet-spinner';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { usePageReload } from '@/hooks/use-page-reload';
+import type { PageReloadOptions } from '@/hooks/use-page-reload';
 import { parentScreens } from '@/lib/parent-screens';
 import { capitalize, cn } from '@/lib/utils';
 import { index } from '@/routes/exercises';
@@ -21,7 +30,13 @@ type Filters = {
     archived: boolean;
 };
 
-function applyFilters(filters: Filters) {
+/** The filter fields, each showing a spinner while a slow reload it started runs. */
+type FilterField = 'search' | 'muscle' | 'equipment' | 'in-use' | 'archived';
+
+function applyFilters(
+    filters: Filters,
+    reloadOptions: ReturnType<PageReloadOptions<FilterField>>,
+) {
     router.get(
         index.url(),
         {
@@ -36,6 +51,7 @@ function applyFilters(filters: Filters) {
             replace: true,
             only: ['exercises', 'filters'],
             reset: ['exercises'],
+            ...reloadOptions,
         },
     );
 }
@@ -52,6 +68,8 @@ export default function ExercisesIndex({
     muscles?: string[];
     equipment?: string[];
 }) {
+    const { updatingField, reloadOptions } = usePageReload<FilterField>();
+
     return (
         <>
             <Head title="Exercises" />
@@ -65,7 +83,10 @@ export default function ExercisesIndex({
                         Search by name, filter by Muscle or equipment.
                     </PageDescription>
                     <Button asChild>
-                        <Link href={ExerciseController.create()}>
+                        <Link
+                            href={ExerciseController.create()}
+                            component="exercises/create"
+                        >
                             <PlusIcon aria-hidden="true" />
                             New
                         </Link>
@@ -77,6 +98,8 @@ export default function ExercisesIndex({
                         filters={filters}
                         muscles={muscles}
                         equipment={equipment}
+                        updatingField={updatingField}
+                        reloadOptions={reloadOptions}
                     />
                 ) : (
                     <ExerciseFiltersSkeleton />
@@ -88,41 +111,52 @@ export default function ExercisesIndex({
                             <ExerciseRowSkeleton key={index} />
                         ))}
                     </ul>
-                ) : exercises.data.length === 0 ? (
-                    <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-                        {filters?.archived
-                            ? 'No archived Exercises.'
-                            : 'No Exercises match. Try another search or filter.'}
-                    </p>
                 ) : (
-                    <InfiniteScroll
-                        data="exercises"
-                        onlyNext
-                        as="ul"
-                        className="flex flex-col gap-2"
-                    >
-                        {exercises.data.map((exercise) => (
-                            <ExerciseRow
-                                key={exercise.id}
-                                exercise={exercise}
-                            />
-                        ))}
-                    </InfiniteScroll>
+                    <UpdatingContent updating={updatingField !== null}>
+                        {exercises.data.length === 0 ? (
+                            <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+                                {filters?.archived
+                                    ? 'No archived Exercises.'
+                                    : 'No Exercises match. Try another search or filter.'}
+                            </p>
+                        ) : (
+                            <InfiniteScroll
+                                data="exercises"
+                                onlyNext
+                                as="ul"
+                                className="flex flex-col gap-2"
+                            >
+                                {exercises.data.map((exercise) => (
+                                    <ExerciseRow
+                                        key={exercise.id}
+                                        exercise={exercise}
+                                    />
+                                ))}
+                            </InfiniteScroll>
+                        )}
+                    </UpdatingContent>
                 )}
             </PageContent>
         </>
     );
 }
 
-/** Search, Muscle and equipment filters, and In use or Archived. Mounted once the filters are known, as the search starts from them. */
+/**
+ * Search, Muscle and equipment filters, and In use or Archived. Mounted once the filters are known, as the search
+ * starts from them. The field a slow reload was started from shows a spinner.
+ */
 function ExerciseFilters({
     filters,
     muscles,
     equipment,
+    updatingField,
+    reloadOptions,
 }: {
     filters: Filters;
     muscles: string[];
     equipment: string[];
+    updatingField: FilterField | null;
+    reloadOptions: PageReloadOptions<FilterField>;
 }) {
     const [search, setSearch] = useState(filters.search ?? '');
 
@@ -132,21 +166,29 @@ function ExerciseFilters({
         }
 
         const timeout = setTimeout(
-            () => applyFilters({ ...filters, search: search.trim() || null }),
+            () =>
+                applyFilters(
+                    { ...filters, search: search.trim() || null },
+                    reloadOptions('search'),
+                ),
             300,
         );
 
         return () => clearTimeout(timeout);
-    }, [search, filters]);
+    }, [search, filters, reloadOptions]);
 
     return (
         <>
             <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
                 <div className="relative">
-                    <SearchIcon
-                        aria-hidden="true"
-                        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                    />
+                    {updatingField === 'search' ? (
+                        <QuietSpinner className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground" />
+                    ) : (
+                        <SearchIcon
+                            aria-hidden="true"
+                            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                        />
+                    )}
                     <Input
                         type="search"
                         aria-label="Search Exercises by name"
@@ -156,42 +198,52 @@ function ExerciseFilters({
                         className="pl-9"
                     />
                 </div>
-                <select
-                    aria-label="Filter by Muscle"
-                    className={nativeSelectClassName}
-                    value={filters.muscle ?? ''}
-                    onChange={(event) =>
-                        applyFilters({
-                            ...filters,
-                            muscle: event.target.value || null,
-                        })
-                    }
-                >
-                    <option value="">All Muscles</option>
-                    {muscles.map((muscle) => (
-                        <option key={muscle} value={muscle}>
-                            {capitalize(muscle)}
-                        </option>
-                    ))}
-                </select>
-                <select
-                    aria-label="Filter by equipment"
-                    className={nativeSelectClassName}
-                    value={filters.equipment ?? ''}
-                    onChange={(event) =>
-                        applyFilters({
-                            ...filters,
-                            equipment: event.target.value || null,
-                        })
-                    }
-                >
-                    <option value="">All equipment</option>
-                    {equipment.map((value) => (
-                        <option key={value} value={value}>
-                            {capitalize(value)}
-                        </option>
-                    ))}
-                </select>
+                <UpdatingSelect updating={updatingField === 'muscle'}>
+                    <select
+                        aria-label="Filter by Muscle"
+                        className={nativeSelectClassName}
+                        value={filters.muscle ?? ''}
+                        onChange={(event) =>
+                            applyFilters(
+                                {
+                                    ...filters,
+                                    muscle: event.target.value || null,
+                                },
+                                reloadOptions('muscle'),
+                            )
+                        }
+                    >
+                        <option value="">All Muscles</option>
+                        {muscles.map((muscle) => (
+                            <option key={muscle} value={muscle}>
+                                {capitalize(muscle)}
+                            </option>
+                        ))}
+                    </select>
+                </UpdatingSelect>
+                <UpdatingSelect updating={updatingField === 'equipment'}>
+                    <select
+                        aria-label="Filter by equipment"
+                        className={nativeSelectClassName}
+                        value={filters.equipment ?? ''}
+                        onChange={(event) =>
+                            applyFilters(
+                                {
+                                    ...filters,
+                                    equipment: event.target.value || null,
+                                },
+                                reloadOptions('equipment'),
+                            )
+                        }
+                    >
+                        <option value="">All equipment</option>
+                        {equipment.map((value) => (
+                            <option key={value} value={value}>
+                                {capitalize(value)}
+                            </option>
+                        ))}
+                    </select>
+                </UpdatingSelect>
             </div>
 
             <div
@@ -199,27 +251,36 @@ function ExerciseFilters({
                 aria-label="Show"
                 className="flex gap-1 self-start rounded-full border p-1"
             >
-                {[
-                    { archived: false, title: 'In use' },
-                    { archived: true, title: 'Archived' },
-                ].map((option) => (
+                {(
+                    [
+                        { archived: false, title: 'In use', field: 'in-use' },
+                        {
+                            archived: true,
+                            title: 'Archived',
+                            field: 'archived',
+                        },
+                    ] as const
+                ).map((option) => (
                     <button
                         key={option.title}
                         type="button"
                         aria-pressed={filters.archived === option.archived}
                         onClick={() =>
-                            applyFilters({
-                                ...filters,
-                                archived: option.archived,
-                            })
+                            applyFilters(
+                                { ...filters, archived: option.archived },
+                                reloadOptions(option.field),
+                            )
                         }
                         className={cn(
-                            'h-8 rounded-full px-3 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                            'flex h-8 items-center gap-1.5 rounded-full px-3 text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
                             filters.archived === option.archived
                                 ? 'bg-secondary text-secondary-foreground'
                                 : 'text-muted-foreground hover:text-foreground',
                         )}
                     >
+                        {updatingField === option.field ? (
+                            <QuietSpinner />
+                        ) : null}
                         {option.title}
                     </button>
                 ))}
@@ -279,6 +340,7 @@ function ExerciseRow({ exercise }: { exercise: Exercise }) {
                 <div className="flex min-w-0 flex-col gap-0.5">
                     <Link
                         href={ExerciseController.show(exercise.id)}
+                        component="exercises/show"
                         className={cn(
                             'truncate rounded-sm font-medium underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50',
                             exercise.archived && 'text-muted-foreground',

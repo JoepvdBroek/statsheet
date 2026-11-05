@@ -16,6 +16,7 @@ import ExercisePicker, {
     ExercisePickerSkeleton,
 } from '@/components/exercise-picker';
 import Heading from '@/components/heading';
+import { LockedButton } from '@/components/locked-button';
 import InputError from '@/components/input-error';
 import { ItemMenu, MoveRemoveItems } from '@/components/item-menu';
 import {
@@ -140,7 +141,7 @@ export default function ShowWorkout({
                         )}
                         {inProgress ? (
                             <Button variant="outline" size="sm" asChild>
-                                <Link href={index()}>
+                                <Link href={index()} component="workouts/index">
                                     <HistoryIcon aria-hidden="true" />
                                     Workout history
                                 </Link>
@@ -225,16 +226,17 @@ export default function ShowWorkout({
                         ) : (
                             <Form
                                 {...WorkoutController.finish.form(workout.id)}
+                                component="home"
                             >
                                 {({ processing }) => (
-                                    <Button
+                                    <LockedButton
                                         type="submit"
                                         size="lg"
                                         className="h-12 w-full text-base"
-                                        disabled={processing}
+                                        locked={processing}
                                     >
                                         Finish workout
-                                    </Button>
+                                    </LockedButton>
                                 )}
                             </Form>
                         )}
@@ -329,19 +331,22 @@ function DeleteWorkoutDialog({ workout }: { workout: Workout }) {
                     can't be undone.
                 </DialogDescription>
 
-                <Form {...WorkoutController.destroy.form(workout.id)}>
+                <Form
+                    {...WorkoutController.destroy.form(workout.id)}
+                    component="workouts/index"
+                >
                     {({ processing }) => (
                         <DialogFooter className="gap-2">
                             <DialogClose asChild>
                                 <Button variant="secondary">Cancel</Button>
                             </DialogClose>
-                            <Button
+                            <LockedButton
                                 type="submit"
                                 variant="destructive"
-                                disabled={processing}
+                                locked={processing}
                             >
                                 Delete
-                            </Button>
+                            </LockedButton>
                         </DialogFooter>
                     )}
                 </Form>

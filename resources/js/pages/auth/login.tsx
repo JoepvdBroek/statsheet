@@ -2,14 +2,13 @@ import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import PasskeyVerify from '@/components/passkey-verify';
+import { LockedButton } from '@/components/locked-button';
 
 type Props = {
     status?: string;
@@ -79,16 +78,15 @@ export default function Login({ status, canResetPassword }: Props) {
                                 <Label htmlFor="remember">Remember me</Label>
                             </div>
 
-                            <Button
+                            <LockedButton
                                 type="submit"
                                 className="mt-4 w-full"
                                 tabIndex={4}
-                                disabled={processing}
+                                locked={processing}
                                 data-test="login-button"
                             >
-                                {processing && <Spinner />}
                                 Log in
-                            </Button>
+                            </LockedButton>
                         </div>
                     </>
                 )}
