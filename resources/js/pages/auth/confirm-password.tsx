@@ -1,9 +1,9 @@
 import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
+import { LockedButton } from '@/components/locked-button';
 import PasswordInput from '@/components/password-input';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
+import { nameVisit } from '@/lib/failed-visits';
 import { store } from '@/routes/password/confirm';
 import {
     index as confirmOptions,
@@ -26,7 +26,11 @@ export default function ConfirmPassword() {
                 separator="Or confirm with password"
             />
 
-            <Form {...store.form()} resetOnSuccess={['password']}>
+            <Form
+                {...store.form()}
+                resetOnSuccess={['password']}
+                onBefore={(visit) => nameVisit(visit, 'confirmPassword')}
+            >
                 {({ processing, errors }) => (
                     <div className="space-y-6">
                         <div className="grid gap-2">
@@ -43,14 +47,13 @@ export default function ConfirmPassword() {
                         </div>
 
                         <div className="flex items-center">
-                            <Button
+                            <LockedButton
                                 className="w-full"
-                                disabled={processing}
+                                locked={processing}
                                 data-test="confirm-password-button"
                             >
-                                {processing && <Spinner />}
                                 Confirm password
-                            </Button>
+                            </LockedButton>
                         </div>
                     </div>
                 )}

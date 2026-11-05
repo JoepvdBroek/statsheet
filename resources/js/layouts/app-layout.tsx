@@ -9,6 +9,7 @@ import type { AppLayoutProps } from '@/types';
 export default function AppLayout({
     tab = null,
     title,
+    loadingTitle,
     parent,
     actions,
     children,
@@ -16,7 +17,12 @@ export default function AppLayout({
     return (
         <div className="min-h-svh bg-background">
             <main className="mx-auto flex w-full max-w-160 flex-col pb-(--tab-bar-height)">
-                <PageHeader title={title} parent={parent} actions={actions} />
+                <PageHeader
+                    title={title}
+                    loadingTitle={loadingTitle}
+                    parent={parent}
+                    actions={actions}
+                />
                 {children}
             </main>
             <TabBar activeTab={tab} />

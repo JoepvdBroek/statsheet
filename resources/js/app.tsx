@@ -4,17 +4,26 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import { handleFailedVisits } from '@/lib/failed-visits';
+import { focusHeadingOnPageChange } from '@/lib/page-heading-focus';
+import { trackPageLoad } from '@/lib/page-load';
+import { trackPageVisits } from '@/lib/page-visits';
+import { flushPrefetchesAfterMutations } from '@/lib/prefetch';
+import { preloadPagesWhenIdle } from '@/lib/preload-pages';
+import { workoutPageShell } from '@/lib/workout-page';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
-    layout: (name) => {
+    layout: (name, page) => {
         switch (true) {
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):
                 return [AppLayout, SettingsLayout];
+            case name === 'workouts/show':
+                return [AppLayout, workoutPageShell(page)];
             default:
                 return AppLayout;
         }
@@ -28,7 +37,14 @@ void createInertiaApp({
             </TooltipProvider>
         );
     },
-    progress: {
-        color: '#3ddc91',
-    },
+    progress: false,
 });
+
+if (typeof window !== 'undefined') {
+    trackPageVisits();
+    focusHeadingOnPageChange();
+    trackPageLoad();
+    handleFailedVisits();
+    flushPrefetchesAfterMutations();
+    preloadPagesWhenIdle();
+}

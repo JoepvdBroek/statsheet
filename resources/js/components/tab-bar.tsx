@@ -1,25 +1,37 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ChartLine, ClipboardList, Dumbbell } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useInstantVisitComponent } from '@/hooks/use-instant-visit-component';
+import { usePrefetchOnPageChange } from '@/hooks/use-prefetch-on-page-change';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { hub as statsHub } from '@/routes/statistics';
 import { index as workoutsIndex, show as showWorkout } from '@/routes/workouts';
-import type { AppTab, NavItem } from '@/types';
+import type { AppTab, NavItem, PageComponent } from '@/types';
 
-type Tab = NavItem & { tab: AppTab; icon: LucideIcon; live?: boolean };
+type Tab = NavItem & {
+    tab: AppTab;
+    /** The tab's page component, for the instant visit to it. */
+    component: PageComponent;
+    icon: LucideIcon;
+    live?: boolean;
+};
 
 /**
  * The bottom tab bar on every screen width. The Workout tab opens the Workout in progress, with a neon dot, or else Workout history.
+ * A tap opens the tab's page at once, as an instant visit, unless it's the page you're on.
+ * The tabs you're not on are prefetched after every page change.
  */
 export function TabBar({ activeTab }: { activeTab: AppTab | null }) {
     const { workoutInProgressId } = usePage().props;
+    const instantVisitComponent = useInstantVisitComponent();
 
     const tabs: Tab[] = [
         {
             tab: 'routines',
             title: 'Routines',
             href: home(),
+            component: 'home',
             icon: ClipboardList,
         },
         {
@@ -29,11 +41,25 @@ export function TabBar({ activeTab }: { activeTab: AppTab | null }) {
                 workoutInProgressId === null
                     ? workoutsIndex()
                     : showWorkout(workoutInProgressId),
+            component:
+                workoutInProgressId === null
+                    ? 'workouts/index'
+                    : 'workouts/show',
             icon: Dumbbell,
             live: workoutInProgressId !== null,
         },
-        { tab: 'stats', title: 'Stats', href: statsHub(), icon: ChartLine },
+        {
+            tab: 'stats',
+            title: 'Stats',
+            href: statsHub(),
+            component: 'statistics/hub',
+            icon: ChartLine,
+        },
     ];
+
+    usePrefetchOnPageChange(
+        tabs.filter((item) => item.tab !== activeTab).map((item) => item.href),
+    );
 
     return (
         <nav
@@ -48,7 +74,10 @@ export function TabBar({ activeTab }: { activeTab: AppTab | null }) {
                         <Link
                             key={item.tab}
                             href={item.href}
-                            prefetch
+                            component={instantVisitComponent(
+                                item.href,
+                                item.component,
+                            )}
                             aria-current={active ? 'page' : undefined}
                             className={cn(
                                 'relative flex flex-1 basis-0 flex-col items-center justify-center gap-1 rounded-lg text-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',

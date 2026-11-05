@@ -1,9 +1,17 @@
+import { Link } from '@inertiajs/react';
+import type { InertiaLinkProps } from '@inertiajs/react';
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { LockedButton } from '@/components/locked-button';
+import { InertButton, repeat, SkeletonBlock } from '@/components/page-skeleton';
+import { MuscleTag } from '@/components/statsheet/muscle-tag';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { MuscleTag } from '@/components/statsheet/muscle-tag';
+import { cn } from '@/lib/utils';
+
+/** The card's own look, shared with its skeleton. */
+const cardClassName =
+    'flex flex-col gap-4 rounded-xl border bg-card p-5 text-card-foreground';
 
 type RoutineCardProps = React.ComponentProps<'article'> & {
     name: string;
@@ -16,11 +24,12 @@ type RoutineCardProps = React.ComponentProps<'article'> & {
     archived?: boolean;
     /** Start workout is shown only when onStart or startHref is given. */
     onStart?: () => void;
+    /** Whether Start workout's request is running: the button locks with a spinner. */
+    starting?: boolean;
     /** Render Start workout as a link instead of a button. */
     startHref?: string;
-    /** Render Edit as a link instead of a button. */
-    editHref?: string;
-    onEdit?: () => void;
+    /** The Routine's edit page, opened at once as an instant visit; the link dims while it opens. */
+    editHref: NonNullable<InertiaLinkProps['href']>;
     onRestore?: () => void;
 };
 
@@ -32,9 +41,9 @@ function RoutineCard({
     lastDone,
     archived = false,
     onStart,
+    starting = false,
     startHref,
     editHref,
-    onEdit,
     onRestore,
     className,
     ...props
@@ -45,10 +54,7 @@ function RoutineCard({
         <article
             data-slot="routine-card"
             data-archived={archived}
-            className={cn(
-                'flex flex-col gap-4 rounded-xl border bg-card p-5 text-card-foreground',
-                className,
-            )}
+            className={cn(cardClassName, className)}
             {...props}
         >
             <div className="flex items-start justify-between gap-3">
@@ -94,25 +100,19 @@ function RoutineCard({
                                 Start workout
                             </a>
                         ) : onStart ? (
-                            <Button size="sm" onClick={onStart}>
-                                Start workout
-                            </Button>
-                        ) : null}
-                        {editHref ? (
-                            <a
-                                href={editHref}
-                                className={buttonVariants({
-                                    variant: 'ghost',
-                                    size: 'sm',
-                                })}
+                            <LockedButton
+                                size="sm"
+                                locked={starting}
+                                onClick={onStart}
                             >
+                                Start workout
+                            </LockedButton>
+                        ) : null}
+                        <Button asChild variant="ghost" size="sm">
+                            <Link href={editHref} component="routines/edit">
                                 Edit
-                            </a>
-                        ) : (
-                            <Button variant="ghost" size="sm" onClick={onEdit}>
-                                Edit
-                            </Button>
-                        )}
+                            </Link>
+                        </Button>
                     </>
                 )}
             </div>
@@ -120,5 +120,31 @@ function RoutineCard({
     );
 }
 
-export { RoutineCard };
+/** A RoutineCard while its Routine loads: grey name, counts and Muscles, with its buttons' labels. */
+function RoutineCardSkeleton() {
+    return (
+        <article data-slot="routine-card" className={cardClassName}>
+            <div className="flex flex-col gap-1">
+                <SkeletonBlock className="my-0.5 h-5 w-1/2" />
+                <SkeletonBlock className="my-0.5 h-4 w-2/3" />
+            </div>
+            <div className="flex gap-1.5">
+                {repeat(3, (index) => (
+                    <SkeletonBlock
+                        key={index}
+                        className="h-6 w-16 rounded-full"
+                    />
+                ))}
+            </div>
+            <div className="flex gap-2">
+                <InertButton size="sm">Start workout</InertButton>
+                <InertButton variant="ghost" size="sm">
+                    Edit
+                </InertButton>
+            </div>
+        </article>
+    );
+}
+
+export { RoutineCard, RoutineCardSkeleton };
 export type { RoutineCardProps };

@@ -1,7 +1,12 @@
 import { Head, router } from '@inertiajs/react';
+import type { ReactNode } from 'react';
 import { nativeSelectClassName } from '@/components/exercise-form';
+import { PageContent } from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
+import { SkeletonBlock } from '@/components/page-skeleton';
 import { TrendChart } from '@/components/statsheet/trend-chart';
+import { UpdatingContent, UpdatingSelect } from '@/components/updating-content';
+import { useSamePageReload } from '@/hooks/use-same-page-reload';
 import { parentScreens } from '@/lib/parent-screens';
 import { capitalize, formatDate } from '@/lib/utils';
 import { weeklyTrend } from '@/routes/statistics';
@@ -21,23 +26,40 @@ export default function WeeklyTrend({
     muscles,
     weeks,
 }: {
-    /** The Muscle shown. */
-    muscle: string;
+    /** The Muscle shown. Every prop is undefined while an instant visit loads the page. */
+    muscle?: string;
     /** Every Muscle, to choose from. */
-    muscles: string[];
+    muscles?: string[];
     /** One per Week, oldest first, ending with this Week. */
-    weeks: TrendWeek[];
+    weeks?: TrendWeek[];
 }) {
-    return (
-        <>
-            <Head title="Weekly trend" />
+    const { updatingField, reloadOptions } = useSamePageReload<'muscle'>();
 
-            <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <PageDescription>
-                        Volume per Week against the Goal in force that Week,
-                        this Week included.
-                    </PageDescription>
+    if (muscle === undefined || muscles === undefined || weeks === undefined) {
+        return (
+            <WeeklyTrendContent
+                loading
+                muscleSelect={
+                    <SkeletonBlock className="h-9 shrink-0 sm:w-40" />
+                }
+                chart={
+                    <div className="flex flex-col gap-2">
+                        <SkeletonBlock className="h-4 w-48" />
+                        <SkeletonBlock className="h-[200px]" />
+                    </div>
+                }
+            />
+        );
+    }
+
+    return (
+        <WeeklyTrendContent
+            loading={false}
+            muscleSelect={
+                <UpdatingSelect
+                    updating={updatingField === 'muscle'}
+                    className="w-full"
+                >
                     <select
                         aria-label="Muscle"
                         className={nativeSelectClassName}
@@ -46,7 +68,12 @@ export default function WeeklyTrend({
                             router.get(
                                 weeklyTrend.url(),
                                 { muscle: event.target.value },
-                                { preserveScroll: true, replace: true },
+                                {
+                                    preserveState: true,
+                                    preserveScroll: true,
+                                    replace: true,
+                                    ...reloadOptions('muscle'),
+                                },
                             )
                         }
                     >
@@ -56,9 +83,10 @@ export default function WeeklyTrend({
                             </option>
                         ))}
                     </select>
-                </div>
-
-                <section className="rounded-xl border bg-card p-4 text-card-foreground">
+                </UpdatingSelect>
+            }
+            chart={
+                <UpdatingContent updating={updatingField !== null}>
                     <TrendChart
                         title={`${capitalize(muscle)} Volume per Week`}
                         unit="kg"
@@ -68,8 +96,42 @@ export default function WeeklyTrend({
                             goal: week.goal,
                         }))}
                     />
+                </UpdatingContent>
+            }
+        />
+    );
+}
+
+/** The page around its Muscle select and chart, which are grey while the page loads. */
+function WeeklyTrendContent({
+    loading,
+    muscleSelect,
+    chart,
+}: {
+    loading: boolean;
+    muscleSelect: ReactNode;
+    chart: ReactNode;
+}) {
+    return (
+        <>
+            <Head title="Weekly trend" />
+
+            <PageContent
+                loading={loading}
+                className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4"
+            >
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <PageDescription>
+                        Volume per Week against the Goal in force that Week,
+                        this Week included.
+                    </PageDescription>
+                    {muscleSelect}
+                </div>
+
+                <section className="rounded-xl border bg-card p-4 text-card-foreground">
+                    {chart}
                 </section>
-            </div>
+            </PageContent>
         </>
     );
 }

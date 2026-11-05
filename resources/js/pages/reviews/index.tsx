@@ -1,6 +1,11 @@
 import { Head } from '@inertiajs/react';
-import { AskForReviewForm } from '@/components/ask-for-review-form';
+import {
+    AskForReviewForm,
+    AskForReviewFormSkeleton,
+} from '@/components/ask-for-review-form';
+import { PageContent } from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
+import { repeat, SkeletonBlock } from '@/components/page-skeleton';
 import { WeeklyReviewLink } from '@/components/weekly-review-link';
 import { parentScreens } from '@/lib/parent-screens';
 import type { PageShell, WeeklyReviewSummary } from '@/types';
@@ -9,24 +14,39 @@ export default function ReviewsIndex({
     currentWeek,
     reviews,
 }: {
-    /** This Week's Monday, as a date. */
-    currentWeek: string;
+    /** This Week's Monday, as a date. Every prop is undefined while an instant visit loads the page. */
+    currentWeek?: string;
     /** The owner's reviews by Week, newest first. */
-    reviews: WeeklyReviewSummary[];
+    reviews?: WeeklyReviewSummary[];
 }) {
     return (
         <>
             <Head title="Weekly Reviews" />
 
-            <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
+            <PageContent
+                loading={reviews === undefined}
+                className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4"
+            >
                 <PageDescription>
                     Reread earlier reviews and their advice, or ask for the
                     review of another Week.
                 </PageDescription>
 
-                <AskForReviewForm defaultDay={currentWeek} />
+                {currentWeek === undefined ? (
+                    <AskForReviewFormSkeleton />
+                ) : (
+                    <AskForReviewForm defaultDay={currentWeek} />
+                )}
 
-                {reviews.length === 0 ? (
+                {reviews === undefined ? (
+                    <ul className="flex flex-col gap-2">
+                        {repeat(4, (index) => (
+                            <li key={index}>
+                                <SkeletonBlock className="h-20 rounded-lg" />
+                            </li>
+                        ))}
+                    </ul>
+                ) : reviews.length === 0 ? (
                     <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
                         No reviews yet. Ask for one above.
                     </p>
@@ -39,7 +59,7 @@ export default function ReviewsIndex({
                         ))}
                     </ul>
                 )}
-            </div>
+            </PageContent>
         </>
     );
 }

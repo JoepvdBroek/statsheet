@@ -2,7 +2,9 @@ import { Form, Head, usePage, usePoll } from '@inertiajs/react';
 import { AlertTriangleIcon, RefreshCwIcon } from 'lucide-react';
 import { useEffect } from 'react';
 import WeeklyReviewController from '@/actions/App/Http/Controllers/WeeklyReviewController';
+import { PageContent } from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
+import { repeat, SkeletonBlock } from '@/components/page-skeleton';
 import { ReviewRatingForm } from '@/components/review-rating-form';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -12,10 +14,14 @@ import { parentScreens } from '@/lib/parent-screens';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import type { PageShell, WeeklyReview } from '@/types';
 
-export default function ShowReview({ review }: { review: WeeklyReview }) {
+export default function ShowReview({
+    review,
+}: {
+    /** Undefined while an instant visit loads the page. */
+    review?: WeeklyReview;
+}) {
     const { auth } = usePage().props;
-    const pending = review.status === 'pending';
-    const hasContent = review.summary !== null;
+    const pending = review?.status === 'pending';
     const { start, stop } = usePoll(
         3000,
         { only: ['review'] },
@@ -30,11 +36,40 @@ export default function ShowReview({ review }: { review: WeeklyReview }) {
         }
     }, [pending, start, stop]);
 
+    if (review === undefined) {
+        return (
+            <>
+                <Head title="Weekly Review" />
+
+                <PageContent
+                    loading
+                    className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4"
+                >
+                    <SkeletonBlock className="my-0.5 h-4 w-48" />
+
+                    <div className="flex flex-col gap-3">
+                        {repeat(4, (index) => (
+                            <SkeletonBlock
+                                key={index}
+                                className="my-1 h-4 last:w-2/3"
+                            />
+                        ))}
+                    </div>
+                </PageContent>
+            </>
+        );
+    }
+
+    const hasContent = review.summary !== null;
+
     return (
         <>
             <Head title={`Weekly Review, ${formatDate(review.week)}`} />
 
-            <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
+            <PageContent
+                loading={false}
+                className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4"
+            >
                 <div className="flex items-start justify-between gap-4">
                     <PageDescription>
                         The Week of Monday {formatDate(review.week)}.
@@ -151,7 +186,7 @@ export default function ShowReview({ review }: { review: WeeklyReview }) {
                             : '.'}
                     </p>
                 ) : null}
-            </div>
+            </PageContent>
         </>
     );
 }

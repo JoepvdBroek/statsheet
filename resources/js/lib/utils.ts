@@ -1,8 +1,13 @@
 import type { InertiaLinkProps } from '@inertiajs/react';
 import { clsx } from 'clsx';
 import type { ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { extendTailwindMerge } from 'tailwind-merge';
 import type { Workout } from '@/types';
+
+/** Knows the app's own animations, so one replaces another such as the Skeleton's pulse. */
+const twMerge = extendTailwindMerge({
+    extend: { theme: { animate: ['skeleton-in', 'skeleton-appear'] } },
+});
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));

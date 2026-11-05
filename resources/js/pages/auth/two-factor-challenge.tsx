@@ -2,7 +2,7 @@ import { Form, Head, setLayoutProps } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { useMemo, useState } from 'react';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
+import { LockedButton } from '@/components/locked-button';
 import { Input } from '@/components/ui/input';
 import {
     InputOTP,
@@ -10,6 +10,7 @@ import {
     InputOTPSlot,
 } from '@/components/ui/input-otp';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
+import { nameVisit } from '@/lib/failed-visits';
 import { store } from '@/routes/two-factor/login';
 
 export default function TwoFactorChallenge() {
@@ -56,6 +57,7 @@ export default function TwoFactorChallenge() {
             <div className="space-y-6">
                 <Form
                     {...store.form()}
+                    onBefore={(visit) => nameVisit(visit, 'logIn')}
                     className="space-y-4"
                     resetOnError
                     resetOnSuccess={!showRecoveryInput}
@@ -104,13 +106,13 @@ export default function TwoFactorChallenge() {
                                 </div>
                             )}
 
-                            <Button
+                            <LockedButton
                                 type="submit"
                                 className="w-full"
-                                disabled={processing}
+                                locked={processing}
                             >
                                 Continue
-                            </Button>
+                            </LockedButton>
 
                             <div className="text-center text-sm text-muted-foreground">
                                 <span>or you can </span>

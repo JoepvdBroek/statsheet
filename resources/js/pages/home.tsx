@@ -1,32 +1,41 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { PlayIcon, PlusIcon, ScaleIcon, SettingsIcon } from 'lucide-react';
+import { useState } from 'react';
 import RoutineController from '@/actions/App/Http/Controllers/RoutineController';
+import { PageContent } from '@/components/page-content';
+import { repeat, SkeletonBlock } from '@/components/page-skeleton';
 import { StartEmptyWorkoutButton } from '@/components/start-empty-workout-button';
-import { RoutineCard } from '@/components/statsheet/routine-card';
+import {
+    RoutineCard,
+    RoutineCardSkeleton,
+} from '@/components/statsheet/routine-card';
 import { StatBlock } from '@/components/statsheet/stat-block';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { usePrefetchOnPageChange } from '@/hooks/use-prefetch-on-page-change';
+import { nameVisit } from '@/lib/failed-visits';
 import { formatDateTime, formatKg, formatLastDone } from '@/lib/utils';
 import { home } from '@/routes';
 import { edit as editProfile } from '@/routes/profile';
 import { show } from '@/routes/workouts';
 import type { PageShell, Routine } from '@/types';
 
+/** Every prop is undefined while an instant visit loads the page. */
 type HomeProps = {
     /** The owner's Routines in use with their Last Done, the one most likely due first. */
-    routines: Routine[];
+    routines?: Routine[];
     /** The owner's Archived Routines, only when the toggle asks for them. */
-    archivedRoutines: Routine[] | null;
+    archivedRoutines?: Routine[] | null;
     /** The owner's one Workout in progress, if any. */
-    workoutInProgress: {
+    workoutInProgress?: {
         id: number;
         started_at: string;
         /** Empty for an empty Workout. */
         routine_name: string | null;
     } | null;
     /** Whether the owner has no Bodyweight set yet. */
-    bodyweightNudge: boolean;
-    thisWeek: ThisWeek;
+    bodyweightNudge?: boolean;
+    thisWeek?: ThisWeek;
 };
 
 type ThisWeek = {
@@ -45,34 +54,56 @@ export default function Home({
     bodyweightNudge,
     thisWeek,
 }: HomeProps) {
-    const { auth } = usePage().props;
-    const showsArchived = archivedRoutines !== null;
+    const { auth, workoutInProgressId } = usePage().props;
+    const showsArchived = Boolean(archivedRoutines);
+    /** Known from the shared props before the page's own arrive. */
+    const resumableId =
+        workoutInProgress === undefined
+            ? workoutInProgressId
+            : (workoutInProgress?.id ?? null);
+
+    usePrefetchOnPageChange(resumableId !== null ? [show(resumableId)] : []);
 
     return (
         <>
             <Head title="Routines" />
 
-            <div className="flex flex-col gap-4 p-4">
-                {workoutInProgress ? (
+            <PageContent
+                loading={routines === undefined}
+                className="flex flex-col gap-4 p-4"
+            >
+                {resumableId !== null ? (
                     <section className="flex items-center justify-between gap-4 rounded-xl border border-primary/40 bg-card p-4 text-card-foreground">
                         <div className="min-w-0 space-y-0.5">
                             <p className="text-xs font-medium tracking-[0.08em] text-primary uppercase">
                                 Workout in progress
                             </p>
-                            <h2 className="truncate text-base font-medium">
-                                {workoutInProgress.routine_name ??
-                                    'Empty workout'}
-                            </h2>
-                            <p className="text-sm text-muted-foreground">
-                                Started{' '}
-                                {formatDateTime(
-                                    workoutInProgress.started_at,
-                                    auth.user.timezone,
-                                )}
-                            </p>
+                            {workoutInProgress ? (
+                                <>
+                                    <h2 className="truncate text-base font-medium">
+                                        {workoutInProgress.routine_name ??
+                                            'Empty workout'}
+                                    </h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Started{' '}
+                                        {formatDateTime(
+                                            workoutInProgress.started_at,
+                                            auth.user.timezone,
+                                        )}
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <SkeletonBlock className="my-0.5 h-5 w-32" />
+                                    <SkeletonBlock className="my-0.5 h-4 w-40" />
+                                </>
+                            )}
                         </div>
                         <Button asChild className="shrink-0">
-                            <Link href={show(workoutInProgress.id)}>
+                            <Link
+                                href={show(resumableId)}
+                                component="workouts/show"
+                            >
                                 <PlayIcon aria-hidden="true" />
                                 Resume
                             </Link>
@@ -90,6 +121,7 @@ export default function Home({
                                 their added load toward Volume.{' '}
                                 <Link
                                     href={editProfile()}
+                                    component="settings/profile"
                                     className="font-medium text-foreground underline underline-offset-4"
                                 >
                                     Set it in your profile
@@ -101,7 +133,13 @@ export default function Home({
 
                 <ThisWeekStrip thisWeek={thisWeek} />
 
-                {routines.length === 0 ? (
+                {routines === undefined ? (
+                    <div className="flex flex-col gap-3">
+                        {repeat(3, (index) => (
+                            <RoutineCardSkeleton key={index} />
+                        ))}
+                    </div>
+                ) : routines.length === 0 ? (
                     <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
                         No Routines yet. Plan your first one.
                     </p>
@@ -129,22 +167,27 @@ export default function Home({
                     </Link>
                 </Button>
 
-                {archivedRoutines === null ? null : archivedRoutines.length ===
-                  0 ? (
+                {!archivedRoutines ? null : archivedRoutines.length === 0 ? (
                     <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
                         No archived Routines.
                     </p>
                 ) : (
                     <RoutineCards routines={archivedRoutines} />
                 )}
-            </div>
+            </PageContent>
         </>
     );
 }
 
-/** Routine cards with Start, Edit and Last Done, or Restore for an Archived Routine. */
+/**
+ * Routine cards with Start, Edit and Last Done, or Restore for an Archived Routine.
+ * Start and Edit open their page at once, as instant visits; Start locks until its Workout opens, and Edit dims.
+ */
 function RoutineCards({ routines }: { routines: Routine[] }) {
     const { auth } = usePage().props;
+    const [startingRoutineId, setStartingRoutineId] = useState<number | null>(
+        null,
+    );
 
     return (
         <div className="flex flex-col gap-3">
@@ -167,12 +210,18 @@ function RoutineCards({ routines }: { routines: Routine[] }) {
                               )
                     }
                     archived={routine.archived}
+                    starting={startingRoutineId === routine.id}
                     onStart={() =>
-                        router.visit(RoutineController.start(routine.id))
+                        router.visit(RoutineController.start(routine.id), {
+                            component: 'workouts/show',
+                            onBefore: (visit) => {
+                                setStartingRoutineId(routine.id);
+                                nameVisit(visit, 'startWorkout');
+                            },
+                            onFinish: () => setStartingRoutineId(null),
+                        })
                     }
-                    onEdit={() =>
-                        router.visit(RoutineController.edit(routine.id))
-                    }
+                    editHref={RoutineController.edit(routine.id)}
                     onRestore={() =>
                         router.visit(RoutineController.restore(routine.id), {
                             preserveScroll: true,
@@ -211,8 +260,32 @@ function primaryMuscles(routine: Routine): string[] {
 /** The sign in front of the % change, by its trend. */
 const signs = { up: '+', down: '−', flat: '' } as const;
 
-/** This Week's Workouts and Volume, with the % change against last Week up to the same moment while last Week had Volume by then. */
-function ThisWeekStrip({ thisWeek }: { thisWeek: ThisWeek }) {
+/**
+ * This Week's Workouts and Volume, with the % change against last Week up to the same moment while last Week had Volume by then.
+ * Grey numbers while the Week loads.
+ */
+function ThisWeekStrip({ thisWeek }: { thisWeek?: ThisWeek }) {
+    if (!thisWeek) {
+        return (
+            <section
+                aria-label="This week"
+                className="grid grid-cols-2 gap-4 rounded-xl border bg-card p-4 text-card-foreground"
+            >
+                <StatBlock
+                    size="sm"
+                    value={<SkeletonBlock className="my-1 h-6 w-8" />}
+                    label="This week"
+                />
+                <StatBlock
+                    size="sm"
+                    value={<SkeletonBlock className="my-1 h-6 w-20" />}
+                    unit="kg"
+                    label="Volume"
+                />
+            </section>
+        );
+    }
+
     const { workouts, volume, last_week_volume: lastWeekVolume } = thisWeek;
     const change =
         lastWeekVolume > 0
@@ -261,13 +334,20 @@ function HomeActions() {
     return (
         <>
             <Button asChild size="sm">
-                <Link href={RoutineController.create()}>
+                <Link
+                    href={RoutineController.create()}
+                    component="routines/create"
+                >
                     <PlusIcon aria-hidden="true" />
                     New routine
                 </Link>
             </Button>
             <Button asChild variant="ghost" size="icon" className="size-11">
-                <Link href={editProfile()} aria-label="Settings">
+                <Link
+                    href={editProfile()}
+                    component="settings/profile"
+                    aria-label="Settings"
+                >
                     <SettingsIcon aria-hidden="true" className="size-5" />
                 </Link>
             </Button>

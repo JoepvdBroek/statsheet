@@ -48,6 +48,19 @@ class ExerciseManagementTest extends TestCase
         $this->assertDatabaseHas('exercise_muscles', ['muscle' => 'triceps', 'role' => 'secondary']);
     }
 
+    public function test_create_page_offers_the_muscle_and_equipment_choices()
+    {
+        $owner = User::factory()->create();
+
+        $response = $this->actingAs($owner)->get(route('exercises.create'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('exercises/create')
+            ->has('muscles', 17)
+            ->has('equipment', 12)
+        );
+    }
+
     public function test_edit_page_shows_the_exercise_with_its_muscles_and_the_choices()
     {
         $exercise = Exercise::factory()

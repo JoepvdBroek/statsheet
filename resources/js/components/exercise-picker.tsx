@@ -1,5 +1,6 @@
 import { PlusIcon, SearchIcon } from 'lucide-react';
 import { useState } from 'react';
+import { InertButton } from '@/components/page-skeleton';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,6 +43,16 @@ export default function ExercisePicker(props: ExercisePickerProps) {
                 onOpenChange={setOpen}
             />
         </>
+    );
+}
+
+/** The Add Exercise button while the page it adds to loads. */
+export function ExercisePickerSkeleton() {
+    return (
+        <InertButton variant="outline" size="lg">
+            <PlusIcon aria-hidden="true" />
+            Add Exercise
+        </InertButton>
     );
 }
 

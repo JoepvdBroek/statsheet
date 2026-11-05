@@ -1,8 +1,9 @@
 import { useForm } from '@inertiajs/react';
 import type { UrlMethodPair } from '@inertiajs/core';
 import InputError from '@/components/input-error';
+import { LockedButton } from '@/components/locked-button';
+import { InertButton, repeat, SkeletonBlock } from '@/components/page-skeleton';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +19,24 @@ type ExerciseFormData = {
     is_bodyweight: boolean;
     primary_muscles: string[];
     secondary_muscles: string[];
+};
+
+const bodyweightDescription =
+    'The weight you log is the load you add on top of your Bodyweight, 0 when none.';
+
+/** Each Muscle picker's legend and description. */
+const musclePickers: Record<
+    MuscleRole,
+    { title: string; description: string }
+> = {
+    primary: {
+        title: 'Primary Muscles',
+        description: 'At least one. Counts in full towards Volume.',
+    },
+    secondary: {
+        title: 'Secondary Muscles',
+        description: 'Optional. Counts half towards Volume.',
+    },
 };
 
 function musclesWithRole(exercise: Exercise | undefined, role: MuscleRole) {
@@ -125,16 +144,13 @@ export default function ExerciseForm({
                 <div className="grid gap-1">
                     <Label htmlFor="is_bodyweight">Bodyweight Exercise</Label>
                     <p className="text-sm text-muted-foreground">
-                        The weight you log is the load you add on top of your
-                        Bodyweight, 0 when none.
+                        {bodyweightDescription}
                     </p>
                 </div>
             </div>
 
             <MusclePicker
                 role="primary"
-                title="Primary Muscles"
-                description="At least one. Counts in full towards Volume."
                 muscles={muscles}
                 chosen={form.data.primary_muscles}
                 onToggle={(muscle) => toggleMuscle(muscle, 'primary')}
@@ -143,33 +159,95 @@ export default function ExerciseForm({
 
             <MusclePicker
                 role="secondary"
-                title="Secondary Muscles"
-                description="Optional. Counts half towards Volume."
                 muscles={muscles}
                 chosen={form.data.secondary_muscles}
                 onToggle={(muscle) => toggleMuscle(muscle, 'secondary')}
                 error={firstError('secondary_muscles')}
             />
 
-            <Button type="submit" size="lg" disabled={form.processing}>
+            <LockedButton type="submit" size="lg" locked={form.processing}>
                 {submitLabel}
-            </Button>
+            </LockedButton>
         </form>
+    );
+}
+
+/**
+ * The ExerciseForm while its page's props load: real labels, grey fields.
+ * The form itself takes its values from props once, when it mounts, so it waits for them.
+ */
+export function ExerciseFormSkeleton({ submitLabel }: { submitLabel: string }) {
+    return (
+        <div className="space-y-6">
+            <div className="grid gap-2">
+                <Label>Name</Label>
+                <SkeletonBlock className="h-9" />
+            </div>
+
+            <div className="grid gap-2">
+                <Label>Equipment</Label>
+                <SkeletonBlock className="h-9" />
+            </div>
+
+            <div className="flex items-start gap-3">
+                <SkeletonBlock className="mt-0.5 size-4 shrink-0 rounded-[4px]" />
+                <div className="grid gap-1">
+                    <Label>Bodyweight Exercise</Label>
+                    <p className="text-sm text-muted-foreground">
+                        {bodyweightDescription}
+                    </p>
+                </div>
+            </div>
+
+            {(['primary', 'secondary'] as const).map((role) => (
+                <div key={role} className="grid gap-2">
+                    <MusclePickerHeading role={role} />
+                    <div className="mt-1 flex flex-wrap gap-2">
+                        {repeat(6, (index) => (
+                            <SkeletonBlock
+                                key={index}
+                                className="h-9 w-20 rounded-full"
+                            />
+                        ))}
+                    </div>
+                </div>
+            ))}
+
+            <InertButton size="lg">{submitLabel}</InertButton>
+        </div>
+    );
+}
+
+/** A Muscle picker's legend and description; a plain heading while the form loads. */
+function MusclePickerHeading({
+    role,
+    legend = false,
+}: {
+    role: MuscleRole;
+    legend?: boolean;
+}) {
+    const Title = legend ? 'legend' : 'p';
+
+    return (
+        <>
+            <Title className="text-sm leading-none font-medium">
+                {musclePickers[role].title}
+            </Title>
+            <p className="text-sm text-muted-foreground">
+                {musclePickers[role].description}
+            </p>
+        </>
     );
 }
 
 function MusclePicker({
     role,
-    title,
-    description,
     muscles,
     chosen,
     onToggle,
     error,
 }: {
     role: MuscleRole;
-    title: string;
-    description: string;
     muscles: string[];
     chosen: string[];
     onToggle: (muscle: string) => void;
@@ -177,10 +255,7 @@ function MusclePicker({
 }) {
     return (
         <fieldset className="grid gap-2">
-            <legend className="text-sm leading-none font-medium">
-                {title}
-            </legend>
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <MusclePickerHeading role={role} legend />
             <div className="mt-1 flex flex-wrap gap-2">
                 {muscles.map((muscle) => {
                     const isChosen = chosen.includes(muscle);

@@ -1,11 +1,11 @@
 // Components
 import { Form, Head } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
 import InputError from '@/components/input-error';
+import { LockedButton } from '@/components/locked-button';
 import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { nameVisit } from '@/lib/failed-visits';
 import { login } from '@/routes';
 import { email } from '@/routes/password';
 
@@ -21,7 +21,10 @@ export default function ForgotPassword({ status }: { status?: string }) {
             )}
 
             <div className="space-y-6">
-                <Form {...email.form()}>
+                <Form
+                    {...email.form()}
+                    onBefore={(visit) => nameVisit(visit, 'sendResetLink')}
+                >
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
@@ -39,16 +42,13 @@ export default function ForgotPassword({ status }: { status?: string }) {
                             </div>
 
                             <div className="my-6 flex items-center justify-start">
-                                <Button
+                                <LockedButton
                                     className="w-full"
-                                    disabled={processing}
+                                    locked={processing}
                                     data-test="email-password-reset-link-button"
                                 >
-                                    {processing && (
-                                        <LoaderCircle className="h-4 w-4 animate-spin" />
-                                    )}
                                     Email password reset link
-                                </Button>
+                                </LockedButton>
                             </div>
                         </>
                     )}

@@ -1,8 +1,8 @@
 // Components
 import { Form, Head } from '@inertiajs/react';
+import { LockedButton } from '@/components/locked-button';
 import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
+import { nameVisit } from '@/lib/failed-visits';
 import { logout } from '@/routes';
 import { send } from '@/routes/verification';
 
@@ -18,16 +18,20 @@ export default function VerifyEmail({ status }: { status?: string }) {
                 </div>
             )}
 
-            <Form {...send.form()} className="space-y-6 text-center">
+            <Form
+                {...send.form()}
+                className="space-y-6 text-center"
+                onBefore={(visit) => nameVisit(visit, 'sendVerificationEmail')}
+            >
                 {({ processing }) => (
                     <>
-                        <Button disabled={processing} variant="secondary">
-                            {processing && <Spinner />}
+                        <LockedButton locked={processing} variant="secondary">
                             Resend verification email
-                        </Button>
+                        </LockedButton>
 
                         <TextLink
                             href={logout()}
+                            onBefore={(visit) => nameVisit(visit, 'logOut')}
                             className="mx-auto block text-sm"
                         >
                             Log out

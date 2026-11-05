@@ -5,27 +5,33 @@ import { PageDescription } from '@/components/page-description';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
+import { useInstantVisitComponent } from '@/hooks/use-instant-visit-component';
+import { nameVisit } from '@/lib/failed-visits';
 import { cn, toUrl } from '@/lib/utils';
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
-import type { NavItem } from '@/types';
+import type { NavItem, PageComponent } from '@/types';
 
-const sidebarNavItems: NavItem[] = [
+/** The settings pages, each with its page component for the instant visit to it. */
+const sidebarNavItems: Array<NavItem & { component: PageComponent }> = [
     {
         title: 'Profile',
         href: edit(),
+        component: 'settings/profile',
         icon: null,
     },
     {
         title: 'Security',
         href: editSecurity(),
+        component: 'settings/security',
         icon: null,
     },
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
+    const instantVisitComponent = useInstantVisitComponent();
 
     return (
         <div className="flex flex-col gap-8 px-4 py-6">
@@ -49,7 +55,13 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                     'bg-muted': isCurrentOrParentUrl(item.href),
                                 })}
                             >
-                                <Link href={item.href}>
+                                <Link
+                                    href={item.href}
+                                    component={instantVisitComponent(
+                                        item.href,
+                                        item.component,
+                                    )}
+                                >
                                     {item.icon && (
                                         <item.icon className="h-4 w-4" />
                                     )}
@@ -66,6 +78,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                             <Link
                                 href={logout()}
                                 as="button"
+                                onBefore={(visit) => nameVisit(visit, 'logOut')}
                                 onClick={() => router.flushAll()}
                                 data-test="logout-button"
                             >

@@ -7,9 +7,21 @@ import type { ParentScreen } from '@/types';
 
 /** The fixed screens that detail screens' back chevrons go to. */
 export const parentScreens = {
-    routines: { title: 'Routines', href: home() },
-    stats: { title: 'Stats', href: statsHub() },
-    workoutHistory: { title: 'Workout history', href: workoutsIndex() },
-    exercises: { title: 'Exercises', href: exercisesIndex() },
-    reviews: { title: 'Weekly Reviews', href: reviewsIndex() },
+    routines: { title: 'Routines', href: home(), component: 'home' },
+    stats: { title: 'Stats', href: statsHub(), component: 'statistics/hub' },
+    workoutHistory: {
+        title: 'Workout history',
+        href: workoutsIndex(),
+        component: 'workouts/index',
+    },
+    exercises: {
+        title: 'Exercises',
+        href: exercisesIndex(),
+        component: 'exercises/index',
+    },
+    reviews: {
+        title: 'Weekly Reviews',
+        href: reviewsIndex(),
+        component: 'reviews/index',
+    },
 } satisfies Record<string, ParentScreen>;

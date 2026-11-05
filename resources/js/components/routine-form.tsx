@@ -2,12 +2,18 @@ import { useForm } from '@inertiajs/react';
 import type { UrlMethodPair } from '@inertiajs/core';
 import { CornerDownRightIcon, DumbbellIcon } from 'lucide-react';
 import { useMemo } from 'react';
-import ExercisePicker from '@/components/exercise-picker';
+import ExercisePicker, {
+    ExercisePickerSkeleton,
+} from '@/components/exercise-picker';
 import InputError from '@/components/input-error';
 import { ItemMenu } from '@/components/item-menu';
-import { ExerciseCard } from '@/components/statsheet/exercise-card';
+import { LockedButton } from '@/components/locked-button';
+import { InertButton, repeat, SkeletonBlock } from '@/components/page-skeleton';
+import {
+    ExerciseCard,
+    ExerciseCardSkeleton,
+} from '@/components/statsheet/exercise-card';
 import { PlannedSetRow } from '@/components/statsheet/set-row';
-import { Button } from '@/components/ui/button';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -386,9 +392,33 @@ export default function RoutineForm({
                 />
             </div>
 
-            <Button type="submit" size="lg" disabled={form.processing}>
+            <LockedButton type="submit" size="lg" locked={form.processing}>
                 {submitLabel}
-            </Button>
+            </LockedButton>
         </form>
+    );
+}
+
+/**
+ * The RoutineForm while its Routine loads: real labels, a grey name and 3 planned Exercises.
+ * The form itself takes its values from the Routine once, when it mounts, so it waits for it.
+ */
+export function RoutineFormSkeleton({ submitLabel }: { submitLabel: string }) {
+    return (
+        <div className="space-y-6">
+            <div className="grid gap-2">
+                <Label>Name</Label>
+                <SkeletonBlock className="h-9" />
+            </div>
+
+            <div className="flex flex-col gap-3">
+                {repeat(3, (index) => (
+                    <ExerciseCardSkeleton key={index} planning />
+                ))}
+                <ExercisePickerSkeleton />
+            </div>
+
+            <InertButton size="lg">{submitLabel}</InertButton>
+        </div>
     );
 }
