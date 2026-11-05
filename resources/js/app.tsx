@@ -4,6 +4,8 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import { flushPrefetchesAfterMutations } from '@/lib/prefetch';
+import { preloadPagesWhenIdle } from '@/lib/preload-pages';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -32,3 +34,8 @@ void createInertiaApp({
         color: '#3ddc91',
     },
 });
+
+if (typeof window !== 'undefined') {
+    flushPrefetchesAfterMutations();
+    preloadPagesWhenIdle();
+}

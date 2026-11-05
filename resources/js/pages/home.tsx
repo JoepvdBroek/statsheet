@@ -6,6 +6,7 @@ import { RoutineCard } from '@/components/statsheet/routine-card';
 import { StatBlock } from '@/components/statsheet/stat-block';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { usePrefetchOnPageChange } from '@/hooks/use-prefetch-on-page-change';
 import { formatDateTime, formatKg, formatLastDone } from '@/lib/utils';
 import { home } from '@/routes';
 import { edit as editProfile } from '@/routes/profile';
@@ -47,6 +48,10 @@ export default function Home({
 }: HomeProps) {
     const { auth } = usePage().props;
     const showsArchived = archivedRoutines !== null;
+
+    usePrefetchOnPageChange(
+        workoutInProgress ? [show(workoutInProgress.id)] : [],
+    );
 
     return (
         <>
