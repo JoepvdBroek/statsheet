@@ -4,7 +4,9 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import { handleFailedVisits } from '@/lib/failed-visits';
 import { focusHeadingOnPageChange } from '@/lib/page-heading-focus';
+import { trackPageLoad } from '@/lib/page-load';
 import { trackPageVisits } from '@/lib/page-visits';
 import { flushPrefetchesAfterMutations } from '@/lib/prefetch';
 import { preloadPagesWhenIdle } from '@/lib/preload-pages';
@@ -41,6 +43,8 @@ void createInertiaApp({
 if (typeof window !== 'undefined') {
     trackPageVisits();
     focusHeadingOnPageChange();
+    trackPageLoad();
+    handleFailedVisits();
     flushPrefetchesAfterMutations();
     preloadPagesWhenIdle();
 }

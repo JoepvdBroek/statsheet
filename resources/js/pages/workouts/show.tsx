@@ -49,6 +49,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { nameInstantAction } from '@/lib/failed-visits';
 import { formatDateTime } from '@/lib/utils';
 import { showsWorkoutInProgress } from '@/lib/workout-page';
 import { index } from '@/routes/workouts';
@@ -227,6 +228,12 @@ export default function ShowWorkout({
                             <Form
                                 {...WorkoutController.finish.form(workout.id)}
                                 component="home"
+                                onBefore={(visit) =>
+                                    nameInstantAction(
+                                        visit,
+                                        'finish the workout',
+                                    )
+                                }
                             >
                                 {({ processing }) => (
                                     <LockedButton
@@ -334,6 +341,9 @@ function DeleteWorkoutDialog({ workout }: { workout: Workout }) {
                 <Form
                     {...WorkoutController.destroy.form(workout.id)}
                     component="workouts/index"
+                    onBefore={(visit) =>
+                        nameInstantAction(visit, 'delete the workout')
+                    }
                 >
                     {({ processing }) => (
                         <DialogFooter className="gap-2">

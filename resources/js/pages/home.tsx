@@ -12,6 +12,7 @@ import { StatBlock } from '@/components/statsheet/stat-block';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { usePrefetchOnPageChange } from '@/hooks/use-prefetch-on-page-change';
+import { nameInstantAction } from '@/lib/failed-visits';
 import { formatDateTime, formatKg, formatLastDone } from '@/lib/utils';
 import { home } from '@/routes';
 import { edit as editProfile } from '@/routes/profile';
@@ -212,7 +213,10 @@ function RoutineCards({ routines }: { routines: Routine[] }) {
                     onStart={() =>
                         router.visit(RoutineController.start(routine.id), {
                             component: 'workouts/show',
-                            onBefore: () => setStartingRoutineId(routine.id),
+                            onBefore: (visit) => {
+                                setStartingRoutineId(routine.id);
+                                nameInstantAction(visit, 'start the workout');
+                            },
                             onFinish: () => setStartingRoutineId(null),
                         })
                     }
