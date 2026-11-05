@@ -1,6 +1,7 @@
 import type { Page } from '@inertiajs/core';
 import { router } from '@inertiajs/react';
 import { focusPageHeading } from '@/lib/page-heading-focus';
+import { refreshPage } from '@/lib/page-refresh';
 
 /** Why the current page couldn't load its props: no answer, or the server's answer with its status. */
 export type PageFailure =
@@ -92,8 +93,9 @@ export function isWithoutItsProps({ props, sharedProps = [] }: Page): boolean {
 }
 
 /**
- * Ends the hint or error state on every page change, and loads the props of a page restored by back/forward
- * without them, so a skeleton or error page left in history never sticks. Returns a function that stops listening.
+ * Ends the hint or error state on every page change. A page restored by back/forward loads its props when it has
+ * none, so a skeleton or error page left in history never sticks, and otherwise refreshes them silently (see
+ * {@link refreshPage}), as they're as old as the page's history entry. Returns a function that stops listening.
  */
 export function trackPageLoad(): () => void {
     return router.on('navigate', (event) => {
@@ -101,8 +103,14 @@ export function trackPageLoad(): () => void {
 
         clearPageLoad();
 
-        if (type === 'history' && isWithoutItsProps(page)) {
+        if (type !== 'history') {
+            return;
+        }
+
+        if (isWithoutItsProps(page)) {
             loadPage(page);
+        } else {
+            refreshPage(page);
         }
     });
 }

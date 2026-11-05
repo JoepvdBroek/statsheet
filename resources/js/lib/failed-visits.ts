@@ -188,14 +188,11 @@ function fail(failure: PageFailure): void {
 }
 
 /**
- * Back to the page an instant action was started from, then reloads it to show the true state, since the action
- * may or may not have reached the server.
+ * Back to the page an instant action was started from, which then reloads to show the true state, since the action
+ * may or may not have reached the server: every page restored by back/forward does (see trackPageLoad).
  */
 function goBackAndReload(): void {
-    window.setTimeout(() => {
-        router.once('navigate', () => router.reload());
-        window.history.back();
-    }, 0);
+    window.setTimeout(() => window.history.back(), 0);
 }
 
 /** Whether a network error is the watched request's, rather than a background one's that failed alongside it. */
