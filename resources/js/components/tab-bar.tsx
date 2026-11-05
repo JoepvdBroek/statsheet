@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ChartLine, ClipboardList, Dumbbell } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { usePrefetchOnPageChange } from '@/hooks/use-prefetch-on-page-change';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { hub as statsHub } from '@/routes/statistics';
@@ -11,6 +12,7 @@ type Tab = NavItem & { tab: AppTab; icon: LucideIcon; live?: boolean };
 
 /**
  * The bottom tab bar on every screen width. The Workout tab opens the Workout in progress, with a neon dot, or else Workout history.
+ * The tabs you're not on are prefetched after every page change.
  */
 export function TabBar({ activeTab }: { activeTab: AppTab | null }) {
     const { workoutInProgressId } = usePage().props;
@@ -35,6 +37,10 @@ export function TabBar({ activeTab }: { activeTab: AppTab | null }) {
         { tab: 'stats', title: 'Stats', href: statsHub(), icon: ChartLine },
     ];
 
+    usePrefetchOnPageChange(
+        tabs.filter((item) => item.tab !== activeTab).map((item) => item.href),
+    );
+
     return (
         <nav
             aria-label="Main"
@@ -48,7 +54,6 @@ export function TabBar({ activeTab }: { activeTab: AppTab | null }) {
                         <Link
                             key={item.tab}
                             href={item.href}
-                            prefetch
                             aria-current={active ? 'page' : undefined}
                             className={cn(
                                 'relative flex flex-1 basis-0 flex-col items-center justify-center gap-1 rounded-lg text-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
