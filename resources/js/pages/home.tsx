@@ -2,7 +2,8 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { PlayIcon, PlusIcon, ScaleIcon, SettingsIcon } from 'lucide-react';
 import { useState } from 'react';
 import RoutineController from '@/actions/App/Http/Controllers/RoutineController';
-import { PageContent, repeat, SkeletonBlock } from '@/components/page-content';
+import { PageContent } from '@/components/page-content';
+import { repeat, SkeletonBlock } from '@/components/page-skeleton';
 import { StartEmptyWorkoutButton } from '@/components/start-empty-workout-button';
 import {
     RoutineCard,
@@ -12,7 +13,7 @@ import { StatBlock } from '@/components/statsheet/stat-block';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { usePrefetchOnPageChange } from '@/hooks/use-prefetch-on-page-change';
-import { nameInstantAction } from '@/lib/failed-visits';
+import { nameVisit } from '@/lib/failed-visits';
 import { formatDateTime, formatKg, formatLastDone } from '@/lib/utils';
 import { home } from '@/routes';
 import { edit as editProfile } from '@/routes/profile';
@@ -180,7 +181,7 @@ export default function Home({
 
 /**
  * Routine cards with Start, Edit and Last Done, or Restore for an Archived Routine.
- * Start and Edit open their page at once, as instant visits; Start locks until its Workout opens.
+ * Start and Edit open their page at once, as instant visits; Start locks until its Workout opens, and Edit dims.
  */
 function RoutineCards({ routines }: { routines: Routine[] }) {
     const { auth } = usePage().props;
@@ -215,16 +216,12 @@ function RoutineCards({ routines }: { routines: Routine[] }) {
                             component: 'workouts/show',
                             onBefore: (visit) => {
                                 setStartingRoutineId(routine.id);
-                                nameInstantAction(visit, 'start the workout');
+                                nameVisit(visit, 'startWorkout');
                             },
                             onFinish: () => setStartingRoutineId(null),
                         })
                     }
-                    onEdit={() =>
-                        router.visit(RoutineController.edit(routine.id), {
-                            component: 'routines/edit',
-                        })
-                    }
+                    editHref={RoutineController.edit(routine.id)}
                     onRestore={() =>
                         router.visit(RoutineController.restore(routine.id), {
                             preserveScroll: true,

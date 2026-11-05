@@ -1,7 +1,7 @@
 import { CheckIcon, TrophyIcon } from 'lucide-react';
 import * as React from 'react';
 
-import { SkeletonBlock } from '@/components/page-content';
+import { SkeletonBlock } from '@/components/page-skeleton';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -11,6 +11,10 @@ import { cn } from '@/lib/utils';
 import type { SetKind } from '@/types';
 
 type SetValues = { reps: number | null; weight: number | null };
+
+/** The columns of a logged Set's row, its header and its skeleton: mark, Target, weight, reps and done. */
+const loggedGrid =
+    'grid grid-cols-[2rem_minmax(0,1fr)_4.5rem_3.75rem_2.5rem] items-center gap-2 px-1';
 
 /** The set-number cell: W for a Warm-up Set, D for a Drop Set, otherwise the Working Set's number. */
 function setMark(kind: SetKind, index: number) {
@@ -209,7 +213,8 @@ function SetRow({
             data-kind={kind}
             data-met={done ? met : undefined}
             className={cn(
-                'grid h-12 grid-cols-[2rem_minmax(0,1fr)_4.5rem_3.75rem_2.5rem] items-center gap-2 px-1',
+                loggedGrid,
+                'h-12',
                 warmup && 'text-muted-foreground',
                 className,
             )}
@@ -327,7 +332,8 @@ function SetRowHeader({
             role="row"
             data-slot="set-row-header"
             className={cn(
-                'grid grid-cols-[2rem_minmax(0,1fr)_4.5rem_3.75rem_2.5rem] items-center gap-2 px-1 text-[11px] leading-4 tracking-[0.05em] text-muted-foreground uppercase',
+                loggedGrid,
+                'text-[11px] leading-4 tracking-[0.05em] text-muted-foreground uppercase',
                 className,
             )}
             {...props}
@@ -490,10 +496,7 @@ function PlannedSetRowHeader({
 /** A SetRow while its Set loads: grey mark, Target, fields and done toggle. */
 function SetRowSkeleton() {
     return (
-        <div
-            role="row"
-            className="grid h-12 grid-cols-[2rem_minmax(0,1fr)_4.5rem_3.75rem_2.5rem] items-center gap-2 px-1"
-        >
+        <div role="row" className={cn(loggedGrid, 'h-12')}>
             <SkeletonBlock className="mx-auto size-6" />
             <SkeletonBlock className="h-4 w-20" />
             <SkeletonBlock className="h-10" />

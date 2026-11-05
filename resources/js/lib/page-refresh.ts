@@ -1,6 +1,7 @@
-import type { Page, PendingVisit } from '@inertiajs/core';
+import type { Page } from '@inertiajs/core';
 import { router } from '@inertiajs/react';
 import { showPageFailure } from '@/lib/page-load';
+import { isBackgroundLoad } from '@/lib/page-visits';
 
 /** Statuses that mean the page itself is gone or not the owner's, rather than that the refresh failed. */
 const pageGoneStatuses = [403, 404];
@@ -22,7 +23,7 @@ let cancelRefresh = (): void => {};
  * A newer visit (a navigation, a reload, or an action such as logging a Set) cancels the refresh, as its response
  * carries fresh props too, and a refresh landing after it would bring back older ones. Back/forward cancels it too.
  */
-export function refreshPage(page: Page): void {
+export function refreshRestoredPage(page: Page): void {
     cancelRefresh();
 
     const { only, reset } = propsToRefresh(page);
@@ -100,15 +101,4 @@ function propsToRefresh({
     }
 
     return { only, reset };
-}
-
-/**
- * Whether a visit only loads in the background without bringing the page's data: a prefetch, or a load of deferred
- * props (an internal flag of Inertia's visit, hence the check).
- */
-function isBackgroundLoad(visit: PendingVisit): boolean {
-    return (
-        visit.prefetch ||
-        ('deferredProps' in visit && visit.deferredProps === true)
-    );
 }

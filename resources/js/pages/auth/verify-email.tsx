@@ -1,9 +1,10 @@
 // Components
 import { Form, Head } from '@inertiajs/react';
+import { LockedButton } from '@/components/locked-button';
 import TextLink from '@/components/text-link';
+import { nameVisit } from '@/lib/failed-visits';
 import { logout } from '@/routes';
 import { send } from '@/routes/verification';
-import { LockedButton } from '@/components/locked-button';
 
 export default function VerifyEmail({ status }: { status?: string }) {
     return (
@@ -17,7 +18,11 @@ export default function VerifyEmail({ status }: { status?: string }) {
                 </div>
             )}
 
-            <Form {...send.form()} className="space-y-6 text-center">
+            <Form
+                {...send.form()}
+                className="space-y-6 text-center"
+                onBefore={(visit) => nameVisit(visit, 'sendVerificationEmail')}
+            >
                 {({ processing }) => (
                     <>
                         <LockedButton locked={processing} variant="secondary">
@@ -26,6 +31,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
 
                         <TextLink
                             href={logout()}
+                            onBefore={(visit) => nameVisit(visit, 'logOut')}
                             className="mx-auto block text-sm"
                         >
                             Log out

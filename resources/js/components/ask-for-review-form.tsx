@@ -1,7 +1,7 @@
 import { Form } from '@inertiajs/react';
 import WeeklyReviewController from '@/actions/App/Http/Controllers/WeeklyReviewController';
 import InputError from '@/components/input-error';
-import { InertButton, SkeletonBlock } from '@/components/page-content';
+import { InertButton, SkeletonBlock } from '@/components/page-skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

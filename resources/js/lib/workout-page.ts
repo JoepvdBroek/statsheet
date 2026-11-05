@@ -1,6 +1,7 @@
 import type { Page } from '@inertiajs/core';
 import { parentScreens } from '@/lib/parent-screens';
 import { isInProgress } from '@/lib/utils';
+import { show as showWorkout } from '@/routes/workouts';
 import type { PageShell, Workout } from '@/types';
 
 /**
@@ -17,12 +18,20 @@ export function showsWorkoutInProgress({ url, props }: Page): boolean {
         return isInProgress(workout);
     }
 
-    const workoutId = /^\/workouts\/(\d+)(?:[?#]|$)/.exec(url)?.[1];
+    const workoutId = workoutIdOf(url);
 
-    return (
-        workoutId === undefined ||
-        Number(workoutId) === (props.workoutInProgressId as number | null)
-    );
+    return workoutId === null || workoutId === props.workoutInProgressId;
+}
+
+/** The id of the Workout whose address this is, or null for another address, such as Start Workout's. */
+function workoutIdOf(url: string): number | null {
+    const { pathname } = new URL(url, 'http://localhost');
+    const lastSegment = Number(pathname.split('/').at(-1));
+
+    return Number.isInteger(lastSegment) &&
+        showWorkout.url(lastSegment) === pathname
+        ? lastSegment
+        : null;
 }
 
 /**

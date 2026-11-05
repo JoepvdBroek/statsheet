@@ -1,6 +1,28 @@
+import type { PendingVisit } from '@inertiajs/core';
 import { router } from '@inertiajs/react';
 
-/** Ids of the page visits whose response hasn't landed yet: sync visits, not prefetches or async reloads. */
+/**
+ * Whether a visit is a page visit: a sync visit, which the owner started and waits for, such as a page change, a
+ * save or a search. Prefetches and async visits (deferred props, polls, background reloads, Workout logging) run in
+ * the background and aren't.
+ */
+export function isPageVisit(visit: PendingVisit): boolean {
+    return !visit.prefetch && !visit.async;
+}
+
+/**
+ * Whether a visit loads in the background without bringing the page's props: a prefetch, or a load of the page's
+ * deferred props (an internal flag of Inertia's visit, hence the check). Other async visits, such as Workout logging,
+ * do bring the page's props, even though they aren't page visits.
+ */
+export function isBackgroundLoad(visit: PendingVisit): boolean {
+    return (
+        visit.prefetch ||
+        ('deferredProps' in visit && visit.deferredProps === true)
+    );
+}
+
+/** Ids of the page visits whose response hasn't landed yet. */
 const visitsInFlight = new Set<string>();
 
 /** Callbacks waiting for every page visit in flight to finish. */
@@ -15,7 +37,7 @@ export function trackPageVisits(): () => void {
     const stopListeningToStart = router.on('start', (event) => {
         const { visit } = event.detail;
 
-        if (!visit.prefetch && !visit.async) {
+        if (isPageVisit(visit)) {
             visitsInFlight.add(visit.id);
         }
     });

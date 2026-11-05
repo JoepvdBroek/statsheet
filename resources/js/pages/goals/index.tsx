@@ -1,13 +1,9 @@
 import { Form, Head } from '@inertiajs/react';
 import GoalController from '@/actions/App/Http/Controllers/GoalController';
 import InputError from '@/components/input-error';
-import {
-    InertButton,
-    PageContent,
-    repeat,
-    SkeletonBlock,
-} from '@/components/page-content';
+import { PageContent } from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
+import { InertButton, repeat, SkeletonBlock } from '@/components/page-skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

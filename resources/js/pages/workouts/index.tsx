@@ -1,7 +1,8 @@
 import { Head, InfiniteScroll, Link, usePage } from '@inertiajs/react';
 import WorkoutController from '@/actions/App/Http/Controllers/WorkoutController';
-import { PageContent, repeat, SkeletonBlock } from '@/components/page-content';
+import { PageContent } from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
+import { repeat, SkeletonBlock } from '@/components/page-skeleton';
 import { StartEmptyWorkoutButton } from '@/components/start-empty-workout-button';
 import { Badge } from '@/components/ui/badge';
 import { formatDateTime, isInProgress } from '@/lib/utils';

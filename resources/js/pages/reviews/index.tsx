@@ -3,8 +3,9 @@ import {
     AskForReviewForm,
     AskForReviewFormSkeleton,
 } from '@/components/ask-for-review-form';
-import { PageContent, repeat, SkeletonBlock } from '@/components/page-content';
+import { PageContent } from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
+import { repeat, SkeletonBlock } from '@/components/page-skeleton';
 import { WeeklyReviewLink } from '@/components/weekly-review-link';
 import { parentScreens } from '@/lib/parent-screens';
 import type { PageShell, WeeklyReviewSummary } from '@/types';

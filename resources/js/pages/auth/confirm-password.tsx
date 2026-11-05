@@ -1,14 +1,15 @@
 import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
+import { LockedButton } from '@/components/locked-button';
 import PasswordInput from '@/components/password-input';
 import { Label } from '@/components/ui/label';
+import { nameVisit } from '@/lib/failed-visits';
 import { store } from '@/routes/password/confirm';
 import {
     index as confirmOptions,
     store as confirmStore,
 } from '@/actions/Laravel/Passkeys/Http/Controllers/PasskeyConfirmationController';
 import PasskeyVerify from '@/components/passkey-verify';
-import { LockedButton } from '@/components/locked-button';
 
 export default function ConfirmPassword() {
     return (
@@ -25,7 +26,11 @@ export default function ConfirmPassword() {
                 separator="Or confirm with password"
             />
 
-            <Form {...store.form()} resetOnSuccess={['password']}>
+            <Form
+                {...store.form()}
+                resetOnSuccess={['password']}
+                onBefore={(visit) => nameVisit(visit, 'confirmPassword')}
+            >
                 {({ processing, errors }) => (
                     <div className="space-y-6">
                         <div className="grid gap-2">

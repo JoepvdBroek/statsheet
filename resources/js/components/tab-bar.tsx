@@ -1,18 +1,18 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ChartLine, ClipboardList, Dumbbell } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useCurrentUrl } from '@/hooks/use-current-url';
+import { useInstantVisitComponent } from '@/hooks/use-instant-visit-component';
 import { usePrefetchOnPageChange } from '@/hooks/use-prefetch-on-page-change';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { hub as statsHub } from '@/routes/statistics';
 import { index as workoutsIndex, show as showWorkout } from '@/routes/workouts';
-import type { AppTab, NavItem } from '@/types';
+import type { AppTab, NavItem, PageComponent } from '@/types';
 
 type Tab = NavItem & {
     tab: AppTab;
     /** The tab's page component, for the instant visit to it. */
-    component: string;
+    component: PageComponent;
     icon: LucideIcon;
     live?: boolean;
 };
@@ -24,7 +24,7 @@ type Tab = NavItem & {
  */
 export function TabBar({ activeTab }: { activeTab: AppTab | null }) {
     const { workoutInProgressId } = usePage().props;
-    const { isCurrentUrl } = useCurrentUrl();
+    const instantVisitComponent = useInstantVisitComponent();
 
     const tabs: Tab[] = [
         {
@@ -74,11 +74,10 @@ export function TabBar({ activeTab }: { activeTab: AppTab | null }) {
                         <Link
                             key={item.tab}
                             href={item.href}
-                            component={
-                                isCurrentUrl(item.href)
-                                    ? undefined
-                                    : item.component
-                            }
+                            component={instantVisitComponent(
+                                item.href,
+                                item.component,
+                            )}
                             aria-current={active ? 'page' : undefined}
                             className={cn(
                                 'relative flex flex-1 basis-0 flex-col items-center justify-center gap-1 rounded-lg text-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',

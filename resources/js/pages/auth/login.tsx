@@ -1,14 +1,15 @@
 import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
+import { LockedButton } from '@/components/locked-button';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { nameVisit } from '@/lib/failed-visits';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import PasskeyVerify from '@/components/passkey-verify';
-import { LockedButton } from '@/components/locked-button';
 
 type Props = {
     status?: string;
@@ -25,6 +26,7 @@ export default function Login({ status, canResetPassword }: Props) {
             <Form
                 {...store.form()}
                 resetOnSuccess={['password']}
+                onBefore={(visit) => nameVisit(visit, 'logIn')}
                 className="flex flex-col gap-6"
             >
                 {({ processing, errors }) => (

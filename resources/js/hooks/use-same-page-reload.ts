@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 const updatingDelay = 150;
 
 /** Visit options that track a reload started from the given field. */
-export type PageReloadOptions<Field extends string> = (
+export type SamePageReloadOptions<Field extends string> = (
     field: Field,
 ) => Pick<VisitOptions, 'onStart' | 'onFinish'>;
 
@@ -15,10 +15,10 @@ export type PageReloadOptions<Field extends string> = (
  * signal and no skeleton. A newer reload takes over from one still running. `reloadOptions` stays the same function
  * across renders, so effects can depend on it.
  */
-export function usePageReload<Field extends string>(): {
+export function useSamePageReload<Field extends string>(): {
     /** The field whose reload is running and has taken over 150 ms; null otherwise. */
     updatingField: Field | null;
-    reloadOptions: PageReloadOptions<Field>;
+    reloadOptions: SamePageReloadOptions<Field>;
 } {
     const [updatingField, setUpdatingField] = useState<Field | null>(null);
     const running = useRef<{ visitId: string; timer: number } | null>(null);

@@ -2,7 +2,7 @@ import { Link } from '@inertiajs/react';
 import { ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { SkeletonBlock } from '@/components/page-content';
+import { SkeletonBlock } from '@/components/page-skeleton';
 import type { ParentScreen } from '@/types';
 
 /**

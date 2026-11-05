@@ -11,9 +11,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * In production, a page change that fails on the server is answered as an Inertia response with the failure's
- * status, so the app shows its in-page error state instead of Inertia's raw-HTML modal. In development the modal
- * keeps Laravel's debug page.
+ * In production, a page change that fails on the server is answered as an Inertia `error` page with the failure's
+ * status and the shared props, so the app shows its in-page error state instead of Inertia's raw-HTML modal. In
+ * development the modal keeps Laravel's debug page.
  */
 class FailedNavigationTest extends TestCase
 {
@@ -24,6 +24,9 @@ class FailedNavigationTest extends TestCase
         parent::setUp();
 
         Route::middleware('web')->get('/failing/{status}', fn (int $status) => abort($status));
+
+        // The error page is never drawn by the client, so only this check proves it exists.
+        config(['inertia.pages.ensure_pages_exist' => true]);
     }
 
     /**
@@ -39,7 +42,7 @@ class FailedNavigationTest extends TestCase
     }
 
     #[DataProvider('failureStatuses')]
-    public function test_a_failed_inertia_visit_returns_an_inertia_response_with_its_status_in_production(int $status)
+    public function test_a_failed_inertia_visit_returns_the_error_page_with_its_status_in_production(int $status)
     {
         config(['app.debug' => false]);
 
@@ -47,7 +50,10 @@ class FailedNavigationTest extends TestCase
 
         $response->assertStatus($status);
         $response->assertHeader('X-Inertia', 'true');
+        $response->assertJsonPath('component', 'error');
         $response->assertJsonPath('props.status', $status);
+        $response->assertJsonPath('props.auth.user', null);
+        $response->assertJsonPath('props.workoutInProgressId', null);
     }
 
     public function test_opening_another_users_workout_returns_an_inertia_404_in_production()
@@ -61,6 +67,7 @@ class FailedNavigationTest extends TestCase
 
         $response->assertNotFound();
         $response->assertHeader('X-Inertia', 'true');
+        $response->assertJsonPath('component', 'error');
         $response->assertJsonPath('props.status', 404);
     }
 

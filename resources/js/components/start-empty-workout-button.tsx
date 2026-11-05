@@ -2,7 +2,7 @@ import { Form } from '@inertiajs/react';
 import { PlusIcon } from 'lucide-react';
 import WorkoutController from '@/actions/App/Http/Controllers/WorkoutController';
 import { LockedButton } from '@/components/locked-button';
-import { nameInstantAction } from '@/lib/failed-visits';
+import { nameVisit } from '@/lib/failed-visits';
 
 /** Starts a Workout without a Routine and opens it at once, as an instant visit. */
 export function StartEmptyWorkoutButton() {
@@ -10,7 +10,7 @@ export function StartEmptyWorkoutButton() {
         <Form
             {...WorkoutController.store.form()}
             component="workouts/show"
-            onBefore={(visit) => nameInstantAction(visit, 'start the workout')}
+            onBefore={(visit) => nameVisit(visit, 'startWorkout')}
         >
             {({ processing }) => (
                 <LockedButton

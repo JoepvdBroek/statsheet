@@ -7,7 +7,8 @@ import ExercisePicker, {
 } from '@/components/exercise-picker';
 import InputError from '@/components/input-error';
 import { ItemMenu } from '@/components/item-menu';
-import { InertButton, repeat, SkeletonBlock } from '@/components/page-content';
+import { LockedButton } from '@/components/locked-button';
+import { InertButton, repeat, SkeletonBlock } from '@/components/page-skeleton';
 import {
     ExerciseCard,
     ExerciseCardSkeleton,
@@ -17,7 +18,6 @@ import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { Exercise, Routine, SetKind } from '@/types';
-import { LockedButton } from '@/components/locked-button';
 
 type PlannedSet = {
     /** Client-only identity, so React keeps rows apart while they move. */

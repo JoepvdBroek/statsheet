@@ -2,12 +2,9 @@ import { Form, Head } from '@inertiajs/react';
 import ExerciseController from '@/actions/App/Http/Controllers/ExerciseController';
 import ExerciseForm, { ExerciseFormSkeleton } from '@/components/exercise-form';
 import Heading from '@/components/heading';
-import {
-    InertButton,
-    PageContent,
-    SkeletonBlock,
-} from '@/components/page-content';
+import { PageContent } from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
+import { InertButton, SkeletonBlock } from '@/components/page-skeleton';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,

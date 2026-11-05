@@ -16,16 +16,12 @@ import ExercisePicker, {
     ExercisePickerSkeleton,
 } from '@/components/exercise-picker';
 import Heading from '@/components/heading';
-import { LockedButton } from '@/components/locked-button';
 import InputError from '@/components/input-error';
 import { ItemMenu, MoveRemoveItems } from '@/components/item-menu';
-import {
-    InertButton,
-    PageContent,
-    repeat,
-    SkeletonBlock,
-} from '@/components/page-content';
+import { LockedButton } from '@/components/locked-button';
+import { PageContent } from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
+import { InertButton, repeat, SkeletonBlock } from '@/components/page-skeleton';
 import {
     ExerciseCard,
     ExerciseCardSkeleton,
@@ -49,7 +45,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { nameInstantAction } from '@/lib/failed-visits';
+import { nameVisit, skipFailureHandling } from '@/lib/failed-visits';
 import { formatDateTime } from '@/lib/utils';
 import { showsWorkoutInProgress } from '@/lib/workout-page';
 import { index } from '@/routes/workouts';
@@ -64,8 +60,14 @@ import type {
 
 type Errors = Record<string, string | undefined>;
 
-/** Structure changes: keep the owner's place on the page. */
-const structureVisit = { preserveScroll: true } satisfies VisitOptions;
+/**
+ * Structure changes: keep the owner's place on the page. Like every in-place action during a Workout, they get no
+ * feedback, so their failures are left alone too.
+ */
+const structureVisit = {
+    preserveScroll: true,
+    onBefore: skipFailureHandling,
+} satisfies VisitOptions;
 
 /** Logging runs in the background, so quick taps on several Sets never cancel each other. */
 const loggingVisit = {
@@ -229,10 +231,7 @@ export default function ShowWorkout({
                                 {...WorkoutController.finish.form(workout.id)}
                                 component="home"
                                 onBefore={(visit) =>
-                                    nameInstantAction(
-                                        visit,
-                                        'finish the workout',
-                                    )
+                                    nameVisit(visit, 'finishWorkout')
                                 }
                             >
                                 {({ processing }) => (
@@ -288,7 +287,7 @@ function UpdateRoutine({
 
                     <Form
                         {...WorkoutController.updateRoutine.form(workout.id)}
-                        options={structureVisit}
+                        options={{ preserveScroll: true }}
                     >
                         {({ processing }) => (
                             <DialogFooter className="gap-2">
@@ -341,9 +340,7 @@ function DeleteWorkoutDialog({ workout }: { workout: Workout }) {
                 <Form
                     {...WorkoutController.destroy.form(workout.id)}
                     component="workouts/index"
-                    onBefore={(visit) =>
-                        nameInstantAction(visit, 'delete the workout')
-                    }
+                    onBefore={(visit) => nameVisit(visit, 'deleteWorkout')}
                 >
                     {({ processing }) => (
                         <DialogFooter className="gap-2">

@@ -3,21 +3,17 @@ import { PlusIcon, SearchIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import ExerciseController from '@/actions/App/Http/Controllers/ExerciseController';
 import { nativeSelectClassName } from '@/components/exercise-form';
-import {
-    PageContent,
-    repeat,
-    SkeletonBlock,
-    UpdatingContent,
-    UpdatingSelect,
-} from '@/components/page-content';
+import { PageContent } from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
+import { repeat, SkeletonBlock } from '@/components/page-skeleton';
 import { QuietSpinner } from '@/components/quiet-spinner';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { usePageReload } from '@/hooks/use-page-reload';
-import type { PageReloadOptions } from '@/hooks/use-page-reload';
+import { UpdatingContent, UpdatingSelect } from '@/components/updating-content';
+import { useSamePageReload } from '@/hooks/use-same-page-reload';
+import type { SamePageReloadOptions } from '@/hooks/use-same-page-reload';
 import { parentScreens } from '@/lib/parent-screens';
 import { capitalize, cn } from '@/lib/utils';
 import { index } from '@/routes/exercises';
@@ -35,7 +31,7 @@ type FilterField = 'search' | 'muscle' | 'equipment' | 'in-use' | 'archived';
 
 function applyFilters(
     filters: Filters,
-    reloadOptions: ReturnType<PageReloadOptions<FilterField>>,
+    reloadOptions: ReturnType<SamePageReloadOptions<FilterField>>,
 ) {
     router.get(
         index.url(),
@@ -68,7 +64,7 @@ export default function ExercisesIndex({
     muscles?: string[];
     equipment?: string[];
 }) {
-    const { updatingField, reloadOptions } = usePageReload<FilterField>();
+    const { updatingField, reloadOptions } = useSamePageReload<FilterField>();
 
     return (
         <>
@@ -156,7 +152,7 @@ function ExerciseFilters({
     muscles: string[];
     equipment: string[];
     updatingField: FilterField | null;
-    reloadOptions: PageReloadOptions<FilterField>;
+    reloadOptions: SamePageReloadOptions<FilterField>;
 }) {
     const [search, setSearch] = useState(filters.search ?? '');
 

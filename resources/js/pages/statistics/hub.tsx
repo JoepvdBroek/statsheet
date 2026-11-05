@@ -12,7 +12,8 @@ import {
     AskForReviewForm,
     AskForReviewFormSkeleton,
 } from '@/components/ask-for-review-form';
-import { PageContent, repeat, SkeletonBlock } from '@/components/page-content';
+import { PageContent } from '@/components/page-content';
+import { repeat, SkeletonBlock } from '@/components/page-skeleton';
 import { StatBlock } from '@/components/statsheet/stat-block';
 import { WeeklyReviewLink } from '@/components/weekly-review-link';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,7 @@ import { index as exercisesIndex } from '@/routes/exercises';
 import { index as goalsIndex } from '@/routes/goals';
 import { index as reviewsIndex } from '@/routes/reviews';
 import { monthlySummary, weeklyTrend } from '@/routes/statistics';
-import type { NavItem, PageShell, WeeklyReview } from '@/types';
+import type { NavItem, PageComponent, PageShell, WeeklyReview } from '@/types';
 
 type ThisWeek = {
     /** The Week's Monday, as a date. */
@@ -41,7 +42,7 @@ type ThisWeek = {
 type HubRow = NavItem & {
     description: string;
     /** The view's page component, for the instant visit to it. */
-    component: string;
+    component: PageComponent;
     icon: LucideIcon;
 };
 

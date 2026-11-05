@@ -2,6 +2,7 @@ import { Form, Head, setLayoutProps } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { useMemo, useState } from 'react';
 import InputError from '@/components/input-error';
+import { LockedButton } from '@/components/locked-button';
 import { Input } from '@/components/ui/input';
 import {
     InputOTP,
@@ -9,8 +10,8 @@ import {
     InputOTPSlot,
 } from '@/components/ui/input-otp';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
+import { nameVisit } from '@/lib/failed-visits';
 import { store } from '@/routes/two-factor/login';
-import { LockedButton } from '@/components/locked-button';
 
 export default function TwoFactorChallenge() {
     const [showRecoveryInput, setShowRecoveryInput] = useState<boolean>(false);
@@ -56,6 +57,7 @@ export default function TwoFactorChallenge() {
             <div className="space-y-6">
                 <Form
                     {...store.form()}
+                    onBefore={(visit) => nameVisit(visit, 'logIn')}
                     className="space-y-4"
                     resetOnError
                     resetOnSuccess={!showRecoveryInput}

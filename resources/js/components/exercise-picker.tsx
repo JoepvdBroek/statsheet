@@ -1,6 +1,6 @@
 import { PlusIcon, SearchIcon } from 'lucide-react';
 import { useState } from 'react';
-import { InertButton } from '@/components/page-content';
+import { InertButton } from '@/components/page-skeleton';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
 import { Button } from '@/components/ui/button';
 import {

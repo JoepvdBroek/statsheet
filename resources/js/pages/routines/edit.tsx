@@ -1,8 +1,9 @@
 import { Form, Head } from '@inertiajs/react';
 import RoutineController from '@/actions/App/Http/Controllers/RoutineController';
 import Heading from '@/components/heading';
-import { PageContent, SkeletonBlock } from '@/components/page-content';
+import { PageContent } from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
+import { SkeletonBlock } from '@/components/page-skeleton';
 import RoutineForm, { RoutineFormSkeleton } from '@/components/routine-form';
 import { Button } from '@/components/ui/button';
 import { parentScreens } from '@/lib/parent-screens';

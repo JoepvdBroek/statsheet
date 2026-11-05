@@ -1,15 +1,12 @@
 import { Head, router } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { nativeSelectClassName } from '@/components/exercise-form';
-import {
-    PageContent,
-    SkeletonBlock,
-    UpdatingContent,
-    UpdatingSelect,
-} from '@/components/page-content';
+import { PageContent } from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
+import { SkeletonBlock } from '@/components/page-skeleton';
 import { TrendChart } from '@/components/statsheet/trend-chart';
-import { usePageReload } from '@/hooks/use-page-reload';
+import { UpdatingContent, UpdatingSelect } from '@/components/updating-content';
+import { useSamePageReload } from '@/hooks/use-same-page-reload';
 import { parentScreens } from '@/lib/parent-screens';
 import { capitalize, formatDate } from '@/lib/utils';
 import { weeklyTrend } from '@/routes/statistics';
@@ -36,7 +33,7 @@ export default function WeeklyTrend({
     /** One per Week, oldest first, ending with this Week. */
     weeks?: TrendWeek[];
 }) {
-    const { updatingField, reloadOptions } = usePageReload<'muscle'>();
+    const { updatingField, reloadOptions } = useSamePageReload<'muscle'>();
 
     if (muscle === undefined || muscles === undefined || weeks === undefined) {
         return (

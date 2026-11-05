@@ -1,8 +1,7 @@
 import { MoreHorizontalIcon, PlusIcon } from 'lucide-react';
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
-import { repeat, SkeletonBlock } from '@/components/page-content';
+import { repeat, SkeletonBlock } from '@/components/page-skeleton';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
 import {
     PlannedSetRowHeader,
@@ -10,6 +9,11 @@ import {
     SetRowHeader,
     SetRowSkeleton,
 } from '@/components/statsheet/set-row';
+import { cn } from '@/lib/utils';
+
+/** The card's own look, shared with its skeleton. */
+const cardClassName =
+    'flex flex-col gap-3 rounded-xl border bg-card px-3 py-4 text-card-foreground';
 
 type ExerciseCardProps = React.ComponentProps<'section'> & {
     /** Exercise name, variation included ("Barbell bench press"). */
@@ -57,10 +61,7 @@ function ExerciseCard({
         <section
             data-slot="exercise-card"
             data-complete={complete}
-            className={cn(
-                'flex flex-col gap-3 rounded-xl border bg-card px-3 py-4 text-card-foreground',
-                className,
-            )}
+            className={cn(cardClassName, className)}
             {...props}
         >
             <header className="flex items-start gap-3 px-1">
@@ -146,10 +147,7 @@ function ExerciseCard({
 /** An ExerciseCard while its Exercise loads: grey name and Muscles, real column labels, 3 Set rows, and Add set. */
 function ExerciseCardSkeleton({ planning = false }: { planning?: boolean }) {
     return (
-        <section
-            data-slot="exercise-card"
-            className="flex flex-col gap-3 rounded-xl border bg-card px-3 py-4 text-card-foreground"
-        >
+        <section data-slot="exercise-card" className={cardClassName}>
             <header className="flex items-start gap-3 px-1">
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
                     <SkeletonBlock className="h-5 w-1/2" />

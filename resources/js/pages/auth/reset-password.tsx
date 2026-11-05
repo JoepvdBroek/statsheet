@@ -1,10 +1,11 @@
 import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
+import { LockedButton } from '@/components/locked-button';
 import PasswordInput from '@/components/password-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { nameVisit } from '@/lib/failed-visits';
 import { update } from '@/routes/password';
-import { LockedButton } from '@/components/locked-button';
 
 type Props = {
     token: string;
@@ -21,6 +22,7 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                 {...update.form()}
                 transform={(data) => ({ ...data, token, email })}
                 resetOnSuccess={['password', 'password_confirmation']}
+                onBefore={(visit) => nameVisit(visit, 'resetPassword')}
             >
                 {({ processing, errors }) => (
                     <div className="grid gap-6">
