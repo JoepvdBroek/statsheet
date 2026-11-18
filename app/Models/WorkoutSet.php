@@ -90,13 +90,13 @@ class WorkoutSet extends Model
 
     /**
      * The Target this Set hands to the same Set the next time its Exercise is trained (Pre-fill):
-     * its Actual if it met its Target or had none, otherwise its Target. Empty when it has neither.
+     * its Actual when done, whether or not it met its Target, otherwise its Target. Empty when it has neither.
      *
      * @return array{reps: int, weight: string}|null
      */
     public function carriedOverTarget(): ?array
     {
-        if ($this->meetsTarget()) {
+        if ($this->isDone()) {
             return ['reps' => $this->actual_reps, 'weight' => $this->actual_weight];
         }
 

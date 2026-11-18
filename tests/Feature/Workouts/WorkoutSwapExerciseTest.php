@@ -60,7 +60,7 @@ class WorkoutSwapExerciseTest extends TestCase
         $this->actingAs($owner)->post(route('workouts.exercises.swap', [$workout, $swapped]), ['exercise_id' => $dumbbellFly->id]);
 
         $this->assertSame(
-            [[10, '20.00', SetKind::WarmUp], [8, '30.00', SetKind::Working], [null, null, SetKind::Drop]],
+            [[10, '20.00', SetKind::WarmUp], [6, '30.00', SetKind::Working], [null, null, SetKind::Drop]],
             $this->sets($swapped->refresh()),
         );
     }
@@ -76,6 +76,20 @@ class WorkoutSwapExerciseTest extends TestCase
         $swapped = $this->performedWith($lastWeek, [WorkoutSet::factory()]);
 
         $this->actingAs($owner)->post(route('workouts.exercises.swap', [$lastWeek, $swapped]), ['exercise_id' => $dumbbellFly->id]);
+
+        $this->assertSame([[8, '24.00', SetKind::Working]], $this->sets($swapped->refresh()));
+    }
+
+    public function test_pre_fill_skips_an_unfinished_earlier_workout()
+    {
+        $owner = User::factory()->create();
+        $dumbbellFly = Exercise::factory()->for($owner)->create();
+        $this->perform($this->finishedWorkout($owner, '-9 days'), $dumbbellFly, [$this->doneSet(8, '24.00')]);
+        $this->perform(Workout::factory()->for($owner)->create(['started_at' => now()->modify('-2 days')]), $dumbbellFly, [$this->doneSet(8, '28.00')]);
+        $yesterday = $this->finishedWorkout($owner, '-1 day');
+        $swapped = $this->performedWith($yesterday, [WorkoutSet::factory()]);
+
+        $this->actingAs($owner)->post(route('workouts.exercises.swap', [$yesterday, $swapped]), ['exercise_id' => $dumbbellFly->id]);
 
         $this->assertSame([[8, '24.00', SetKind::Working]], $this->sets($swapped->refresh()));
     }
