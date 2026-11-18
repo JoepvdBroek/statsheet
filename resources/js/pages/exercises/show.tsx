@@ -1,14 +1,12 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { PencilIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
 import ExerciseController from '@/actions/App/Http/Controllers/ExerciseController';
 import { PageContent } from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
 import { repeat, SkeletonBlock } from '@/components/page-skeleton';
 import { HistoryEntry } from '@/components/statsheet/history-entry';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
-import { PRBadge } from '@/components/statsheet/pr-badge';
-import { StatBlock } from '@/components/statsheet/stat-block';
+import { PersonalRecordsCard } from '@/components/statsheet/personal-records';
 import { TrendChart } from '@/components/statsheet/trend-chart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -49,10 +47,6 @@ export default function ShowExercise({
     }
 
     const bodyweight = exercise.is_bodyweight;
-    const addedLoad = (weight: number) =>
-        bodyweight
-            ? `BW${weight ? `+${formatKg(weight)}` : ''}`
-            : formatKg(weight);
 
     return (
         <>
@@ -93,63 +87,10 @@ export default function ShowExercise({
                     ))}
                 </div>
 
-                <PersonalRecordsCard>
-                    {records.heaviest === null ? (
-                        <p className="text-sm text-muted-foreground">
-                            No done working Sets yet. Log one to set your first
-                            records.
-                        </p>
-                    ) : (
-                        <>
-                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                                <StatBlock
-                                    size="sm"
-                                    tone="plain"
-                                    label="Heaviest"
-                                    value={addedLoad(records.heaviest)}
-                                    unit={
-                                        bodyweight && !records.heaviest
-                                            ? undefined
-                                            : 'kg'
-                                    }
-                                />
-                                <StatBlock
-                                    size="sm"
-                                    tone="plain"
-                                    label="Est. 1RM"
-                                    value={
-                                        records.e1rm === null
-                                            ? '–'
-                                            : formatKg(records.e1rm)
-                                    }
-                                    unit={
-                                        records.e1rm === null ? undefined : 'kg'
-                                    }
-                                />
-                                <StatBlock
-                                    size="sm"
-                                    tone="plain"
-                                    label="Best set"
-                                    value={formatKg(records.tonnage ?? 0)}
-                                    unit="kg"
-                                />
-                            </div>
-                            <MostRepsAtWeight>
-                                <ul className="flex flex-wrap gap-1.5">
-                                    {records.reps_at_weight.map((best) => (
-                                        <li
-                                            key={best.weight}
-                                            className="inline-flex h-7 items-center rounded-full bg-secondary px-2.5 text-sm tabular-nums"
-                                        >
-                                            {best.reps} ×{' '}
-                                            {addedLoad(best.weight)}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </MostRepsAtWeight>
-                        </>
-                    )}
-                </PersonalRecordsCard>
+                <PersonalRecordsCard
+                    records={records}
+                    bodyweight={bodyweight}
+                />
 
                 {progress.length ? (
                     <section className="flex flex-col gap-6 rounded-xl border bg-card p-4 text-card-foreground">
@@ -258,31 +199,7 @@ function ExerciseSkeleton() {
                     ))}
                 </div>
 
-                <PersonalRecordsCard>
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                        {['Heaviest', 'Est. 1RM', 'Best set'].map((label) => (
-                            <StatBlock
-                                key={label}
-                                size="sm"
-                                tone="plain"
-                                label={label}
-                                value={
-                                    <SkeletonBlock className="my-1 h-6 w-16" />
-                                }
-                            />
-                        ))}
-                    </div>
-                    <MostRepsAtWeight>
-                        <div className="flex flex-wrap gap-1.5">
-                            {repeat(4, (index) => (
-                                <SkeletonBlock
-                                    key={index}
-                                    className="h-7 w-20 rounded-full"
-                                />
-                            ))}
-                        </div>
-                    </MostRepsAtWeight>
-                </PersonalRecordsCard>
+                <PersonalRecordsCard />
 
                 <section className="flex flex-col gap-6 rounded-xl border bg-card p-4 text-card-foreground">
                     {repeat(2, (index) => (
@@ -316,35 +233,6 @@ function ExerciseSkeleton() {
                 </section>
             </PageContent>
         </>
-    );
-}
-
-function PersonalRecordsCard({ children }: { children: ReactNode }) {
-    return (
-        <section
-            aria-labelledby="records"
-            className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground"
-        >
-            <h2
-                id="records"
-                className="flex items-center gap-2 text-base font-medium"
-            >
-                <PRBadge />
-                Personal Records
-            </h2>
-            {children}
-        </section>
-    );
-}
-
-function MostRepsAtWeight({ children }: { children: ReactNode }) {
-    return (
-        <div className="flex flex-col gap-2">
-            <h3 className="text-[11px] leading-4 tracking-[0.05em] text-muted-foreground uppercase">
-                Most reps at a weight
-            </h3>
-            {children}
-        </div>
     );
 }
 
