@@ -123,8 +123,8 @@ class Workout extends Model
     }
 
     /**
-     * The Workout's Exercises in order as a Routine plans them, each Set with its planned Target and kind.
-     * Sets with neither a Target nor an Actual are dropped, and so is an Exercise left without Sets.
+     * The Workout's Exercises in order as a Routine plans them, each Set with what was lifted as its Target (its Actual when done,
+     * otherwise its Target) and its kind. Sets with neither are dropped, and so is an Exercise left without Sets.
      *
      * @return list<array{exercise_id: int, sets: list<array{target_reps: int, target_weight: string, kind: SetKind}>}>
      */
@@ -134,7 +134,7 @@ class Workout extends Model
             ->map(fn (WorkoutExercise $performed) => [
                 'exercise_id' => $performed->exercise_id,
                 'sets' => array_values($performed->sets
-                    ->map(fn (WorkoutSet $set) => ($target = $set->plannedTarget()) === null ? null : [
+                    ->map(fn (WorkoutSet $set) => ($target = $set->carriedOverTarget()) === null ? null : [
                         'target_reps' => $target['reps'],
                         'target_weight' => $target['weight'],
                         'kind' => $set->kind,
