@@ -58,3 +58,10 @@ export type ExercisePerformance = {
     /** In order; weight is the added load for a Bodyweight Exercise. */
     sets: { reps: number; weight: number; kind: SetKind; top: boolean }[];
 };
+
+/** An Exercise's history as a Workout shows it: its Personal Records and its most recent earlier performances. */
+export type ExerciseHistory = {
+    records: PersonalRecords;
+    /** Newest first, at most 10; never the Workout it is shown in. */
+    recent: ExercisePerformance[];
+};

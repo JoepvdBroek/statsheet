@@ -1,4 +1,4 @@
-import { MoreHorizontalIcon, PlusIcon } from 'lucide-react';
+import { HistoryIcon, MoreHorizontalIcon, PlusIcon } from 'lucide-react';
 import * as React from 'react';
 
 import { repeat, SkeletonBlock } from '@/components/page-skeleton';
@@ -20,6 +20,8 @@ type ExerciseCardProps = React.ComponentProps<'section'> & {
     name: string;
     /** Makes the name a link, e.g. to the Exercise's history. */
     href?: string;
+    /** Makes the name a button that opens the Exercise's history in place, e.g. in a sheet. Ignored with `href`. */
+    onNameClick?: () => void;
     muscles?: { muscle: string; role?: 'primary' | 'secondary' }[];
     /** Done working sets, for the progress counter. */
     doneCount?: number;
@@ -41,6 +43,7 @@ type ExerciseCardProps = React.ComponentProps<'section'> & {
 function ExerciseCard({
     name,
     href,
+    onNameClick,
     muscles = [],
     doneCount,
     setCount,
@@ -74,6 +77,22 @@ function ExerciseCard({
                             >
                                 {name}
                             </a>
+                        ) : onNameClick ? (
+                            <button
+                                type="button"
+                                aria-haspopup="dialog"
+                                aria-label={`${name} history`}
+                                onClick={onNameClick}
+                                className="group/name inline-flex max-w-full items-center gap-1.5 rounded-sm text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            >
+                                <span className="truncate underline-offset-4 group-hover/name:underline">
+                                    {name}
+                                </span>
+                                <HistoryIcon
+                                    aria-hidden="true"
+                                    className="size-3.5 shrink-0 text-muted-foreground"
+                                />
+                            </button>
                         ) : (
                             name
                         )}
@@ -114,9 +133,9 @@ function ExerciseCard({
                     ) : null)}
             </header>
             {hint ? (
-                <p className="px-1 text-sm text-muted-foreground tabular-nums">
+                <div className="px-1 text-sm text-muted-foreground tabular-nums">
                     {hint}
-                </p>
+                </div>
             ) : null}
             <div
                 role="table"

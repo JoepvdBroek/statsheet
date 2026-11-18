@@ -26,6 +26,10 @@ import {
     ExerciseCard,
     ExerciseCardSkeleton,
 } from '@/components/statsheet/exercise-card';
+import {
+    ExerciseHistorySheet,
+    LastTimeHint,
+} from '@/components/statsheet/exercise-history-sheet';
 import { PRBadge } from '@/components/statsheet/pr-badge';
 import { SetRow, meetsTarget } from '@/components/statsheet/set-row';
 import type { SetValues } from '@/components/statsheet/set-row';
@@ -51,6 +55,7 @@ import { showsWorkoutInProgress } from '@/lib/workout-page';
 import { index } from '@/routes/workouts';
 import type {
     Exercise,
+    ExerciseHistory,
     SetKind,
     Workout,
     WorkoutExercise,
@@ -104,16 +109,34 @@ function withSetChanges(
 export default function ShowWorkout({
     workout,
     exercises,
+    history,
 }: {
     /** Undefined while an instant visit loads the page. */
     workout?: Workout;
     /** The owner's Exercises in use to add; undefined while the deferred prop loads. */
     exercises?: Exercise[];
+    /** Each Exercise's Personal Records and earlier performances, by Exercise id; undefined while the deferred prop loads. */
+    history?: Record<number, ExerciseHistory>;
 }) {
     const page = usePage<{ errors: Errors; workout?: Workout }>();
     const { auth, errors } = page.props;
     const inProgress = showsWorkoutInProgress(page);
     const timeZone = auth.user.timezone;
+    const [lastHistory, setLastHistory] = useState({
+        workoutId: workout?.id,
+        history,
+    });
+
+    // Adding, Swapping or removing an Exercise reloads the deferred history; meanwhile this Workout's last one stays, so the other hints don't flash grey.
+    if (history !== undefined && history !== lastHistory.history) {
+        setLastHistory({ workoutId: workout?.id, history });
+    }
+
+    const shownHistory =
+        history ??
+        (lastHistory.workoutId === workout?.id
+            ? lastHistory.history
+            : undefined);
 
     return (
         <>
@@ -173,6 +196,10 @@ export default function ShowWorkout({
                                     workoutId={workout.id}
                                     performed={performed}
                                     exercises={exercises}
+                                    history={
+                                        shownHistory?.[performed.exercise.id]
+                                    }
+                                    historyLoading={history === undefined}
                                     position={position}
                                     isLast={
                                         position ===
@@ -366,6 +393,8 @@ function PerformedExercise({
     workoutId,
     performed,
     exercises,
+    history,
+    historyLoading,
     position,
     isLast,
 }: {
@@ -373,11 +402,16 @@ function PerformedExercise({
     performed: WorkoutExercise;
     /** The Exercises a Swap can pick from; undefined while they load. */
     exercises?: Exercise[];
+    /** The Exercise's Personal Records and earlier performances; undefined while they load or when not known yet. */
+    history?: ExerciseHistory;
+    /** Whether the history is still loading. */
+    historyLoading: boolean;
     position: number;
     isLast: boolean;
 }) {
     const { exercise, sets } = performed;
     const [swapping, setSwapping] = useState(false);
+    const [showingHistory, setShowingHistory] = useState(false);
     const hasDoneSet = sets.some((set) => set.done);
     const workingSets = sets.filter((set) => set.kind === 'working');
     const route = { workout: workoutId, exercise: performed.id };
@@ -385,8 +419,17 @@ function PerformedExercise({
     return (
         <ExerciseCard
             name={exercise.name}
+            onNameClick={() => setShowingHistory(true)}
             muscles={exercise.muscles}
             bodyweight={exercise.is_bodyweight}
+            hint={
+                history !== undefined || historyLoading ? (
+                    <LastTimeHint
+                        history={history}
+                        bodyweight={exercise.is_bodyweight}
+                    />
+                ) : undefined
+            }
             doneCount={workingSets.filter((set) => set.done).length}
             setCount={workingSets.length}
             onAddSet={() =>
@@ -456,6 +499,13 @@ function PerformedExercise({
                 description="Archived Exercises aren't offered. Restore one first to log it."
                 open={swapping}
                 onOpenChange={setSwapping}
+            />
+            <ExerciseHistorySheet
+                exercise={exercise}
+                history={history}
+                loading={historyLoading}
+                open={showingHistory}
+                onOpenChange={setShowingHistory}
             />
             {sets.map((set, setPosition) => (
                 <LoggedSet
