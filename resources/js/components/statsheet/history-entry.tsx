@@ -1,9 +1,10 @@
+import { usePage } from '@inertiajs/react';
 import { CornerDownRightIcon } from 'lucide-react';
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
+import { cn, formatDay, formatKg } from '@/lib/utils';
 import { PRBadge } from '@/components/statsheet/pr-badge';
-import type { SetKind } from '@/types';
+import type { ExercisePerformance, SetKind } from '@/types';
 
 type HistorySet = {
     reps: number;
@@ -149,5 +150,45 @@ function HistoryEntry({
     );
 }
 
-export { HistoryEntry, epley };
-export type { HistoryEntryProps, HistorySet };
+type PerformanceEntryProps = {
+    performance: ExercisePerformance;
+    bodyweight?: boolean;
+};
+
+/** One earlier performance of an Exercise as a HistoryEntry, dated in the user's timezone. */
+function PerformanceEntry({
+    performance,
+    bodyweight = false,
+}: PerformanceEntryProps) {
+    const { auth } = usePage().props;
+
+    return (
+        <HistoryEntry
+            date={formatDay(performance.started_at, auth.user.timezone, {
+                weekday: true,
+            })}
+            workout={performance.routine ?? 'Empty workout'}
+            e1rm={
+                performance.e1rm === null
+                    ? undefined
+                    : formatKg(performance.e1rm)
+            }
+            intensity={
+                performance.intensity === null
+                    ? undefined
+                    : String(performance.intensity)
+            }
+            averageWeight={
+                performance.average_weight === null
+                    ? undefined
+                    : formatKg(performance.average_weight)
+            }
+            bodyweight={bodyweight}
+            prs={performance.new_records}
+            sets={performance.sets}
+        />
+    );
+}
+
+export { HistoryEntry, PerformanceEntry, epley };
+export type { HistoryEntryProps, HistorySet, PerformanceEntryProps };

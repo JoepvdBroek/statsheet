@@ -4,14 +4,14 @@ import ExerciseController from '@/actions/App/Http/Controllers/ExerciseControlle
 import { PageContent } from '@/components/page-content';
 import { PageDescription } from '@/components/page-description';
 import { repeat, SkeletonBlock } from '@/components/page-skeleton';
-import { HistoryEntry } from '@/components/statsheet/history-entry';
+import { PerformanceEntry } from '@/components/statsheet/history-entry';
 import { MuscleTag } from '@/components/statsheet/muscle-tag';
 import { PersonalRecordsCard } from '@/components/statsheet/personal-records';
 import { TrendChart } from '@/components/statsheet/trend-chart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { parentScreens } from '@/lib/parent-screens';
-import { formatDay, formatKg } from '@/lib/utils';
+import { formatDay } from '@/lib/utils';
 import type {
     Exercise,
     ExercisePerformance,
@@ -135,37 +135,10 @@ export default function ShowExercise({
                             {bodyweight ? ' Both add your Bodyweight.' : null}
                         </p>
                         {recent.map((performance) => (
-                            <HistoryEntry
+                            <PerformanceEntry
                                 key={performance.workout_id}
-                                date={formatDay(
-                                    performance.started_at,
-                                    timeZone,
-                                    { weekday: true },
-                                )}
-                                workout={performance.routine ?? 'Empty workout'}
-                                e1rm={
-                                    performance.e1rm === null
-                                        ? undefined
-                                        : formatKg(performance.e1rm)
-                                }
-                                intensity={
-                                    performance.intensity === null
-                                        ? undefined
-                                        : String(performance.intensity)
-                                }
-                                averageWeight={
-                                    performance.average_weight === null
-                                        ? undefined
-                                        : formatKg(performance.average_weight)
-                                }
+                                performance={performance}
                                 bodyweight={bodyweight}
-                                prs={performance.new_records}
-                                sets={performance.sets.map((set) => ({
-                                    reps: set.reps,
-                                    weight: set.weight,
-                                    kind: set.kind,
-                                    top: set.top,
-                                }))}
                             />
                         ))}
                     </section>

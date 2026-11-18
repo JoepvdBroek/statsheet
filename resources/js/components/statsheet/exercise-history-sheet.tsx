@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import ExerciseController from '@/actions/App/Http/Controllers/ExerciseController';
 import { repeat, SkeletonBlock } from '@/components/page-skeleton';
-import { HistoryEntry } from '@/components/statsheet/history-entry';
+import { PerformanceEntry } from '@/components/statsheet/history-entry';
 import {
     formatLoad,
     PersonalRecordsCard,
@@ -18,7 +18,7 @@ import {
     SheetHeader,
     SheetTitle,
 } from '@/components/ui/sheet';
-import { formatDay, formatKg } from '@/lib/utils';
+import { formatDay } from '@/lib/utils';
 import type { Exercise, ExerciseHistory } from '@/types';
 
 type LastTimeHintProps = {
@@ -96,8 +96,6 @@ function ExerciseHistorySheet({
     open,
     onOpenChange,
 }: ExerciseHistorySheetProps) {
-    const { auth } = usePage().props;
-    const timeZone = auth.user.timezone;
     const bodyweight = exercise.is_bodyweight;
     const recentId = React.useId();
     const opener = React.useRef<Element | null>(null);
@@ -166,42 +164,10 @@ function ExerciseHistorySheet({
                                     the Average Weight per rep.
                                 </p>
                                 {history.recent.map((performance) => (
-                                    <HistoryEntry
+                                    <PerformanceEntry
                                         key={performance.workout_id}
-                                        date={formatDay(
-                                            performance.started_at,
-                                            timeZone,
-                                            { weekday: true },
-                                        )}
-                                        workout={
-                                            performance.routine ??
-                                            'Empty workout'
-                                        }
-                                        e1rm={
-                                            performance.e1rm === null
-                                                ? undefined
-                                                : formatKg(performance.e1rm)
-                                        }
-                                        intensity={
-                                            performance.intensity === null
-                                                ? undefined
-                                                : String(performance.intensity)
-                                        }
-                                        averageWeight={
-                                            performance.average_weight === null
-                                                ? undefined
-                                                : formatKg(
-                                                      performance.average_weight,
-                                                  )
-                                        }
+                                        performance={performance}
                                         bodyweight={bodyweight}
-                                        prs={performance.new_records}
-                                        sets={performance.sets.map((set) => ({
-                                            reps: set.reps,
-                                            weight: set.weight,
-                                            kind: set.kind,
-                                            top: set.top,
-                                        }))}
                                     />
                                 ))}
                             </>
