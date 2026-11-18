@@ -61,7 +61,7 @@ class WorkoutExercise extends Model
     {
         $sets = $this->sets()->get();
         $copied = $sets->last(fn (WorkoutSet $set) => $set->kind->counts()) ?? $sets->last();
-        $target = $copied?->targetForNextSet();
+        $target = $copied?->carriedOverTarget();
 
         return $this->sets()->create([
             'position' => ($sets->max('position') ?? -1) + 1,

@@ -40,13 +40,25 @@ class WorkoutUpdateRoutineTest extends TestCase
         $this->assertSame('Push day', $routine->refresh()->name);
         $this->assertSame(
             [
-                [$press->id, [[8, '40.00', SetKind::Working], [6, '42.50', SetKind::Working]]],
+                [$press->id, [[8, '40.00', SetKind::Working], [4, '42.50', SetKind::Working]]],
                 [$squat->id, [[5, '100.00', SetKind::WarmUp]]],
             ],
             $this->plan($routine),
         );
         $this->assertDatabaseCount('routine_exercises', 2);
         $this->assertDatabaseCount('routine_sets', 3);
+    }
+
+    public function test_a_done_set_takes_its_actual_over_its_target()
+    {
+        $workout = $this->workoutFromRoutine();
+        $bench = $this->performNewExercise($workout, [
+            WorkoutSet::factory()->state(['target_reps' => 10, 'target_weight' => '110.00', 'actual_reps' => 10, 'actual_weight' => '115.00']),
+        ]);
+
+        $this->actingAs($workout->user)->put(route('workouts.routine.update', $workout));
+
+        $this->assertSame([[$bench->id, [[10, '115.00', SetKind::Working]]]], $this->plan($workout->routine));
     }
 
     public function test_a_set_without_a_target_takes_its_actual()

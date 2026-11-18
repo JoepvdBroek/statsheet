@@ -58,8 +58,8 @@ class WorkoutStartFromRoutineTest extends TestCase
         return [
             'met target: its Actual' => [[5, '140.00', 6, '142.50'], [6, '142.50']],
             'no Target, done: its Actual' => [[null, null, 8, '60.00'], [8, '60.00']],
-            'missed reps: its Target' => [[5, '140.00', 4, '145.00'], [5, '140.00']],
-            'missed weight: its Target' => [[5, '140.00', 6, '137.50'], [5, '140.00']],
+            'missed reps: its Actual' => [[5, '140.00', 4, '145.00'], [4, '145.00']],
+            'missed weight: its Actual' => [[10, '120.00', 10, '110.00'], [10, '110.00']],
             'not done: its Target' => [[5, '140.00', null, null], [5, '140.00']],
             'no Target or Actual: the Routine\'s Target' => [[null, null, null, null], [3, '100.00']],
         ];

@@ -89,50 +89,12 @@ class WorkoutSet extends Model
     }
 
     /**
-     * The Target this Set hands to the same Set the next time its Exercise is trained (Pre-fill):
-     * its Actual if it met its Target or had none, otherwise its Target. Empty when it has neither.
+     * What this Set hands on as a Target, used for Pre-fill, for a Set added after it, and for updating the Routine from its Workout:
+     * its Actual when done, whether or not it met its Target, otherwise its Target. Empty when it has neither.
      *
      * @return array{reps: int, weight: string}|null
      */
     public function carriedOverTarget(): ?array
-    {
-        if ($this->meetsTarget()) {
-            return ['reps' => $this->actual_reps, 'weight' => $this->actual_weight];
-        }
-
-        if ($this->target_reps !== null) {
-            return ['reps' => $this->target_reps, 'weight' => $this->target_weight];
-        }
-
-        return null;
-    }
-
-    /**
-     * The Target this Set gives the Routine when the Routine is updated from its Workout:
-     * its Target, or its Actual when it had no Target. Empty when it has neither.
-     *
-     * @return array{reps: int, weight: string}|null
-     */
-    public function plannedTarget(): ?array
-    {
-        if ($this->target_reps !== null) {
-            return ['reps' => $this->target_reps, 'weight' => $this->target_weight];
-        }
-
-        if ($this->isDone()) {
-            return ['reps' => $this->actual_reps, 'weight' => $this->actual_weight];
-        }
-
-        return null;
-    }
-
-    /**
-     * The Target a Set added after this one during the Workout copies: its Actual when done, otherwise its Target.
-     * Empty when it has neither.
-     *
-     * @return array{reps: int, weight: string}|null
-     */
-    public function targetForNextSet(): ?array
     {
         if ($this->isDone()) {
             return ['reps' => $this->actual_reps, 'weight' => $this->actual_weight];

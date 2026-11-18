@@ -94,8 +94,8 @@ class Exercise extends Model
     }
 
     /**
-     * Its first occurrence in the most recent Workout containing it that started before the given moment, with its Sets.
-     * Empty when it wasn't trained before then.
+     * Its first occurrence in the most recent finished Workout containing it that started before the given moment,
+     * with its Sets. Empty when it wasn't trained in a finished Workout before then.
      */
     public function lastPerformance(CarbonImmutable $before): ?WorkoutExercise
     {
@@ -103,6 +103,7 @@ class Exercise extends Model
             ->select('workout_exercises.*')
             ->join('workouts', 'workouts.id', '=', 'workout_exercises.workout_id')
             ->where('workouts.started_at', '<', $before)
+            ->whereNotNull('workouts.finished_at')
             ->orderByDesc('workouts.started_at')
             ->orderByDesc('workouts.id')
             ->orderBy('workout_exercises.position')

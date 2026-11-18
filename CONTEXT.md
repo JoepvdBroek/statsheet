@@ -39,7 +39,7 @@ Replacing an Exercise in a Workout with another in the same place. The new Exerc
 _Avoid_: Replace, substitute
 
 **Pre-fill**:
-The Targets and set kinds a Workout's Sets get from the plan, per set position, when the Workout starts from a Routine or an Exercise is Swapped in: from the most recent earlier Workout containing that exercise. That set's kind is kept, and its Actual is used if it met its target (or had no Target); otherwise that set's Target carries over. With no such earlier set, the plan's kind and Target are used: the Routine's at start; on a Swap, the swapped-out Set's kind and no Target.
+The Targets and set kinds a Workout's Sets get from the plan, per set position, when the Workout starts from a Routine or an Exercise is Swapped in: from the most recent earlier finished Workout containing that exercise. That set's kind is kept, and its Actual is used if it was done, whether or not it met its Target; otherwise that set's Target carries over. With no such earlier set, the plan's kind and Target are used: the Routine's at start; on a Swap, the swapped-out Set's kind and no Target.
 _Avoid_: Auto-fill, suggestion
 
 ### Exercises and muscles
