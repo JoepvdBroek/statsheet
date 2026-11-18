@@ -7,10 +7,13 @@ use App\Http\Requests\UpdateWorkoutRequest;
 use App\Http\Resources\ExerciseResource;
 use App\Http\Resources\WorkoutResource;
 use App\Http\Resources\WorkoutSummaryResource;
+use App\Models\Exercise;
 use App\Models\Workout;
+use App\Support\ExerciseProgress;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -49,16 +52,43 @@ class WorkoutController extends Controller
 
     /**
      * Show the logging screen for a Workout.
+     *
+     * The history of its Exercises is deferred, and the client remembers it under a key naming the Workout and its
+     * Exercises. It only counts earlier Workouts, so logging Sets leaves it as it is: it is loaded again only when an
+     * Exercise is added, Swapped in or removed.
      */
     #[Authorize('view', 'workout')]
     public function show(Request $request, Workout $workout): Response
     {
+        $workout->load('routine', 'exercises.exercise.muscles', 'exercises.sets');
+        $exercises = $workout->exercises->pluck('exercise')->unique('id')->sortBy('id')->values();
+
         return Inertia::render('workouts/show', [
-            'workout' => WorkoutResource::make($workout->load('routine', 'exercises.exercise.muscles', 'exercises.sets'))->resolve(),
+            'workout' => WorkoutResource::make($workout)->resolve(),
             'exercises' => Inertia::defer(fn () => ExerciseResource::collection(
                 $request->user()->exercises()->active()->with('muscles')->orderBy('name')->orderBy('id')->get(),
             )->resolve()),
+            'history' => Inertia::defer(fn () => $this->history($workout, $exercises))
+                ->once(as: "workouts.{$workout->id}.history.{$exercises->pluck('id')->implode('-')}"),
         ]);
+    }
+
+    /**
+     * Each Exercise's Personal Records and recent performances from the Workouts started before this one, keyed by
+     * Exercise id. It is an object so it stays one in JSON, even when empty.
+     *
+     * @param  Collection<int, Exercise>  $exercises
+     */
+    private function history(Workout $workout, Collection $exercises): object
+    {
+        return (object) $exercises->mapWithKeys(function (Exercise $exercise) use ($workout) {
+            $progress = ExerciseProgress::of($exercise, before: $workout->started_at);
+
+            return [$exercise->id => [
+                'records' => $progress->records(),
+                'recent' => $progress->recentPerformances(),
+            ]];
+        })->all();
     }
 
     /**
