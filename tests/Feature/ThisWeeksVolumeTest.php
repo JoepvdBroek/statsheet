@@ -36,6 +36,28 @@ class ThisWeeksVolumeTest extends TestCase
         );
     }
 
+    public function test_a_muscle_trained_as_primary_and_as_secondary_in_one_workout_gets_the_full_and_half_volume_added_up()
+    {
+        $this->travelTo('2026-09-30 12:00:00');
+        $owner = User::factory()->create();
+        $dip = Exercise::factory()->for($owner)->bodyweight()->primaryMuscle(Muscle::Triceps)->create();
+        $pushUp = Exercise::factory()->for($owner)->bodyweight()->primaryMuscle(Muscle::Chest)->withSecondaryMuscle(Muscle::Triceps)->create();
+        $pushdown = Exercise::factory()->for($owner)->primaryMuscle(Muscle::Triceps)->create();
+        $workout = Workout::factory()->for($owner)->finished()->create(['started_at' => '2026-09-29 10:00:00', 'bodyweight' => '81.10']);
+        $this->perform($workout, $dip, [$this->doneSet(9, '1.25'), $this->doneSet(8, '10.00')]);
+        $this->perform($workout, $pushUp, [$this->doneSet(7, '3.75')]);
+        $this->perform($workout, $pushdown, [$this->doneSet(7, '22.50')]);
+
+        $response = $this->actingAs($owner)->get(route('statistics.hub'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('thisWeek.muscles', [
+                ['muscle' => 'triceps', 'volume' => 1924.43, 'set_count' => 3.5, 'direct_sets' => 3, 'goal' => null, 'met' => null],
+                ['muscle' => 'chest', 'volume' => 593.95, 'set_count' => 1, 'direct_sets' => 1, 'goal' => null, 'met' => null],
+            ])
+        );
+    }
+
     public function test_warm_up_and_not_done_sets_are_left_out_while_drop_sets_count()
     {
         $this->travelTo('2026-09-30 12:00:00');

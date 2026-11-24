@@ -62,7 +62,7 @@ class MuscleAttribution
     }
 
     /**
-     * The amount per Workout, Muscle and role, of the Workouts started from the first moment up to the second: rows of started_at, muscle, role and amount.
+     * What each Muscle got per Workout started from the first moment up to the second: one row per Workout and Muscle with its started_at, muscle, total and direct.
      *
      * @return Collection<int, stdClass>
      */
@@ -78,9 +78,16 @@ class MuscleAttribution
             ->where('workouts.started_at', '<', $until->utc())
             ->whereNotNull('workout_sets.actual_reps')
             ->whereIn('workout_sets.kind', $this->kinds)
-            ->select('workouts.started_at', 'exercise_muscles.muscle', 'exercise_muscles.role')
-            ->selectRaw('SUM('.$this->amountPerSet.') AS amount')
-            ->groupBy('workouts.id', 'workouts.started_at', 'exercise_muscles.muscle', 'exercise_muscles.role')
+            ->select('workouts.started_at', 'exercise_muscles.muscle')
+            ->selectRaw(
+                'SUM(('.$this->amountPerSet.') * CASE WHEN exercise_muscles.role = ? THEN 1 ELSE 0.5 END) AS total',
+                [MuscleRole::Primary->value],
+            )
+            ->selectRaw(
+                'SUM(CASE WHEN exercise_muscles.role = ? THEN '.$this->amountPerSet.' ELSE 0 END) AS direct',
+                [MuscleRole::Primary->value],
+            )
+            ->groupBy('workouts.id', 'workouts.started_at', 'exercise_muscles.muscle')
             ->orderBy('exercise_muscles.muscle')
             ->toBase()
             ->get();
@@ -95,15 +102,9 @@ class MuscleAttribution
         $muscles = [];
 
         foreach ($rows as $row) {
-            $role = MuscleRole::from($row->role);
-            $amount = (float) $row->amount;
-
             $muscles[$row->muscle] ??= ['total' => 0.0, 'direct' => 0.0];
-            $muscles[$row->muscle]['total'] += $amount * $role->share();
-
-            if ($role === MuscleRole::Primary) {
-                $muscles[$row->muscle]['direct'] += $amount;
-            }
+            $muscles[$row->muscle]['total'] += (float) $row->total;
+            $muscles[$row->muscle]['direct'] += (float) $row->direct;
         }
 
         return $muscles;
