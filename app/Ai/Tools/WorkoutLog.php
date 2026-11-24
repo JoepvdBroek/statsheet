@@ -29,7 +29,7 @@ class WorkoutLog extends WeekRangeTool
             .'start time in the owner\'s timezone, whether still in progress, the Routine it was started from, the Bodyweight in kg, the Workout Note, '
             .'and each Exercise with its Sets in order. A Set has a Target and an Actual in reps and kg (for a Bodyweight Exercise the added load); '
             .'a Set without an Actual was not done. A Set\'s kind is working, warm_up or drop: '
-            .'a Warm-up Set never counts, and a Drop Set was done straight after the Set before it at a lower weight, without rest, and counts like a working Set.';
+            .'a Warm-up Set never counts, and a Drop Set was done straight after the Set before it at a lower weight, without rest, and counts toward Volume, Goals and Personal Records but not toward Set Count.';
     }
 
     /**

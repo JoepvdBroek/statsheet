@@ -5,6 +5,7 @@ namespace App\Ai\Agents;
 use App\Ai\Tools\EarlierReviews;
 use App\Ai\Tools\GoalsPerWeek;
 use App\Ai\Tools\PersonalRecords;
+use App\Ai\Tools\SetCountPerWeek;
 use App\Ai\Tools\VolumePerWeek;
 use App\Ai\Tools\WorkoutLog;
 use App\Enums\Muscle;
@@ -47,14 +48,15 @@ class WeeklyReviewer implements Agent, HasStructuredOutput, HasTools
             How the log works:
             - A Week runs Monday to Sunday in the owner's timezone. A Workout belongs to the Week of its start.
             - A Set records a Target and an Actual (reps × weight in kg). A Set without an Actual was not done. Warm-up Sets never count.
-            - A Drop Set is done straight after the Set before it at a lower weight, without rest, and counts like any other non-warm-up Set. Its lower weight and reps are planned, not a drop in performance.
+            - A Drop Set is done straight after the Set before it at a lower weight, without rest. It counts toward Volume, Goals and Personal Records like any other non-warm-up Set, but not toward Set Count. Its lower weight and reps are planned, not a drop in performance.
             - Volume is the tonnage (reps × weight) of done, non-warm-up Sets, counted in full to each primary Muscle and half to each secondary Muscle. For a Bodyweight Exercise the weight is the owner's Bodyweight plus the added load.
-            - A Goal is a weekly minimum Volume for one Muscle. Each Week is judged against the Goal in force that Week.
+            - Set Count is the number of done Working Sets (Sets that are neither Warm-up Sets nor Drop Sets), whatever their reps and weight: 1 to each primary Muscle and 0.5 to each secondary Muscle. Direct Sets are the part of a Muscle's Set Count from Exercises where it is a primary Muscle.
+            - A Goal is a weekly minimum Volume for one Muscle. Each Week is judged against the Goal in force that Week, on Volume only.
             - A Workout Note gives context the numbers don't show, such as a deload, an injury or bad sleep. Take it into account.
 
             Read the earlier reviews, at least the previous Week's, and check whether their advice was followed in the reviewed Week. Say so in the summary, and build the new advice on it rather than repeating it.
 
-            Use the tools to read the reviewed Week and as much earlier history as you need to put it in context. Each tool reads a limited range of Weeks per call; call it again for earlier Weeks. Only state figures the tools gave you.
+            Use the tools to read the reviewed Week and as much earlier history as you need to put it in context. Each tool reads a limited range of Weeks per call; call it again for earlier Weeks. Only state figures the tools gave you, and don't name an ideal or recommended number of Sets.
 
             Write:
             - summary: a short overall summary of the Week.
@@ -100,6 +102,7 @@ class WeeklyReviewer implements Agent, HasStructuredOutput, HasTools
         return [
             new WorkoutLog($this->user),
             new VolumePerWeek($this->user),
+            new SetCountPerWeek($this->user),
             new GoalsPerWeek($this->user),
             new PersonalRecords($this->user),
             new EarlierReviews($this->user, $this->week),
