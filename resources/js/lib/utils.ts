@@ -2,7 +2,7 @@ import type { InertiaLinkProps } from '@inertiajs/react';
 import { clsx } from 'clsx';
 import type { ClassValue } from 'clsx';
 import { extendTailwindMerge } from 'tailwind-merge';
-import type { Workout } from '@/types';
+import type { MuscleSetCount, Workout } from '@/types';
 
 /** Knows the app's own animations, so one replaces another such as the Skeleton's pulse. */
 const twMerge = extendTailwindMerge({
@@ -27,13 +27,33 @@ export function toUrl(url: NonNullable<InertiaLinkProps['href']>): string {
     return typeof url === 'string' ? url : url.url;
 }
 
-const kgFormat = new Intl.NumberFormat(undefined, {
+const decimalFormat = new Intl.NumberFormat(undefined, {
     maximumFractionDigits: 1,
 });
 
 /** Formats a weight or Volume in kg with at most one decimal, e.g. "1,234.5". */
 export function formatKg(kg: number): string {
-    return kgFormat.format(kg);
+    return decimalFormat.format(kg);
+}
+
+/** Formats a Set Count or Direct Sets as a bare number with at most one decimal, e.g. "1.5". */
+export function formatSetCount(count: number): string {
+    return decimalFormat.format(count);
+}
+
+/** Formats a Set Count or Direct Sets with its unit, e.g. "1 set" or "0.5 sets". */
+export function formatSets(count: number): string {
+    return `${formatSetCount(count)} ${count === 1 ? 'set' : 'sets'}`;
+}
+
+/** The parts of a Muscle's Set Count line, e.g. "9 sets" and "0 direct"; only "18 sets" when every set is direct. */
+export function formatSetCountParts({
+    set_count,
+    direct_sets,
+}: MuscleSetCount): string[] {
+    return direct_sets === set_count
+        ? [formatSets(set_count)]
+        : [formatSets(set_count), `${formatSetCount(direct_sets)} direct`];
 }
 
 /** Formats a timestamp as a short weekday, date and time in the owner's timezone, e.g. "Tue 30 Sep, 18:05". */

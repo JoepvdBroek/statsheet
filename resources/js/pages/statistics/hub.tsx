@@ -14,21 +14,32 @@ import {
 } from '@/components/ask-for-review-form';
 import { PageContent } from '@/components/page-content';
 import { repeat, SkeletonBlock } from '@/components/page-skeleton';
-import { StatBlock } from '@/components/statsheet/stat-block';
+import { StatBlock, StatBlockDetail } from '@/components/statsheet/stat-block';
 import { WeeklyReviewLink } from '@/components/weekly-review-link';
 import { Button } from '@/components/ui/button';
-import { capitalize, formatDate, formatKg } from '@/lib/utils';
+import {
+    capitalize,
+    formatDate,
+    formatKg,
+    formatSetCountParts,
+} from '@/lib/utils';
 import { index as exercisesIndex } from '@/routes/exercises';
 import { index as goalsIndex } from '@/routes/goals';
 import { index as reviewsIndex } from '@/routes/reviews';
 import { monthlySummary, weeklyTrend } from '@/routes/statistics';
-import type { NavItem, PageComponent, PageShell, WeeklyReview } from '@/types';
+import type {
+    MuscleSetCount,
+    NavItem,
+    PageComponent,
+    PageShell,
+    WeeklyReview,
+} from '@/types';
 
 type ThisWeek = {
     /** The Week's Monday, as a date. */
     starts_on: string;
-    /** Each Muscle with Volume or a Goal in force, most Volume first. */
-    muscles: {
+    /** Each Muscle with Volume, a Set Count or a Goal in force: most Volume first, then those without Volume by name. */
+    muscles: (MuscleSetCount & {
         muscle: string;
         /** kg */
         volume: number;
@@ -36,7 +47,7 @@ type ThisWeek = {
         goal: number | null;
         /** Whether the Goal is met; empty without a Goal. */
         met: boolean | null;
-    }[];
+    })[];
 };
 
 type HubRow = NavItem & {
@@ -89,7 +100,7 @@ export default function StatsHub({
     thisWeek,
     latestReview,
 }: {
-    /** This Week's Volume per Muscle, live: Sets in the Workout in progress count too. Undefined while an instant visit loads the page. */
+    /** This Week's Volume and Set Count per Muscle, live: Sets in the Workout in progress count too. Undefined while an instant visit loads the page. */
     thisWeek?: ThisWeek;
     /** The Weekly Review of the most recent Week that has one. Undefined while an instant visit loads the page. */
     latestReview?: WeeklyReview | null;
@@ -105,15 +116,15 @@ export default function StatsHub({
                     <div className="flex items-start justify-between gap-4">
                         <div className="space-y-0.5">
                             <h2 className="text-base font-medium">This Week</h2>
-                            {thisWeek === undefined ? (
-                                <SkeletonBlock className="my-0.5 h-4 w-56" />
-                            ) : (
-                                <p className="text-sm text-muted-foreground">
-                                    Volume per Muscle since Monday{' '}
-                                    {formatDate(thisWeek.starts_on)}, including
-                                    the Workout in progress.
-                                </p>
-                            )}
+                            <div className="text-sm text-muted-foreground">
+                                Volume and Set Count per Muscle since Monday{' '}
+                                {thisWeek === undefined ? (
+                                    <SkeletonBlock className="inline-block h-3 w-12" />
+                                ) : (
+                                    formatDate(thisWeek.starts_on)
+                                )}
+                                , including the Workout in progress.
+                            </div>
                         </div>
                         <Button asChild variant="outline" size="sm">
                             <Link href={goalsIndex()} component="goals/index">
@@ -129,23 +140,26 @@ export default function StatsHub({
                                     key={index}
                                     size="sm"
                                     value={
-                                        <SkeletonBlock className="my-1 h-6 w-20" />
+                                        <SkeletonBlock className="my-[0.3rem] h-6 w-20" />
                                     }
                                     label={
                                         <SkeletonBlock className="my-0.5 h-3 w-16" />
+                                    }
+                                    detail={
+                                        <SkeletonBlock className="my-0.5 h-3 w-28" />
                                     }
                                 />
                             ))}
                         </div>
                     ) : thisWeek.muscles.length === 0 ? (
                         <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-                            No Volume yet this Week. Mark a Set done to see it
-                            here.
+                            No Volume or Set Count yet this Week. Mark a Set
+                            done to see it here.
                         </p>
                     ) : (
                         <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3">
                             {thisWeek.muscles.map(
-                                ({ muscle, volume, goal, met }) => (
+                                ({ muscle, volume, goal, met, ...sets }) => (
                                     <StatBlock
                                         key={muscle}
                                         size="sm"
@@ -159,6 +173,13 @@ export default function StatsHub({
                                                 : met
                                                   ? `Goal met · ${formatKg(goal)}`
                                                   : `${formatKg(goal - volume)} to go`
+                                        }
+                                        detail={
+                                            <StatBlockDetail
+                                                parts={formatSetCountParts(
+                                                    sets,
+                                                )}
+                                            />
                                         }
                                     />
                                 ),
