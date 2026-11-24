@@ -18,4 +18,12 @@ enum SetKind: string
     {
         return $this !== self::WarmUp;
     }
+
+    /**
+     * Whether a Set of this kind counts toward Set Count: only a Working Set.
+     */
+    public function countsTowardSetCount(): bool
+    {
+        return $this === self::Working;
+    }
 }
