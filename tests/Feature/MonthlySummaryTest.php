@@ -18,7 +18,7 @@ class MonthlySummaryTest extends TestCase
 {
     use PerformsExercises, RefreshDatabase;
 
-    public function test_the_chosen_month_shows_its_volume_per_muscle_and_workout_count_in_progress_or_not_with_links_to_the_months_around_it()
+    public function test_the_chosen_month_shows_its_volume_and_set_count_per_muscle_and_workout_count_in_progress_or_not_with_links_to_the_months_around_it()
     {
         $this->travelTo('2026-09-30 12:00:00');
         $owner = User::factory()->create();
@@ -42,26 +42,53 @@ class MonthlySummaryTest extends TestCase
             ->where('nextMonth', '2026-09')
             ->where('workouts', 4)
             ->where('volume', [
-                ['muscle' => 'chest', 'volume' => 1300],
-                ['muscle' => 'quadriceps', 'volume' => 1200],
-                ['muscle' => 'triceps', 'volume' => 650],
+                ['muscle' => 'chest', 'volume' => 1300, 'set_count' => 2, 'direct_sets' => 2],
+                ['muscle' => 'quadriceps', 'volume' => 1200, 'set_count' => 1, 'direct_sets' => 1],
+                ['muscle' => 'triceps', 'volume' => 650, 'set_count' => 1, 'direct_sets' => 0],
+            ])
+        );
+    }
+
+    public function test_muscles_with_only_sets_at_0_kg_follow_those_with_volume_by_name_and_muscles_with_only_a_goal_are_left_out()
+    {
+        $this->travelTo('2026-09-30 12:00:00');
+        $owner = User::factory()->create();
+        Goal::factory()->for($owner)->create(['muscle' => Muscle::Lats, 'weekly_minimum' => '3000.00', 'effective_week' => '2026-07-27']);
+        $neckCurl = Exercise::factory()->for($owner)->primaryMuscle(Muscle::Neck)->create();
+        $plankReach = Exercise::factory()->for($owner)->primaryMuscle(Muscle::Abdominals)->create();
+        $benchPress = Exercise::factory()->for($owner)->primaryMuscle(Muscle::Chest)->withSecondaryMuscle(Muscle::Triceps)->create();
+        $pushdown = Exercise::factory()->for($owner)->primaryMuscle(Muscle::Triceps)->create();
+        $workout = Workout::factory()->for($owner)->finished()->create(['started_at' => '2026-08-12 10:00:00']);
+        $this->perform($workout, $neckCurl, [$this->doneSet(15, '0.00'), $this->doneSet(15, '0.00'), $this->doneSet(15, '0.00')]);
+        $this->perform($workout, $plankReach, [$this->doneSet(12, '0.00')]);
+        $this->perform($workout, $benchPress, [$this->doneSet(10, '100.00')]);
+        $this->perform($workout, $pushdown, [$this->doneSet(10, '20.00'), $this->doneSet(10, '20.00')]);
+
+        $response = $this->actingAs($owner)->get(route('statistics.monthly-summary', ['month' => '2026-08']));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('volume', [
+                ['muscle' => 'chest', 'volume' => 1000, 'set_count' => 1, 'direct_sets' => 1],
+                ['muscle' => 'triceps', 'volume' => 900, 'set_count' => 2.5, 'direct_sets' => 2],
+                ['muscle' => 'abdominals', 'volume' => 0, 'set_count' => 1, 'direct_sets' => 1],
+                ['muscle' => 'neck', 'volume' => 0, 'set_count' => 3, 'direct_sets' => 3],
             ])
         );
     }
 
     /**
-     * @return array<string, array{0: string, 1: int, 2: list<array{muscle: string, volume: int}>}>
+     * @return array<string, array{0: string, 1: int, 2: list<array{muscle: string, volume: int, set_count: int, direct_sets: int}>}>
      */
     public static function monthsAroundTheLastEvening(): array
     {
         return [
-            'the month of that evening' => ['2026-09', 1, [['muscle' => 'quadriceps', 'volume' => 1000]]],
+            'the month of that evening' => ['2026-09', 1, [['muscle' => 'quadriceps', 'volume' => 1000, 'set_count' => 1, 'direct_sets' => 1]]],
             'the month it already is in UTC' => ['2026-10', 0, []],
         ];
     }
 
     /**
-     * @param  list<array{muscle: string, volume: int}>  $volume
+     * @param  list<array{muscle: string, volume: int, set_count: int, direct_sets: int}>  $volume
      */
     #[DataProvider('monthsAroundTheLastEvening')]
     public function test_a_workout_on_the_last_evening_of_a_month_counts_in_that_month_in_the_owners_timezone(string $month, int $workouts, array $volume)

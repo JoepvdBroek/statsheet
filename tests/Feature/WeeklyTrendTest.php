@@ -35,10 +35,31 @@ class WeeklyTrendTest extends TestCase
             ->where('muscle', 'triceps')
             ->has('muscles', 17)
             ->has('weeks', 12)
-            ->where('weeks.0', ['starts_on' => '2026-07-13', 'volume' => 0, 'goal' => null])
-            ->where('weeks.9', ['starts_on' => '2026-09-14', 'volume' => 500, 'goal' => null])
-            ->where('weeks.10', ['starts_on' => '2026-09-21', 'volume' => 0, 'goal' => null])
-            ->where('weeks.11', ['starts_on' => '2026-09-28', 'volume' => 250, 'goal' => null])
+            ->where('weeks.0', ['starts_on' => '2026-07-13', 'volume' => 0, 'set_count' => 0, 'direct_sets' => 0, 'goal' => null])
+            ->where('weeks.9', ['starts_on' => '2026-09-14', 'volume' => 500, 'set_count' => 0.5, 'direct_sets' => 0, 'goal' => null])
+            ->where('weeks.10', ['starts_on' => '2026-09-21', 'volume' => 0, 'set_count' => 0, 'direct_sets' => 0, 'goal' => null])
+            ->where('weeks.11', ['starts_on' => '2026-09-28', 'volume' => 250, 'set_count' => 0.5, 'direct_sets' => 0, 'goal' => null])
+        );
+    }
+
+    public function test_each_week_gives_the_chosen_muscles_set_count_and_its_direct_sets_from_exercises_where_it_is_primary()
+    {
+        $this->travelTo('2026-09-30 12:00:00');
+        $owner = User::factory()->create();
+        $benchPress = Exercise::factory()->for($owner)->primaryMuscle(Muscle::Chest)->withSecondaryMuscle(Muscle::Triceps)->create();
+        $pushdown = Exercise::factory()->for($owner)->primaryMuscle(Muscle::Triceps)->create();
+        $bothRoles = Workout::factory()->for($owner)->finished()->create(['started_at' => '2026-09-15 10:00:00']);
+        $this->perform($bothRoles, $benchPress, [$this->doneSet(10, '100.00'), $this->doneSet(10, '100.00'), $this->doneSet(10, '100.00')]);
+        $this->perform($bothRoles, $pushdown, [$this->doneSet(10, '20.00'), $this->doneSet(10, '20.00')]);
+        $withoutVolume = Workout::factory()->for($owner)->finished()->create(['started_at' => '2026-09-29 10:00:00']);
+        $this->perform($withoutVolume, $pushdown, [$this->doneSet(15, '0.00'), $this->doneSet(15, '0.00')]);
+
+        $response = $this->actingAs($owner)->get(route('statistics.weekly-trend', ['muscle' => 'triceps']));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('weeks.9', ['starts_on' => '2026-09-14', 'volume' => 1900, 'set_count' => 3.5, 'direct_sets' => 2, 'goal' => null])
+            ->where('weeks.10', ['starts_on' => '2026-09-21', 'volume' => 0, 'set_count' => 0, 'direct_sets' => 0, 'goal' => null])
+            ->where('weeks.11', ['starts_on' => '2026-09-28', 'volume' => 0, 'set_count' => 2, 'direct_sets' => 2, 'goal' => null])
         );
     }
 
@@ -57,16 +78,18 @@ class WeeklyTrendTest extends TestCase
      * @param  array<string, string>  $query
      */
     #[DataProvider('unchosenMuscles')]
-    public function test_without_a_chosen_muscle_the_one_with_the_most_volume_in_the_range_is_shown(array $query)
+    public function test_without_a_chosen_muscle_the_one_with_the_most_volume_in_the_range_is_shown_even_if_another_has_a_higher_set_count(array $query)
     {
         $this->travelTo('2026-09-30 12:00:00');
         $owner = User::factory()->create();
         $benchPress = Exercise::factory()->for($owner)->primaryMuscle(Muscle::Triceps)->withSecondaryMuscle(Muscle::Chest)->create();
         $squat = Exercise::factory()->for($owner)->primaryMuscle(Muscle::Quadriceps)->create();
+        $calfRaise = Exercise::factory()->for($owner)->primaryMuscle(Muscle::Calves)->create();
         $this->perform(Workout::factory()->for($owner)->finished()->create(['started_at' => '2026-05-05 10:00:00']), $squat, [$this->doneSet(10, '500.00')]);
         $this->perform(Workout::factory()->for($owner)->finished()->create(['started_at' => '2026-08-04 10:00:00']), $squat, [$this->doneSet(10, '100.00')]);
         $this->perform(Workout::factory()->for($owner)->finished()->create(['started_at' => '2026-09-15 10:00:00']), $benchPress, [$this->doneSet(10, '80.00')]);
         $this->perform(Workout::factory()->for($owner)->finished()->create(['started_at' => '2026-09-22 10:00:00']), $benchPress, [$this->doneSet(10, '80.00')]);
+        $this->perform(Workout::factory()->for($owner)->finished()->create(['started_at' => '2026-09-23 10:00:00']), $calfRaise, [$this->doneSet(10, '10.00'), $this->doneSet(10, '10.00'), $this->doneSet(10, '10.00')]);
 
         $response = $this->actingAs($owner)->get(route('statistics.weekly-trend', $query));
 
@@ -107,18 +130,18 @@ class WeeklyTrendTest extends TestCase
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('weeks', [
-                ['starts_on' => '2026-07-13', 'volume' => 0, 'goal' => 4000],
-                ['starts_on' => '2026-07-20', 'volume' => 0, 'goal' => 4000],
-                ['starts_on' => '2026-07-27', 'volume' => 0, 'goal' => 4000],
-                ['starts_on' => '2026-08-03', 'volume' => 5000, 'goal' => 4000],
-                ['starts_on' => '2026-08-10', 'volume' => 5000, 'goal' => 5000.5],
-                ['starts_on' => '2026-08-17', 'volume' => 0, 'goal' => 5000.5],
-                ['starts_on' => '2026-08-24', 'volume' => 0, 'goal' => 5000.5],
-                ['starts_on' => '2026-08-31', 'volume' => 0, 'goal' => 5000.5],
-                ['starts_on' => '2026-09-07', 'volume' => 0, 'goal' => 5000.5],
-                ['starts_on' => '2026-09-14', 'volume' => 0, 'goal' => null],
-                ['starts_on' => '2026-09-21', 'volume' => 0, 'goal' => null],
-                ['starts_on' => '2026-09-28', 'volume' => 5000, 'goal' => 6000],
+                ['starts_on' => '2026-07-13', 'volume' => 0, 'set_count' => 0, 'direct_sets' => 0, 'goal' => 4000],
+                ['starts_on' => '2026-07-20', 'volume' => 0, 'set_count' => 0, 'direct_sets' => 0, 'goal' => 4000],
+                ['starts_on' => '2026-07-27', 'volume' => 0, 'set_count' => 0, 'direct_sets' => 0, 'goal' => 4000],
+                ['starts_on' => '2026-08-03', 'volume' => 5000, 'set_count' => 1, 'direct_sets' => 1, 'goal' => 4000],
+                ['starts_on' => '2026-08-10', 'volume' => 5000, 'set_count' => 1, 'direct_sets' => 1, 'goal' => 5000.5],
+                ['starts_on' => '2026-08-17', 'volume' => 0, 'set_count' => 0, 'direct_sets' => 0, 'goal' => 5000.5],
+                ['starts_on' => '2026-08-24', 'volume' => 0, 'set_count' => 0, 'direct_sets' => 0, 'goal' => 5000.5],
+                ['starts_on' => '2026-08-31', 'volume' => 0, 'set_count' => 0, 'direct_sets' => 0, 'goal' => 5000.5],
+                ['starts_on' => '2026-09-07', 'volume' => 0, 'set_count' => 0, 'direct_sets' => 0, 'goal' => 5000.5],
+                ['starts_on' => '2026-09-14', 'volume' => 0, 'set_count' => 0, 'direct_sets' => 0, 'goal' => null],
+                ['starts_on' => '2026-09-21', 'volume' => 0, 'set_count' => 0, 'direct_sets' => 0, 'goal' => null],
+                ['starts_on' => '2026-09-28', 'volume' => 5000, 'set_count' => 1, 'direct_sets' => 1, 'goal' => 6000],
             ])
         );
     }
@@ -135,7 +158,7 @@ class WeeklyTrendTest extends TestCase
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('weeks.0.starts_on', '2026-07-06')
-            ->where('weeks.11', ['starts_on' => '2026-09-21', 'volume' => 1000, 'goal' => null])
+            ->where('weeks.11', ['starts_on' => '2026-09-21', 'volume' => 1000, 'set_count' => 1, 'direct_sets' => 1, 'goal' => null])
         );
     }
 

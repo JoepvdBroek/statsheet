@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Muscle;
+use App\Support\SetCountCalculator;
 use App\Support\VolumeCalculator;
 use App\Support\WeekCalendar;
 use Carbon\CarbonImmutable;
@@ -18,27 +19,30 @@ class WeeklyTrendController extends Controller
     private const WEEKS = 12;
 
     /**
-     * Show one Muscle's Volume per Week over recent Weeks, with the Goal in force in each.
+     * Show one Muscle's Volume and Set Count per Week over recent Weeks, with the Goal in force in each.
      */
-    public function __invoke(Request $request, VolumeCalculator $volumeCalculator): Response
+    public function __invoke(Request $request, VolumeCalculator $volumeCalculator, SetCountCalculator $setCountCalculator): Response
     {
         $user = $request->user();
         $calendar = WeekCalendar::for($user);
         $thisWeek = $calendar->currentWeek();
         $weeks = $calendar->weeksBetween($thisWeek->subWeeks(self::WEEKS - 1), $thisWeek);
         $volume = $volumeCalculator->perWeek($user, $weeks);
+        $setCounts = $setCountCalculator->perWeek($user, $weeks);
         $goals = $user->goalsInForcePerWeek($weeks);
         $muscle = $request->enum('muscle', Muscle::class) ?? $this->withMostVolume($volume);
 
         return Inertia::render('statistics/weekly-trend', [
             'muscle' => $muscle->value,
             'muscles' => array_column(Muscle::cases(), 'value'),
-            'weeks' => array_map(function (CarbonImmutable $week) use ($volume, $goals, $muscle) {
+            'weeks' => array_map(function (CarbonImmutable $week) use ($volume, $setCounts, $goals, $muscle) {
                 $monday = $week->toDateString();
 
                 return [
                     'starts_on' => $monday,
                     'volume' => $volume[$monday][$muscle->value] ?? 0,
+                    'set_count' => $setCounts[$monday][$muscle->value]['set_count'] ?? 0,
+                    'direct_sets' => $setCounts[$monday][$muscle->value]['direct_sets'] ?? 0,
                     'goal' => $goals[$monday][$muscle->value] ?? null,
                 ];
             }, $weeks),
