@@ -153,8 +153,8 @@ function WeeklyTrendContent({
             >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <PageDescription>
-                        Volume or Set Count per Week, this Week included. The
-                        Goal in force each Week is about Volume.
+                        Volume or Set Count per Week, this Week included. Goals
+                        are about Volume.
                     </PageDescription>
                     <div className="flex shrink-0 items-center gap-3">
                         <div className="min-w-0 flex-1 sm:w-40 sm:flex-none">
@@ -163,8 +163,9 @@ function WeeklyTrendContent({
                         <ToggleGroup
                             type="single"
                             variant="outline"
+                            size="sm"
                             aria-label="Show Volume or Set Count"
-                            className="shrink-0"
+                            className="shrink-0 data-[variant=outline]:p-px"
                             value={measure}
                             onValueChange={(value) => {
                                 // Pressing the selected item gives an empty value: one always stays selected.
