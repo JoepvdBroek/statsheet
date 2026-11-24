@@ -1,6 +1,6 @@
 import type { Exercise, PersonalRecordMeasure } from './exercise';
 
-/** What a Set is. A Warm-up Set never counts; a Drop Set follows the Set before it at a lower weight, without rest, and counts like a Working Set. */
+/** What a Set is. A Warm-up Set never counts; a Drop Set follows the Set before it at a lower weight, without rest, and counts toward Volume, Goals and Personal Records but not toward Set Count. */
 export type SetKind = 'working' | 'warm_up' | 'drop';
 
 /** The Routine a Workout was started from. */

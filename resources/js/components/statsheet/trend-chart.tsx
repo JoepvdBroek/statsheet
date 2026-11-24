@@ -22,6 +22,12 @@ type TrendChartProps = Omit<React.ComponentProps<'figure'>, 'title'> & {
     height?: number;
     /** Decimal places in labels. */
     digits?: number;
+    /** Formats a value without its unit, for the axis and end label. Defaults to a number with `digits`. */
+    formatValue?: (value: number) => string;
+    /** Formats a value with its unit, for a unit that depends on the value ("1 set"). Defaults to the value and `unit`. */
+    formatWithUnit?: (value: number) => string;
+    /** The smallest step between axis ticks, for values that only come in such steps. */
+    minTickStep?: number;
 };
 
 /** The dashed stroke of the Goal line, shared with its legend. */
@@ -31,12 +37,14 @@ const goalStroke = {
     strokeDasharray: '4 4',
 };
 
-function niceTicks(min: number, max: number, count = 4) {
+function niceTicks(min: number, max: number, minStep = 0, count = 4) {
     const span = max - min || 1;
     const raw = span / (count - 1);
     const mag = 10 ** Math.floor(Math.log10(raw));
-    const step =
-        [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw) ?? raw;
+    const step = Math.max(
+        minStep,
+        [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw) ?? raw,
+    );
     const lo = Math.floor(min / step) * step;
     const hi = Math.ceil(max / step) * step;
     const ticks: number[] = [];
@@ -52,6 +60,10 @@ function TrendChart({
     hideCaption = false,
     height = 200,
     digits = 1,
+    formatValue = (value) =>
+        value.toLocaleString('en-GB', { maximumFractionDigits: digits }),
+    formatWithUnit = (value) => `${formatValue(value)} ${unit}`,
+    minTickStep,
     className,
     ...props
 }: TrendChartProps) {
@@ -69,9 +81,6 @@ function TrendChart({
         return () => ro.disconnect();
     }, []);
 
-    const fmt = (v: number) =>
-        v.toLocaleString('en-GB', { maximumFractionDigits: digits });
-
     if (!points.length) {
         return (
             <figure
@@ -86,7 +95,11 @@ function TrendChart({
     const pad = { top: 16, right: 48, bottom: 24, left: 36 };
     const goals = points.flatMap((p) => (p.goal == null ? [] : [p.goal]));
     const values = [...points.map((p) => p.value), ...goals];
-    const ticks = niceTicks(Math.min(...values), Math.max(...values));
+    const ticks = niceTicks(
+        Math.min(...values),
+        Math.max(...values),
+        minTickStep,
+    );
     const yMin = ticks[0];
     const yMax = ticks[ticks.length - 1];
     const iw = width - pad.left - pad.right;
@@ -141,7 +154,7 @@ function TrendChart({
                     width={width}
                     height={height}
                     role="img"
-                    aria-label={`${title}: from ${fmt(points[0].value)} to ${fmt(points[last].value)} ${unit}`}
+                    aria-label={`${title}: from ${formatValue(points[0].value)} to ${formatWithUnit(points[last].value)}`}
                     className="block overflow-visible"
                 >
                     {ticks.map((t) => (
@@ -161,7 +174,7 @@ function TrendChart({
                                 textAnchor="end"
                                 className="fill-muted-foreground text-[11px] tabular-nums"
                             >
-                                {fmt(t)}
+                                {formatValue(t)}
                             </text>
                         </g>
                     ))}
@@ -226,7 +239,7 @@ function TrendChart({
                         dy="0.32em"
                         className="fill-foreground text-xs tabular-nums"
                     >
-                        {fmt(points[last].value)}
+                        {formatValue(points[last].value)}
                     </text>
                     <rect
                         x={pad.left}
@@ -252,14 +265,14 @@ function TrendChart({
                     >
                         <div className="text-muted-foreground">{h.label}</div>
                         <div className="tabular-nums">
-                            {fmt(h.value)} {unit}
+                            {formatWithUnit(h.value)}
                             {h.pr ? (
                                 <span className="text-primary"> · PR</span>
                             ) : null}
                         </div>
                         {h.goal != null ? (
                             <div className="text-muted-foreground tabular-nums">
-                                Goal {fmt(h.goal)} {unit}
+                                Goal {formatWithUnit(h.goal)}
                             </div>
                         ) : null}
                     </div>
@@ -283,10 +296,10 @@ function TrendChart({
                         <tr key={i}>
                             <th scope="row">{p.label}</th>
                             <td>
-                                {fmt(p.value)} {unit}
+                                {formatWithUnit(p.value)}
                                 {p.pr ? ' (PR)' : ''}
                                 {p.goal != null
-                                    ? `, Goal ${fmt(p.goal)} ${unit}`
+                                    ? `, Goal ${formatWithUnit(p.goal)}`
                                     : ''}
                             </td>
                         </tr>

@@ -42,7 +42,7 @@ type SetRowProps = Omit<React.ComponentProps<'div'>, 'onChange'> & {
     done?: boolean;
     defaultDone?: boolean;
     onDoneChange?: (done: boolean) => void;
-    /** Warm-up sets are logged but never count toward Volume, Goals or PRs; drop sets count like working sets. */
+    /** Warm-up sets are logged but never count toward Volume, Goals or PRs; drop sets do, but not toward Set Count. */
     kind?: SetKind;
     /** Bodyweight Exercise: the weight field is the added load. */
     bodyweight?: boolean;
