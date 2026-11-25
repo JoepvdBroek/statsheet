@@ -13,6 +13,7 @@ use App\Models\WorkoutExercise;
 use App\Models\WorkoutSet;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Concerns\PerformsExercises;
 use Tests\TestCase;
@@ -213,6 +214,24 @@ class WorkoutStartFromRoutineTest extends TestCase
         );
     }
 
+    public function test_starting_from_a_routine_copies_its_supersets()
+    {
+        $routine = Routine::factory()->create();
+        $this->plan($routine, [[10, '20.00', SetKind::Working]]);
+        $this->plan($routine, [[10, '20.00', SetKind::Working]], superset: 1);
+        $this->plan($routine, [[10, '20.00', SetKind::Working]], superset: 1);
+
+        $response = $this->actingAs($routine->user)->post(route('routines.start', $routine));
+
+        $response->assertRedirect();
+        $workout = $this->workoutInProgress($routine->user);
+        $this->assertSame([null, 1, 1], $workout->exercises()->pluck('superset')->all());
+
+        $this->get(route('workouts.show', $workout))->assertInertia(fn (Assert $page) => $page
+            ->where('workout.exercises', fn ($exercises) => collect($exercises)->pluck('superset')->all() === [null, 1, 1])
+        );
+    }
+
     public function test_editing_or_archiving_the_routine_afterwards_leaves_the_workout_unchanged()
     {
         $routine = Routine::factory()->create();
@@ -260,11 +279,11 @@ class WorkoutStartFromRoutineTest extends TestCase
     }
 
     /**
-     * Plan an Exercise after the Routine's others, with Sets of [reps, weight, kind].
+     * Plan an Exercise after the Routine's others, with Sets of [reps, weight, kind], in the given Superset.
      *
      * @param  list<array{int, string, SetKind}>  $sets
      */
-    private function plan(Routine $routine, array $sets, ?Exercise $exercise = null): Exercise
+    private function plan(Routine $routine, array $sets, ?Exercise $exercise = null, ?int $superset = null): Exercise
     {
         $exercise ??= Exercise::factory()->for($routine->user)->create();
 
@@ -282,7 +301,7 @@ class WorkoutStartFromRoutineTest extends TestCase
                     ]),
                 'sets',
             )
-            ->create(['position' => $routine->exercises()->count()]);
+            ->create(['position' => $routine->exercises()->count(), 'superset' => $superset]);
 
         return $exercise;
     }

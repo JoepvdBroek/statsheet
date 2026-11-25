@@ -46,6 +46,20 @@ class WorkoutSwapExerciseTest extends TestCase
         );
     }
 
+    public function test_the_new_exercise_keeps_the_superset_of_the_swapped_out_one()
+    {
+        $workout = Workout::factory()->create();
+        WorkoutExercise::factory()->for($workout)->inSuperset(1)->create(['position' => 0]);
+        $swapped = WorkoutExercise::factory()->for($workout)->inSuperset(1)->create(['position' => 1]);
+        $dumbbellFly = Exercise::factory()->for($workout->user)->create();
+
+        $this->actingAs($workout->user)->post(route('workouts.exercises.swap', [$workout, $swapped]), ['exercise_id' => $dumbbellFly->id]);
+
+        $swapped->refresh();
+        $this->assertSame($dumbbellFly->id, $swapped->exercise_id);
+        $this->assertSame(1, $swapped->superset);
+    }
+
     public function test_the_new_exercise_pre_fills_from_its_most_recent_earlier_workout_and_falls_back_to_the_swapped_out_kind()
     {
         $owner = User::factory()->create();

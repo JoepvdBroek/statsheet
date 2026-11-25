@@ -18,8 +18,9 @@ use Illuminate\Support\Facades\DB;
  * @property int $workout_id
  * @property int $exercise_id
  * @property int $position 0-based place in the Workout's order
+ * @property int|null $superset The number of the Superset it belongs to within the Workout, numbered 1, 2, … in order; null when in none
  */
-#[Fillable(['exercise_id', 'position'])]
+#[Fillable(['exercise_id', 'position', 'superset'])]
 #[WithoutTimestamps]
 class WorkoutExercise extends Model
 {
@@ -97,7 +98,7 @@ class WorkoutExercise extends Model
     }
 
     /**
-     * Swap in another Exercise in this place: its Sets keep their count and kinds as the plan, Pre-filled for it, and logged Actuals are discarded.
+     * Swap in another Exercise in this place and Superset: its Sets keep their count and kinds as the plan, Pre-filled for it, and logged Actuals are discarded.
      */
     public function swapFor(Exercise $exercise): void
     {

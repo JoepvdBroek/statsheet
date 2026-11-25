@@ -91,6 +91,21 @@ class WorkoutUpdateRoutineTest extends TestCase
         $this->assertSame([[$rowing->id, [[10, '60.00', SetKind::Working]]]], $this->plan($workout->routine));
     }
 
+    public function test_the_routine_takes_the_workouts_supersets_dissolving_one_left_with_a_single_exercise()
+    {
+        $workout = $this->workoutFromRoutine();
+        $done = fn () => [WorkoutSet::factory()->state(['target_reps' => 10, 'target_weight' => '20.00'])->done()];
+        $this->performNewExercise($workout, $done(), superset: 1);
+        $this->performNewExercise($workout, [WorkoutSet::factory()->withoutTarget()->notDone()], superset: 1);
+        $this->performNewExercise($workout, $done());
+        $this->performNewExercise($workout, $done(), superset: 2);
+        $this->performNewExercise($workout, $done(), superset: 2);
+
+        $this->actingAs($workout->user)->put(route('workouts.routine.update', $workout));
+
+        $this->assertSame([null, null, 1, 1], $workout->routine->exercises()->pluck('superset')->all());
+    }
+
     public function test_the_workout_page_names_the_routine_to_update_only_when_it_has_one()
     {
         $workout = $this->workoutFromRoutine();
@@ -159,15 +174,16 @@ class WorkoutUpdateRoutineTest extends TestCase
     }
 
     /**
-     * Add a new Exercise of the owner after the Workout's others, performed with the given Sets in order.
+     * Add a new Exercise of the owner after the Workout's others, performed with the given Sets in order, in the given Superset.
      *
      * @param  list<WorkoutSetFactory>  $sets
      */
-    private function performNewExercise(Workout $workout, array $sets): Exercise
+    private function performNewExercise(Workout $workout, array $sets, ?int $superset = null): Exercise
     {
         $exercise = Exercise::factory()->for($workout->user)->create();
 
         $this->perform($workout, $exercise, $sets);
+        $workout->exercises()->get()->last()->update(['superset' => $superset]);
 
         return $exercise;
     }
