@@ -6,6 +6,8 @@ import {
     DumbbellIcon,
     FlameIcon,
     HistoryIcon,
+    Link2Icon,
+    Unlink2Icon,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import WorkoutController from '@/actions/App/Http/Controllers/WorkoutController';
@@ -33,6 +35,7 @@ import {
 import { PRBadge } from '@/components/statsheet/pr-badge';
 import { SetRow, meetsTarget } from '@/components/statsheet/set-row';
 import type { SetValues } from '@/components/statsheet/set-row';
+import { SupersetGroup } from '@/components/statsheet/superset-group';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -50,6 +53,15 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { nameVisit, skipFailureHandling } from '@/lib/failed-visits';
+import {
+    canJoinWithNext,
+    canMove,
+    groupSupersets,
+    joinWithNext,
+    leaveSuperset,
+    moveItem,
+    supersetLabels,
+} from '@/lib/supersets';
 import { formatDateTime } from '@/lib/utils';
 import { showsWorkoutInProgress } from '@/lib/workout-page';
 import { index } from '@/routes/workouts';
@@ -138,6 +150,25 @@ export default function ShowWorkout({
             ? lastHistory.history
             : undefined);
 
+    const labels = workout ? supersetLabels(workout.exercises) : [];
+
+    const renderPerformed = (shown: Workout, position: number) => {
+        const performed = shown.exercises[position];
+
+        return (
+            <PerformedExercise
+                key={performed.id}
+                workoutId={shown.id}
+                arrangement={shown.exercises}
+                position={position}
+                supersetLabel={labels[position] ?? undefined}
+                exercises={exercises}
+                history={shownHistory?.[performed.exercise.id]}
+                historyLoading={history === undefined}
+            />
+        );
+    };
+
     return (
         <>
             <Head title="Workout" />
@@ -190,23 +221,23 @@ export default function ShowWorkout({
                                 </p>
                             ) : null}
 
-                            {workout.exercises.map((performed, position) => (
-                                <PerformedExercise
-                                    key={performed.id}
-                                    workoutId={workout.id}
-                                    performed={performed}
-                                    exercises={exercises}
-                                    history={
-                                        shownHistory?.[performed.exercise.id]
-                                    }
-                                    historyLoading={history === undefined}
-                                    position={position}
-                                    isLast={
-                                        position ===
-                                        workout.exercises.length - 1
-                                    }
-                                />
-                            ))}
+                            {groupSupersets(workout.exercises).map((section) =>
+                                section.letter === null ? (
+                                    renderPerformed(
+                                        workout,
+                                        section.entries[0].index,
+                                    )
+                                ) : (
+                                    <SupersetGroup
+                                        key={`superset-${section.entries[0].item.id}`}
+                                        letter={section.letter}
+                                    >
+                                        {section.entries.map(({ index }) =>
+                                            renderPerformed(workout, index),
+                                        )}
+                                    </SupersetGroup>
+                                ),
+                            )}
 
                             <ExercisePicker
                                 exercises={exercises}
@@ -391,24 +422,28 @@ function DeleteWorkoutDialog({ workout }: { workout: Workout }) {
 
 function PerformedExercise({
     workoutId,
-    performed,
+    arrangement,
+    position,
+    supersetLabel,
     exercises,
     history,
     historyLoading,
-    position,
-    isLast,
 }: {
     workoutId: number;
-    performed: WorkoutExercise;
+    /** All the Workout's Exercises in order, with their Supersets. */
+    arrangement: WorkoutExercise[];
+    /** This Exercise's place in the arrangement. */
+    position: number;
+    /** Its place in its Superset ("A1"); undefined outside a Superset. */
+    supersetLabel?: string;
     /** The Exercises a Swap can pick from; undefined while they load. */
     exercises?: Exercise[];
     /** The Exercise's Personal Records and earlier performances; undefined while they load or when not known yet. */
     history?: ExerciseHistory;
     /** Whether the history is still loading. */
     historyLoading: boolean;
-    position: number;
-    isLast: boolean;
 }) {
+    const performed = arrangement[position];
     const { exercise, sets } = performed;
     const [swapping, setSwapping] = useState(false);
     const [showingHistory, setShowingHistory] = useState(false);
@@ -416,9 +451,23 @@ function PerformedExercise({
     const workingSets = sets.filter((set) => set.kind === 'working');
     const route = { workout: workoutId, exercise: performed.id };
 
+    /** Sends the Workout's whole new order and Supersets. */
+    const arrange = (arranged: WorkoutExercise[]) =>
+        router.put(
+            WorkoutExerciseController.arrange.url(workoutId),
+            {
+                exercises: arranged.map(({ id, superset }) => ({
+                    id,
+                    superset,
+                })),
+            },
+            structureVisit,
+        );
+
     return (
         <ExerciseCard
             name={exercise.name}
+            supersetLabel={supersetLabel}
             onNameClick={() => setShowingHistory(true)}
             muscles={exercise.muscles}
             bodyweight={exercise.is_bodyweight}
@@ -443,14 +492,10 @@ function PerformedExercise({
                 <ItemMenu
                     label={`More actions for ${exercise.name}`}
                     removeLabel="Remove Exercise"
-                    isFirst={position === 0}
-                    isLast={isLast}
+                    isFirst={!canMove(arrangement, position, -1)}
+                    isLast={!canMove(arrangement, position, 1)}
                     onMove={(offset) =>
-                        router.put(
-                            WorkoutExerciseController.move.url(route),
-                            { position: position + offset },
-                            structureVisit,
-                        )
+                        arrange(moveItem(arrangement, position, offset))
                     }
                     onRemove={() => {
                         if (
@@ -472,6 +517,26 @@ function PerformedExercise({
                         <ArrowLeftRightIcon aria-hidden="true" />
                         Swap Exercise
                     </DropdownMenuItem>
+                    {canJoinWithNext(arrangement, position) ? (
+                        <DropdownMenuItem
+                            onSelect={() =>
+                                arrange(joinWithNext(arrangement, position))
+                            }
+                        >
+                            <Link2Icon aria-hidden="true" />
+                            Superset with next Exercise
+                        </DropdownMenuItem>
+                    ) : null}
+                    {performed.superset !== null ? (
+                        <DropdownMenuItem
+                            onSelect={() =>
+                                arrange(leaveSuperset(arrangement, position))
+                            }
+                        >
+                            <Unlink2Icon aria-hidden="true" />
+                            Remove from Superset
+                        </DropdownMenuItem>
+                    ) : null}
                 </ItemMenu>
             }
         >

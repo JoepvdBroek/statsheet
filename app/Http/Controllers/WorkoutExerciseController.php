@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AddWorkoutExerciseRequest;
-use App\Http\Requests\RepositionRequest;
+use App\Http\Requests\ArrangeWorkoutExercisesRequest;
 use App\Models\Workout;
 use App\Models\WorkoutExercise;
 use Illuminate\Http\RedirectResponse;
@@ -23,12 +23,12 @@ class WorkoutExerciseController extends Controller
     }
 
     /**
-     * Move an Exercise to another place in the Workout's order.
+     * Put the Workout's Exercises in a new order and Supersets.
      */
     #[Authorize('update', 'workout')]
-    public function move(RepositionRequest $request, Workout $workout, WorkoutExercise $exercise): RedirectResponse
+    public function arrange(ArrangeWorkoutExercisesRequest $request, Workout $workout): RedirectResponse
     {
-        $workout->moveExercise($exercise, $request->position());
+        $workout->arrangeExercises($request->arrangement());
 
         return to_route('workouts.show', $workout);
     }
@@ -45,12 +45,12 @@ class WorkoutExerciseController extends Controller
     }
 
     /**
-     * Remove an Exercise and its Sets from the Workout.
+     * Remove an Exercise and its Sets from the Workout, dissolving a Superset it leaves with a single member.
      */
     #[Authorize('update', 'workout')]
     public function destroy(Workout $workout, WorkoutExercise $exercise): RedirectResponse
     {
-        $exercise->delete();
+        $workout->removeExercise($exercise);
 
         return to_route('workouts.show', $workout);
     }

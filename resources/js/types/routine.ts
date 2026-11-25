@@ -12,6 +12,8 @@ export type RoutineExercise = {
     exercise: Exercise;
     /** In order. */
     sets: RoutineSet[];
+    /** Its Superset's number (1, 2, … in order of first appearance), shared with the exercises next to it in the same Superset; null when in none. */
+    superset: number | null;
 };
 
 export type Routine = {

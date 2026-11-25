@@ -18,6 +18,8 @@ const cardClassName =
 type ExerciseCardProps = React.ComponentProps<'section'> & {
     /** Exercise name, variation included ("Barbell bench press"). */
     name: string;
+    /** Its place in a Superset ("A1"), shown as a badge before the name. */
+    supersetLabel?: string;
     /** Makes the name a link, e.g. to the Exercise's history. */
     href?: string;
     /** Makes the name a button that opens the Exercise's history in place, e.g. in a sheet. Ignored with `href`. */
@@ -42,6 +44,7 @@ type ExerciseCardProps = React.ComponentProps<'section'> & {
 
 function ExerciseCard({
     name,
+    supersetLabel,
     href,
     onNameClick,
     muscles = [],
@@ -60,6 +63,37 @@ function ExerciseCard({
 }: ExerciseCardProps) {
     const complete =
         setCount !== undefined && setCount > 0 && doneCount === setCount;
+    const heading = (
+        <h3 className="truncate text-base leading-[1.3] font-medium">
+            {href ? (
+                <a
+                    href={href}
+                    className="rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                >
+                    {name}
+                </a>
+            ) : onNameClick ? (
+                <button
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-label={`${name} history`}
+                    onClick={onNameClick}
+                    className="group/name inline-flex max-w-full items-center gap-1.5 rounded-sm text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                >
+                    <span className="truncate underline-offset-4 group-hover/name:underline">
+                        {name}
+                    </span>
+                    <HistoryIcon
+                        aria-hidden="true"
+                        className="size-3.5 shrink-0 text-muted-foreground"
+                    />
+                </button>
+            ) : (
+                name
+            )}
+        </h3>
+    );
+
     return (
         <section
             data-slot="exercise-card"
@@ -69,34 +103,19 @@ function ExerciseCard({
         >
             <header className="flex items-start gap-3 px-1">
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
-                    <h3 className="truncate text-base leading-[1.3] font-medium">
-                        {href ? (
-                            <a
-                                href={href}
-                                className="rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    {supersetLabel ? (
+                        <div className="flex min-w-0 items-center gap-2">
+                            <span
+                                data-slot="superset-label"
+                                className="inline-flex h-5 shrink-0 items-center rounded-md bg-primary/15 px-1.5 text-xs font-medium text-primary tabular-nums"
                             >
-                                {name}
-                            </a>
-                        ) : onNameClick ? (
-                            <button
-                                type="button"
-                                aria-haspopup="dialog"
-                                aria-label={`${name} history`}
-                                onClick={onNameClick}
-                                className="group/name inline-flex max-w-full items-center gap-1.5 rounded-sm text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                            >
-                                <span className="truncate underline-offset-4 group-hover/name:underline">
-                                    {name}
-                                </span>
-                                <HistoryIcon
-                                    aria-hidden="true"
-                                    className="size-3.5 shrink-0 text-muted-foreground"
-                                />
-                            </button>
-                        ) : (
-                            name
-                        )}
-                    </h3>
+                                {supersetLabel}
+                            </span>
+                            {heading}
+                        </div>
+                    ) : (
+                        heading
+                    )}
                     {muscles.length ? (
                         <div className="flex flex-wrap gap-1.5">
                             {muscles.map((m) => (

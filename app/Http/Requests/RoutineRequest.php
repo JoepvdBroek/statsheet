@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\SetKind;
 use App\Models\Routine;
+use App\Rules\ContiguousSupersets;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -20,9 +21,10 @@ class RoutineRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'exercises' => ['array'],
-            'exercises.*' => ['array:exercise_id,sets'],
+            'exercises' => ['array', new ContiguousSupersets],
+            'exercises.*' => ['array:exercise_id,superset,sets'],
             'exercises.*.exercise_id' => ['required', 'integer', Rule::exists('exercises', 'id')->where('user_id', $this->user()->id)],
+            'exercises.*.superset' => ['nullable', 'integer', 'min:1'],
             'exercises.*.sets' => ['required', 'array', 'min:1'],
             'exercises.*.sets.*' => ['array:target_reps,target_weight,kind'],
             'exercises.*.sets.*.target_reps' => ['required', 'integer', 'min:1', 'max:999'],
@@ -56,18 +58,20 @@ class RoutineRequest extends FormRequest
             'exercises.*.sets.*.target_reps' => 'target reps',
             'exercises.*.sets.*.target_weight' => 'target weight',
             'exercises.*.sets.*.kind' => 'kind',
+            'exercises.*.superset' => 'superset',
         ];
     }
 
     /**
-     * The validated plan: Exercises in order, each with its Sets in order.
+     * The validated plan: Exercises in order, each with its Superset number (null when in none) and its Sets in order.
      *
-     * @return list<array{exercise_id: int, sets: list<array{target_reps: int, target_weight: string, kind: SetKind}>}>
+     * @return list<array{exercise_id: int, superset: int|null, sets: list<array{target_reps: int, target_weight: string, kind: SetKind}>}>
      */
     public function plannedExercises(): array
     {
         return array_map(fn (array $planned) => [
             'exercise_id' => (int) $planned['exercise_id'],
+            'superset' => isset($planned['superset']) ? (int) $planned['superset'] : null,
             'sets' => array_map(fn (array $set) => [
                 'target_reps' => (int) $set['target_reps'],
                 'target_weight' => number_format((float) $set['target_weight'], 2, '.', ''),
