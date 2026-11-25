@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Concerns\HasPosition;
 use App\Enums\SetKind;
 use Database\Factories\WorkoutExerciseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -25,7 +24,7 @@ use Illuminate\Support\Facades\DB;
 class WorkoutExercise extends Model
 {
     /** @use HasFactory<WorkoutExerciseFactory> */
-    use HasFactory, HasPosition;
+    use HasFactory;
 
     /**
      * @return BelongsTo<Workout, $this>
