@@ -197,10 +197,23 @@ class Workout extends Model
     }
 
     /**
-     * Move an Exercise to the given 0-based place in the order.
+     * Put the Exercises in the given order and Supersets. The arrangement lists every Exercise of the Workout once; its Supersets are
+     * normalised, so a Superset with a single member is dissolved.
+     *
+     * @param  list<array{id: int, superset: int|null}>  $arrangement
      */
-    public function moveExercise(WorkoutExercise $moved, int $position): void
+    public function arrangeExercises(array $arrangement): void
     {
-        WorkoutExercise::reposition($this->exercises()->get(), $moved, $position);
+        DB::transaction(function () use ($arrangement) {
+            $exercises = $this->exercises()->get()->keyBy('id');
+            $supersets = Supersets::normalise(array_column($arrangement, 'superset'));
+
+            foreach ($arrangement as $position => $arranged) {
+                $performed = $exercises[$arranged['id']];
+                $performed->position = $position;
+                $performed->superset = $supersets[$position];
+                $performed->save();
+            }
+        });
     }
 }
