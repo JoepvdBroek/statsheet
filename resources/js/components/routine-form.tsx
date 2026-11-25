@@ -247,7 +247,7 @@ export default function RoutineForm({
                                     }
                                 >
                                     <Link2Icon aria-hidden="true" />
-                                    Superset with next exercise
+                                    Superset with next Exercise
                                 </DropdownMenuItem>
                             ) : null}
                             {planned.superset !== null ? (
@@ -259,7 +259,7 @@ export default function RoutineForm({
                                     }
                                 >
                                     <Unlink2Icon aria-hidden="true" />
-                                    Remove from superset
+                                    Remove from Superset
                                 </DropdownMenuItem>
                             ) : null}
                         </ItemMenu>
