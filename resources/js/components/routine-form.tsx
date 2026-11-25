@@ -1,6 +1,11 @@
 import { useForm } from '@inertiajs/react';
 import type { UrlMethodPair } from '@inertiajs/core';
-import { CornerDownRightIcon, DumbbellIcon } from 'lucide-react';
+import {
+    CornerDownRightIcon,
+    DumbbellIcon,
+    Link2Icon,
+    Unlink2Icon,
+} from 'lucide-react';
 import { useMemo } from 'react';
 import ExercisePicker, {
     ExercisePickerSkeleton,
@@ -14,9 +19,20 @@ import {
     ExerciseCardSkeleton,
 } from '@/components/statsheet/exercise-card';
 import { PlannedSetRow } from '@/components/statsheet/set-row';
+import { SupersetGroup } from '@/components/statsheet/superset-group';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    canJoinWithNext,
+    canMove,
+    groupSupersets,
+    joinWithNext,
+    leaveSuperset,
+    moveItem,
+    normaliseSupersets,
+    supersetLabels,
+} from '@/lib/supersets';
 import type { Exercise, Routine, SetKind } from '@/types';
 
 type PlannedSet = {
@@ -31,6 +47,8 @@ type PlannedExercise = {
     key: string;
     exercise_id: number;
     sets: PlannedSet[];
+    /** Its Superset's number, shared with the exercises next to it in the same Superset; null when in none. */
+    superset: number | null;
 };
 
 type RoutineFormData = {
@@ -40,7 +58,7 @@ type RoutineFormData = {
 
 const newKey = () => crypto.randomUUID();
 
-/** Moves the item at `from` one place up (-1) or down (+1). */
+/** Moves the Set at `from` one place up (-1) or down (+1). */
 function move<T>(items: T[], from: number, offset: -1 | 1): T[] {
     const to = from + offset;
 
@@ -72,6 +90,7 @@ export default function RoutineForm({
             key: newKey(),
             exercise_id: planned.exercise.id,
             sets: planned.sets.map((set) => ({ key: newKey(), ...set })),
+            superset: planned.superset,
         })),
     });
 
@@ -144,6 +163,7 @@ export default function RoutineForm({
                         kind: 'working',
                     },
                 ],
+                superset: null,
             },
         ]);
 
@@ -167,6 +187,190 @@ export default function RoutineForm({
             ];
         });
 
+    const labels = supersetLabels(form.data.exercises);
+
+    const renderExercise = (
+        planned: PlannedExercise,
+        exerciseIndex: number,
+    ) => {
+        const exercise = exercisesById.get(planned.exercise_id);
+
+        return (
+            <div key={planned.key} className="flex flex-col gap-2">
+                <ExerciseCard
+                    planning
+                    supersetLabel={labels[exerciseIndex] ?? undefined}
+                    name={exercise?.name ?? 'Exercise'}
+                    muscles={exercise?.muscles}
+                    bodyweight={exercise?.is_bodyweight}
+                    hint={
+                        exercise?.archived
+                            ? "Archived. It stays in this Routine, but can't be added again once removed."
+                            : undefined
+                    }
+                    onAddSet={() => addSet(exerciseIndex)}
+                    actions={
+                        <ItemMenu
+                            label={`More actions for ${exercise?.name ?? 'this Exercise'}`}
+                            removeLabel="Remove Exercise"
+                            isFirst={
+                                !canMove(form.data.exercises, exerciseIndex, -1)
+                            }
+                            isLast={
+                                !canMove(form.data.exercises, exerciseIndex, 1)
+                            }
+                            onMove={(offset) =>
+                                setExercises((all) =>
+                                    moveItem(all, exerciseIndex, offset),
+                                )
+                            }
+                            onRemove={() =>
+                                setExercises((all) =>
+                                    normaliseSupersets(
+                                        all.filter(
+                                            (_, index) =>
+                                                index !== exerciseIndex,
+                                        ),
+                                    ),
+                                )
+                            }
+                        >
+                            {canJoinWithNext(
+                                form.data.exercises,
+                                exerciseIndex,
+                            ) ? (
+                                <DropdownMenuItem
+                                    onSelect={() =>
+                                        setExercises((all) =>
+                                            joinWithNext(all, exerciseIndex),
+                                        )
+                                    }
+                                >
+                                    <Link2Icon aria-hidden="true" />
+                                    Superset with next exercise
+                                </DropdownMenuItem>
+                            ) : null}
+                            {planned.superset !== null ? (
+                                <DropdownMenuItem
+                                    onSelect={() =>
+                                        setExercises((all) =>
+                                            leaveSuperset(all, exerciseIndex),
+                                        )
+                                    }
+                                >
+                                    <Unlink2Icon aria-hidden="true" />
+                                    Remove from superset
+                                </DropdownMenuItem>
+                            ) : null}
+                        </ItemMenu>
+                    }
+                >
+                    {planned.sets.map((set, setIndex) => {
+                        const field = `exercises.${exerciseIndex}.sets.${setIndex}`;
+                        const workingSetNumber = planned.sets
+                            .slice(0, setIndex + 1)
+                            .filter((other) => other.kind === 'working').length;
+                        const followsCountingSet =
+                            setIndex > 0 &&
+                            planned.sets[setIndex - 1].kind !== 'warm_up';
+
+                        return (
+                            <PlannedSetRow
+                                key={set.key}
+                                index={workingSetNumber}
+                                bodyweight={exercise?.is_bodyweight}
+                                target={{
+                                    reps: set.target_reps,
+                                    weight: set.target_weight,
+                                }}
+                                onTargetChange={(target) =>
+                                    updateSet(exerciseIndex, setIndex, {
+                                        target_reps: target.reps,
+                                        target_weight: target.weight,
+                                    })
+                                }
+                                kind={set.kind}
+                                onKindChange={(kind) =>
+                                    updateSet(exerciseIndex, setIndex, { kind })
+                                }
+                                invalid={{
+                                    reps: Boolean(
+                                        errors[`${field}.target_reps`],
+                                    ),
+                                    weight: Boolean(
+                                        errors[`${field}.target_weight`],
+                                    ),
+                                }}
+                                actions={
+                                    <ItemMenu
+                                        label={`More actions for set ${setIndex + 1}`}
+                                        removeLabel="Remove set"
+                                        isFirst={setIndex === 0}
+                                        isLast={
+                                            setIndex === planned.sets.length - 1
+                                        }
+                                        onMove={(offset) =>
+                                            setSets(exerciseIndex, (sets) =>
+                                                move(sets, setIndex, offset),
+                                            )
+                                        }
+                                        onRemove={() =>
+                                            setSets(exerciseIndex, (sets) =>
+                                                sets.filter(
+                                                    (_, index) =>
+                                                        index !== setIndex,
+                                                ),
+                                            )
+                                        }
+                                    >
+                                        {set.kind === 'drop' ? (
+                                            <DropdownMenuItem
+                                                onSelect={() =>
+                                                    updateSet(
+                                                        exerciseIndex,
+                                                        setIndex,
+                                                        {
+                                                            kind: 'working',
+                                                        },
+                                                    )
+                                                }
+                                            >
+                                                <DumbbellIcon aria-hidden="true" />
+                                                Make a working set
+                                            </DropdownMenuItem>
+                                        ) : followsCountingSet ? (
+                                            <DropdownMenuItem
+                                                onSelect={() =>
+                                                    updateSet(
+                                                        exerciseIndex,
+                                                        setIndex,
+                                                        {
+                                                            kind: 'drop',
+                                                        },
+                                                    )
+                                                }
+                                            >
+                                                <CornerDownRightIcon aria-hidden="true" />
+                                                Make a drop set
+                                            </DropdownMenuItem>
+                                        ) : null}
+                                    </ItemMenu>
+                                }
+                            />
+                        );
+                    })}
+                </ExerciseCard>
+                {errorsFor(`exercises.${exerciseIndex}.`).map((message) => (
+                    <InputError
+                        key={message}
+                        message={message}
+                        className="px-1"
+                    />
+                ))}
+            </div>
+        );
+    };
+
     return (
         <form
             onSubmit={(event) => {
@@ -175,6 +379,7 @@ export default function RoutineForm({
                     name: data.name,
                     exercises: data.exercises.map((planned) => ({
                         exercise_id: planned.exercise_id,
+                        superset: planned.superset,
                         sets: planned.sets.map((set) => ({
                             target_reps: set.target_reps,
                             target_weight: set.target_weight,
@@ -202,188 +407,23 @@ export default function RoutineForm({
             </div>
 
             <div className="flex flex-col gap-3">
-                {form.data.exercises.map((planned, exerciseIndex) => {
-                    const exercise = exercisesById.get(planned.exercise_id);
-
-                    return (
-                        <div key={planned.key} className="flex flex-col gap-2">
-                            <ExerciseCard
-                                planning
-                                name={exercise?.name ?? 'Exercise'}
-                                muscles={exercise?.muscles}
-                                bodyweight={exercise?.is_bodyweight}
-                                hint={
-                                    exercise?.archived
-                                        ? "Archived. It stays in this Routine, but can't be added again once removed."
-                                        : undefined
-                                }
-                                onAddSet={() => addSet(exerciseIndex)}
-                                actions={
-                                    <ItemMenu
-                                        label={`More actions for ${exercise?.name ?? 'this Exercise'}`}
-                                        removeLabel="Remove Exercise"
-                                        isFirst={exerciseIndex === 0}
-                                        isLast={
-                                            exerciseIndex ===
-                                            form.data.exercises.length - 1
-                                        }
-                                        onMove={(offset) =>
-                                            setExercises((all) =>
-                                                move(
-                                                    all,
-                                                    exerciseIndex,
-                                                    offset,
-                                                ),
-                                            )
-                                        }
-                                        onRemove={() =>
-                                            setExercises((all) =>
-                                                all.filter(
-                                                    (_, index) =>
-                                                        index !== exerciseIndex,
-                                                ),
-                                            )
-                                        }
-                                    />
-                                }
-                            >
-                                {planned.sets.map((set, setIndex) => {
-                                    const field = `exercises.${exerciseIndex}.sets.${setIndex}`;
-                                    const workingSetNumber = planned.sets
-                                        .slice(0, setIndex + 1)
-                                        .filter(
-                                            (other) => other.kind === 'working',
-                                        ).length;
-                                    const followsCountingSet =
-                                        setIndex > 0 &&
-                                        planned.sets[setIndex - 1].kind !==
-                                            'warm_up';
-
-                                    return (
-                                        <PlannedSetRow
-                                            key={set.key}
-                                            index={workingSetNumber}
-                                            bodyweight={exercise?.is_bodyweight}
-                                            target={{
-                                                reps: set.target_reps,
-                                                weight: set.target_weight,
-                                            }}
-                                            onTargetChange={(target) =>
-                                                updateSet(
-                                                    exerciseIndex,
-                                                    setIndex,
-                                                    {
-                                                        target_reps:
-                                                            target.reps,
-                                                        target_weight:
-                                                            target.weight,
-                                                    },
-                                                )
-                                            }
-                                            kind={set.kind}
-                                            onKindChange={(kind) =>
-                                                updateSet(
-                                                    exerciseIndex,
-                                                    setIndex,
-                                                    { kind },
-                                                )
-                                            }
-                                            invalid={{
-                                                reps: Boolean(
-                                                    errors[
-                                                        `${field}.target_reps`
-                                                    ],
-                                                ),
-                                                weight: Boolean(
-                                                    errors[
-                                                        `${field}.target_weight`
-                                                    ],
-                                                ),
-                                            }}
-                                            actions={
-                                                <ItemMenu
-                                                    label={`More actions for set ${setIndex + 1}`}
-                                                    removeLabel="Remove set"
-                                                    isFirst={setIndex === 0}
-                                                    isLast={
-                                                        setIndex ===
-                                                        planned.sets.length - 1
-                                                    }
-                                                    onMove={(offset) =>
-                                                        setSets(
-                                                            exerciseIndex,
-                                                            (sets) =>
-                                                                move(
-                                                                    sets,
-                                                                    setIndex,
-                                                                    offset,
-                                                                ),
-                                                        )
-                                                    }
-                                                    onRemove={() =>
-                                                        setSets(
-                                                            exerciseIndex,
-                                                            (sets) =>
-                                                                sets.filter(
-                                                                    (
-                                                                        _,
-                                                                        index,
-                                                                    ) =>
-                                                                        index !==
-                                                                        setIndex,
-                                                                ),
-                                                        )
-                                                    }
-                                                >
-                                                    {set.kind === 'drop' ? (
-                                                        <DropdownMenuItem
-                                                            onSelect={() =>
-                                                                updateSet(
-                                                                    exerciseIndex,
-                                                                    setIndex,
-                                                                    {
-                                                                        kind: 'working',
-                                                                    },
-                                                                )
-                                                            }
-                                                        >
-                                                            <DumbbellIcon aria-hidden="true" />
-                                                            Make a working set
-                                                        </DropdownMenuItem>
-                                                    ) : followsCountingSet ? (
-                                                        <DropdownMenuItem
-                                                            onSelect={() =>
-                                                                updateSet(
-                                                                    exerciseIndex,
-                                                                    setIndex,
-                                                                    {
-                                                                        kind: 'drop',
-                                                                    },
-                                                                )
-                                                            }
-                                                        >
-                                                            <CornerDownRightIcon aria-hidden="true" />
-                                                            Make a drop set
-                                                        </DropdownMenuItem>
-                                                    ) : null}
-                                                </ItemMenu>
-                                            }
-                                        />
-                                    );
-                                })}
-                            </ExerciseCard>
-                            {errorsFor(`exercises.${exerciseIndex}.`).map(
-                                (message) => (
-                                    <InputError
-                                        key={message}
-                                        message={message}
-                                        className="px-1"
-                                    />
-                                ),
+                {groupSupersets(form.data.exercises).map((section) =>
+                    section.letter === null ? (
+                        renderExercise(
+                            section.entries[0].item,
+                            section.entries[0].index,
+                        )
+                    ) : (
+                        <SupersetGroup
+                            key={section.entries[0].item.key}
+                            letter={section.letter}
+                        >
+                            {section.entries.map(({ item, index }) =>
+                                renderExercise(item, index),
                             )}
-                        </div>
-                    );
-                })}
+                        </SupersetGroup>
+                    ),
+                )}
 
                 <ExercisePicker
                     exercises={exercises}
