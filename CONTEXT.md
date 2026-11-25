@@ -39,7 +39,7 @@ Two or more Exercises of a Routine or Workout, next to each other in the order, 
 _Avoid_: Circuit, giant set, tri-set
 
 **Swap**:
-Replacing an Exercise in a Workout with another in the same place and Superset. The new Exercise keeps the set count and is Pre-filled with the swapped-out Sets as its plan; Actuals already logged are discarded, so all its Sets start not done. The Workout does not remember the Exercise swapped out.
+Replacing an Exercise in a Workout with another in the same place and Superset. The new Exercise keeps the number of Sets and is Pre-filled with the swapped-out Sets as its plan; Actuals already logged are discarded, so all its Sets start not done. The Workout does not remember the Exercise swapped out.
 _Avoid_: Replace, substitute
 
 **Pre-fill**:
@@ -69,7 +69,7 @@ A Set marked as preparation. It is logged but never counts toward Volume, Goals 
 A Set that is neither a Warm-up Set nor a Drop Set. The sets of an Exercise are counted and numbered by its Working Sets.
 
 **Drop Set**:
-A Set done straight after the previous Set of the same Exercise, at a lower weight, without rest. The heavy Set it drops from is not itself a Drop Set. A Set is never both a Warm-up Set and a Drop Set. A Drop Set counts like any other non-warm-up Set.
+A Set done straight after the previous Set of the same Exercise, at a lower weight, without rest. The heavy Set it drops from is not itself a Drop Set. A Set is never both a Warm-up Set and a Drop Set. A Drop Set counts toward Volume, Goals and Personal Records like any other non-warm-up Set, but not toward Set Count.
 _Avoid_: Strip set, descending set
 
 **Bodyweight**:
@@ -79,6 +79,14 @@ _Avoid_: Body measurement
 **Volume**:
 Tonnage (reps × weight, in kg) of done, non-warm-up Sets, attributed to Muscles: in full to each primary Muscle and half to each secondary Muscle. For a Bodyweight Exercise the weight is Bodyweight plus added load.
 _Avoid_: Load, workload, training volume (as a set count)
+
+**Set Count**:
+The number of done Working Sets attributed to each Muscle, whatever their reps and weight: 1 to each primary Muscle and 0.5 to each secondary Muscle of the Exercise. It is for display only, with no Goals or Personal Records based on it, and is never totalled across Muscles, which would count one Set several times.
+_Avoid_: Training volume, hard sets, Working Sets (as a number per Muscle)
+
+**Direct Sets**:
+The part of a Muscle's Set Count that comes from Exercises where it is a primary Muscle.
+_Avoid_: Primary sets, main sets, isolation sets
 
 **Week**:
 Monday to Sunday in the owner's timezone. A Workout belongs to the Week (and calendar month) of its start date.

@@ -37,7 +37,7 @@ class GoalTest extends TestCase
         $this->assertSame('2026-09-28', $goal->effective_week->toDateString());
 
         $this->get(route('statistics.hub'))->assertInertia(fn (Assert $page) => $page
-            ->where('thisWeek.muscles', [['muscle' => 'chest', 'volume' => 0, 'goal' => 5000, 'met' => false]])
+            ->where('thisWeek.muscles', [['muscle' => 'chest', 'volume' => 0, 'set_count' => 0, 'direct_sets' => 0, 'goal' => 5000, 'met' => false]])
         );
     }
 
@@ -59,9 +59,9 @@ class GoalTest extends TestCase
 
         $response->assertInertia(fn (Assert $page) => $page
             ->where('thisWeek.muscles', [
-                ['muscle' => 'chest', 'volume' => 1000, 'goal' => 800, 'met' => true],
-                ['muscle' => 'triceps', 'volume' => 500, 'goal' => null, 'met' => null],
-                ['muscle' => 'lats', 'volume' => 0, 'goal' => 3000, 'met' => false],
+                ['muscle' => 'chest', 'volume' => 1000, 'set_count' => 1, 'direct_sets' => 1, 'goal' => 800, 'met' => true],
+                ['muscle' => 'triceps', 'volume' => 500, 'set_count' => 0.5, 'direct_sets' => 0, 'goal' => null, 'met' => null],
+                ['muscle' => 'lats', 'volume' => 0, 'set_count' => 0, 'direct_sets' => 0, 'goal' => 3000, 'met' => false],
             ])
         );
     }
@@ -162,7 +162,7 @@ class GoalTest extends TestCase
         $response = $this->actingAs($owner)->get(route('statistics.hub'));
 
         $response->assertInertia(fn (Assert $page) => $page
-            ->where('thisWeek.muscles', [['muscle' => 'chest', 'volume' => 6000, 'goal' => $expectedGoal, 'met' => $expectedMet]])
+            ->where('thisWeek.muscles', [['muscle' => 'chest', 'volume' => 6000, 'set_count' => 1, 'direct_sets' => 1, 'goal' => $expectedGoal, 'met' => $expectedMet]])
         );
     }
 

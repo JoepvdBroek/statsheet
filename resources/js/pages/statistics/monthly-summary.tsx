@@ -4,14 +4,19 @@ import type { ReactNode } from 'react';
 import Heading from '@/components/heading';
 import { PageContent } from '@/components/page-content';
 import { repeat, SkeletonBlock } from '@/components/page-skeleton';
-import { StatBlock } from '@/components/statsheet/stat-block';
+import { StatBlock, StatBlockDetail } from '@/components/statsheet/stat-block';
 import { Button } from '@/components/ui/button';
 import { parentScreens } from '@/lib/parent-screens';
-import { capitalize, formatKg, formatMonth } from '@/lib/utils';
+import {
+    capitalize,
+    formatKg,
+    formatMonth,
+    formatSetCountParts,
+} from '@/lib/utils';
 import { monthlySummary } from '@/routes/statistics';
-import type { PageShell } from '@/types';
+import type { MuscleSetCount, PageShell } from '@/types';
 
-type MuscleVolume = {
+type MuscleVolume = MuscleSetCount & {
     muscle: string;
     /** kg */
     volume: number;
@@ -41,7 +46,7 @@ export default function MonthlySummary({
     nextMonth?: string | null;
     /** Workouts started in the month, in progress or not. */
     workouts?: number;
-    /** Each Muscle with Volume in the month, most Volume first. */
+    /** Each Muscle with Volume or a Set Count in the month: most Volume first, then those without Volume by name. */
     volume?: MuscleVolume[];
     /** Each Muscle with a Goal in force in one of the month's Weeks so far, by name. A Week belongs to the month of its Monday. */
     goals?: GoalWeeks[];
@@ -136,20 +141,29 @@ export default function MonthlySummary({
                 <VolumeCard>
                     {volume.length === 0 ? (
                         <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-                            No Volume this month.
+                            No Volume or Set Count this month.
                         </p>
                     ) : (
                         <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3">
-                            {volume.map(({ muscle, volume: tonnage }) => (
-                                <StatBlock
-                                    key={muscle}
-                                    size="sm"
-                                    tone="plain"
-                                    value={formatKg(tonnage)}
-                                    unit="kg"
-                                    label={capitalize(muscle)}
-                                />
-                            ))}
+                            {volume.map(
+                                ({ muscle, volume: tonnage, ...sets }) => (
+                                    <StatBlock
+                                        key={muscle}
+                                        size="sm"
+                                        tone="plain"
+                                        value={formatKg(tonnage)}
+                                        unit="kg"
+                                        label={capitalize(muscle)}
+                                        detail={
+                                            <StatBlockDetail
+                                                parts={formatSetCountParts(
+                                                    sets,
+                                                )}
+                                            />
+                                        }
+                                    />
+                                ),
+                            )}
                         </div>
                     )}
                 </VolumeCard>
@@ -159,18 +173,19 @@ export default function MonthlySummary({
 }
 
 const summaryDescription =
-    'Volume, Workouts and Goals met in one calendar month.';
+    'Volume, Set Count, Workouts and Goals met in one calendar month.';
 
 /** The summary while its month loads: real headings and descriptions, grey month, numbers and Muscles. */
 function MonthlySummarySkeleton() {
-    const statBlocks = (count: number) => (
+    const statBlocks = (count: number, detail?: ReactNode) => (
         <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3">
             {repeat(count, (index) => (
                 <StatBlock
                     key={index}
                     size="sm"
-                    value={<SkeletonBlock className="my-1 h-6 w-20" />}
+                    value={<SkeletonBlock className="my-[0.3rem] h-6 w-20" />}
                     label={<SkeletonBlock className="my-0.5 h-3 w-16" />}
+                    detail={detail}
                 />
             ))}
         </div>
@@ -210,7 +225,12 @@ function MonthlySummarySkeleton() {
 
                 <GoalsMetCard>{statBlocks(4)}</GoalsMetCard>
 
-                <VolumeCard>{statBlocks(6)}</VolumeCard>
+                <VolumeCard>
+                    {statBlocks(
+                        6,
+                        <SkeletonBlock className="my-0.5 h-3 w-28" />,
+                    )}
+                </VolumeCard>
             </PageContent>
         </>
     );
@@ -235,7 +255,9 @@ function VolumeCard({ children }: { children: ReactNode }) {
     return (
         <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground">
             <div className="space-y-0.5">
-                <h2 className="text-base font-medium">Volume per Muscle</h2>
+                <h2 className="text-base font-medium">
+                    Volume and Set Count per Muscle
+                </h2>
                 <p className="text-sm text-muted-foreground">
                     From the Workouts started this month.
                 </p>

@@ -3,21 +3,26 @@
 namespace Tests\Feature;
 
 use App\Ai\Agents\WeeklyReviewer;
+use App\Ai\Tools\SetCountPerWeek;
 use App\Enums\Muscle;
 use App\Enums\ReviewRating;
 use App\Enums\ReviewStatus;
 use App\Jobs\GenerateWeeklyReview;
+use App\Models\Exercise;
 use App\Models\Goal;
 use App\Models\WeeklyReview;
+use App\Models\Workout;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Laravel\Ai\Prompts\AgentPrompt;
+use Laravel\Ai\Tools\Request;
 use RuntimeException;
+use Tests\Concerns\PerformsExercises;
 use Tests\TestCase;
 
 class GenerateWeeklyReviewTest extends TestCase
 {
-    use RefreshDatabase;
+    use PerformsExercises, RefreshDatabase;
 
     public function test_a_successful_generation_stores_the_three_parts_and_the_model()
     {
@@ -62,6 +67,26 @@ class GenerateWeeklyReviewTest extends TestCase
 
         $this->assertSame([['muscle' => 'chest', 'note' => 'Met.']], $review->refresh()->muscle_notes);
         WeeklyReviewer::assertPrompted(fn (AgentPrompt $prompt) => $prompt->contains('chest 5000'));
+    }
+
+    public function test_the_agent_can_read_the_owners_set_counts()
+    {
+        $review = WeeklyReview::factory()->pending()->create(['week' => '2026-09-21']);
+        $benchPress = Exercise::factory()->for($review->user)->primaryMuscle(Muscle::Chest)->create();
+        $this->perform(Workout::factory()->for($review->user)->finished()->create(['started_at' => '2026-09-23 12:00:00']), $benchPress, [$this->doneSet(5, '100.00')]);
+        WeeklyReviewer::fake([['summary' => 'A Week.', 'muscle_notes' => [], 'advice' => []]])->preventStrayPrompts();
+
+        GenerateWeeklyReview::dispatchSync($review);
+
+        WeeklyReviewer::assertPrompted(function (AgentPrompt $prompt) {
+            $this->assertInstanceOf(WeeklyReviewer::class, $prompt->agent);
+            $tool = collect($prompt->agent->tools())->first(fn ($tool) => $tool instanceof SetCountPerWeek);
+            $this->assertNotNull($tool, 'The agent has no tool to read Set Counts.');
+            $setCounts = (string) $tool->handle(new Request(['from' => '2026-09-21', 'to' => '2026-09-21']));
+            $this->assertSame(['2026-09-21' => ['chest' => ['set_count' => 1, 'direct_sets' => 1]]], json_decode($setCounts, true));
+
+            return true;
+        });
     }
 
     public function test_a_failed_generation_keeps_the_previous_content_and_marks_the_review_failed()

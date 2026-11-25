@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\MuscleList;
+use App\Support\SetCountCalculator;
 use App\Support\VolumeCalculator;
 use App\Support\WeekCalendar;
 use Carbon\CarbonImmutable;
@@ -12,16 +14,15 @@ use Inertia\Response;
 class MonthlySummaryController extends Controller
 {
     /**
-     * Summarise a calendar month: its Volume per Muscle, its number of Workouts, and for each Goal the Weeks it was met.
-     * Goals are judged on the Weeks whose Monday falls in the month, up to this Week, each against the Goal in force then.
+     * Summarise a calendar month: its Volume and Set Count per Muscle, its number of Workouts, and for each Goal the Weeks it was met.
+     * Goals are judged by Volume alone, on the Weeks whose Monday falls in the month, up to this Week, each against the Goal in force then.
      */
-    public function __invoke(Request $request, VolumeCalculator $volumeCalculator): Response
+    public function __invoke(Request $request, VolumeCalculator $volumeCalculator, SetCountCalculator $setCountCalculator): Response
     {
         $user = $request->user();
         $calendar = WeekCalendar::for($user);
         $thisMonth = $calendar->monthOf(now());
         $month = $this->chosenMonth($request->string('month')->value(), $user->timezone) ?? $thisMonth;
-        $volume = $volumeCalculator->forMonth($user, $month);
         $weeks = array_values(array_filter(
             $calendar->weeksOfMonth($month),
             fn (CarbonImmutable $week) => $week->lessThanOrEqualTo($calendar->currentWeek()),
@@ -32,10 +33,7 @@ class MonthlySummaryController extends Controller
             'previousMonth' => $month->subMonth()->format('Y-m'),
             'nextMonth' => $month->lessThan($thisMonth) ? $month->addMonth()->format('Y-m') : null,
             'workouts' => $user->workouts()->startedBetween($month, $month->addMonth())->count(),
-            'volume' => array_map(fn (string $muscle) => [
-                'muscle' => $muscle,
-                'volume' => $volume[$muscle],
-            ], array_keys($volume)),
+            'volume' => MuscleList::of($volumeCalculator->forMonth($user, $month), $setCountCalculator->forMonth($user, $month)),
             'goals' => $this->weeksMetPerGoal($volumeCalculator->perWeek($user, $weeks), $user->goalsInForcePerWeek($weeks)),
         ]);
     }

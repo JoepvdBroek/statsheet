@@ -3,7 +3,7 @@
 namespace App\Enums;
 
 /**
- * How an Exercise trains a Muscle: primary Muscles get full Volume, secondary Muscles half.
+ * How an Exercise trains a Muscle: primary Muscles get full Volume and Set Count, secondary Muscles half.
  */
 enum MuscleRole: string
 {

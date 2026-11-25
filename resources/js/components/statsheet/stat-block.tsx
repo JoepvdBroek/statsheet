@@ -13,6 +13,8 @@ type StatBlockProps = React.ComponentProps<'div'> & {
     delta?: React.ReactNode;
     /** Direction of the change; up is shown with ▲, down with ▼. */
     trend?: 'up' | 'down' | 'flat';
+    /** Quieter line under the label, usually a StatBlockDetail. */
+    detail?: React.ReactNode;
     /** lg: 48px hero number; sm: 24px, for inside cards and rows. */
     size?: 'lg' | 'sm';
     /** Neon for the one live number on a screen; plain white otherwise. */
@@ -25,6 +27,7 @@ function StatBlock({
     label,
     delta,
     trend = 'flat',
+    detail,
     size = 'lg',
     tone = 'live',
     className,
@@ -60,7 +63,7 @@ function StatBlock({
                     </span>
                 ) : null}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="text-[11px] leading-4 tracking-[0.05em] text-muted-foreground uppercase">
                     {label}
                 </span>
@@ -71,9 +74,24 @@ function StatBlock({
                     </span>
                 ) : null}
             </div>
+            {detail ? (
+                <div className="text-xs text-muted-foreground tabular-nums">
+                    {detail}
+                </div>
+            ) : null}
         </div>
     );
 }
 
-export { StatBlock };
+/** Short facts on one line, separated by dots; screen readers hear one phrase with commas. */
+function StatBlockDetail({ parts }: { parts: string[] }) {
+    return (
+        <>
+            <span aria-hidden="true">{parts.join(' · ')}</span>
+            <span className="sr-only">{parts.join(', ')}</span>
+        </>
+    );
+}
+
+export { StatBlock, StatBlockDetail };
 export type { StatBlockProps };
