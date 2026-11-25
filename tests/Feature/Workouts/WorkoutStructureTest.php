@@ -50,6 +50,7 @@ class WorkoutStructureTest extends TestCase
         $added = $workout->exercises()->get()->last();
         $this->assertSame($squat->id, $added->exercise_id);
         $this->assertSame(1, $added->position);
+        $this->assertNull($added->superset);
 
         $set = $added->sets()->sole();
         $this->assertNull($set->target_reps);
@@ -110,6 +111,36 @@ class WorkoutStructureTest extends TestCase
         $this->assertModelMissing($first);
         $this->assertSame([$second->id], $workout->exercises()->pluck('id')->all());
         $this->assertDatabaseCount('workout_sets', 3);
+    }
+
+    public function test_removing_an_exercise_from_a_pair_dissolves_the_superset_and_numbers_the_others_again()
+    {
+        $workout = Workout::factory()->create();
+        $exercises = collect([1, 1, null, 2, 2, 2])->map(fn (?int $superset, int $position) => WorkoutExercise::factory()
+            ->for($workout)
+            ->state(['superset' => $superset])
+            ->create(['position' => $position]));
+
+        $response = $this
+            ->actingAs($workout->user)
+            ->delete(route('workouts.exercises.destroy', [$workout, $exercises[0]]));
+
+        $response->assertRedirect(route('workouts.show', $workout));
+
+        $this->assertSame([null, null, 1, 1, 1], $workout->exercises()->pluck('superset')->all());
+    }
+
+    public function test_removing_an_exercise_from_a_larger_superset_keeps_it()
+    {
+        $workout = Workout::factory()->create();
+        $exercises = collect([1, 1, 1])->map(fn (int $superset, int $position) => WorkoutExercise::factory()
+            ->for($workout)
+            ->inSuperset($superset)
+            ->create(['position' => $position]));
+
+        $this->actingAs($workout->user)->delete(route('workouts.exercises.destroy', [$workout, $exercises[1]]));
+
+        $this->assertSame([1, 1], $workout->exercises()->pluck('superset')->all());
     }
 
     public function test_moving_an_exercise_changes_the_order()

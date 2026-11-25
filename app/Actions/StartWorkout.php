@@ -28,7 +28,7 @@ class StartWorkout
     }
 
     /**
-     * Start a Workout from a Routine, snapshotting the owner's current Bodyweight and the Routine's Exercises and set counts (ADR 0001).
+     * Start a Workout from a Routine, snapshotting the owner's current Bodyweight and the Routine's Exercises, Supersets and set counts (ADR 0001).
      * Each Set is Pre-filled from the same Set in the most recent earlier Workout containing its Exercise.
      *
      * The returned Workout's `wasRecentlyCreated` tells whether it is new or the one already in progress.
@@ -47,6 +47,7 @@ class StartWorkout
                     $performed = $workout->exercises()->create([
                         'exercise_id' => $planned->exercise_id,
                         'position' => $position,
+                        'superset' => $planned->superset,
                     ]);
 
                     $performed->preFill($planned->sets

@@ -19,7 +19,7 @@ class WorkoutResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @return array{id: int, status: string, started_at: string, finished_at: string|null, routine: array{id: int, name: string, archived: bool}|null, bodyweight: float|null, note: string|null, exercises: array<int, array{id: int, exercise: array<string, mixed>, sets: array<int, array{id: int, target_reps: int|null, target_weight: float|null, actual_reps: int|null, actual_weight: float|null, kind: string, done: bool, meets_target: bool, new_records: list<Measure>}>}>}
+     * @return array{id: int, status: string, started_at: string, finished_at: string|null, routine: array{id: int, name: string, archived: bool}|null, bodyweight: float|null, note: string|null, exercises: array<int, array{id: int, exercise: array<string, mixed>, superset: int|null, sets: array<int, array{id: int, target_reps: int|null, target_weight: float|null, actual_reps: int|null, actual_weight: float|null, kind: string, done: bool, meets_target: bool, new_records: list<Measure>}>}>}
      */
     public function toArray(Request $request): array
     {
@@ -41,6 +41,7 @@ class WorkoutResource extends JsonResource
                 ->map(fn (WorkoutExercise $performed) => [
                     'id' => $performed->id,
                     'exercise' => ExerciseResource::make($performed->exercise)->resolve($request),
+                    'superset' => $performed->superset,
                     'sets' => $performed->sets
                         ->map(fn (WorkoutSet $set) => [
                             'id' => $set->id,

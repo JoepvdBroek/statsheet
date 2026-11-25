@@ -216,6 +216,7 @@ class RoutineManagementTest extends TestCase
                         'archived' => false,
                         'muscles' => [['muscle' => 'lats', 'role' => 'primary']],
                     ],
+                    'superset' => null,
                     'sets' => [
                         ['target_reps' => 5, 'target_weight' => 0, 'kind' => 'warm_up'],
                         ['target_reps' => 8, 'target_weight' => 12.5, 'kind' => 'working'],
@@ -309,6 +310,101 @@ class RoutineManagementTest extends TestCase
         $this->assertDatabaseCount('routine_exercises', 1);
     }
 
+    public function test_owner_groups_neighbouring_exercises_into_supersets_numbered_in_order()
+    {
+        $owner = User::factory()->create();
+        $exercises = Exercise::factory()->for($owner)->count(5)->create();
+
+        $response = $this
+            ->actingAs($owner)
+            ->post(route('routines.store'), [
+                'name' => 'Arm day',
+                'exercises' => $this->plannedWithSupersets($exercises->all(), [5, 5, null, 2, 2]),
+            ]);
+
+        $response->assertSessionHasNoErrors();
+
+        $this->assertSame([1, 1, null, 2, 2], $this->supersets($owner->routines()->sole()));
+    }
+
+    public function test_a_superset_with_a_single_exercise_is_dissolved()
+    {
+        $owner = User::factory()->create();
+        $exercises = Exercise::factory()->for($owner)->count(4)->create();
+
+        $response = $this
+            ->actingAs($owner)
+            ->post(route('routines.store'), [
+                'name' => 'Arm day',
+                'exercises' => $this->plannedWithSupersets($exercises->all(), [1, null, 2, 2]),
+            ]);
+
+        $response->assertSessionHasNoErrors();
+
+        $this->assertSame([null, null, 1, 1], $this->supersets($owner->routines()->sole()));
+    }
+
+    public function test_a_superset_whose_exercises_are_not_next_to_each_other_is_rejected()
+    {
+        $owner = User::factory()->create();
+        $exercises = Exercise::factory()->for($owner)->count(3)->create();
+
+        $response = $this
+            ->actingAs($owner)
+            ->post(route('routines.store'), [
+                'name' => 'Arm day',
+                'exercises' => $this->plannedWithSupersets($exercises->all(), [1, null, 1]),
+            ]);
+
+        $response->assertSessionHasErrors(['exercises' => 'The Exercises of a Superset must be next to each other.']);
+
+        $this->assertDatabaseEmpty('routines');
+    }
+
+    public function test_a_superset_number_must_be_one_or_more()
+    {
+        $owner = User::factory()->create();
+        $exercises = Exercise::factory()->for($owner)->count(2)->create();
+
+        $response = $this
+            ->actingAs($owner)
+            ->post(route('routines.store'), [
+                'name' => 'Arm day',
+                'exercises' => $this->plannedWithSupersets($exercises->all(), [0, 0]),
+            ]);
+
+        $response->assertSessionHasErrors(['exercises.0.superset' => 'The superset field must be at least 1.']);
+
+        $this->assertDatabaseEmpty('routines');
+    }
+
+    public function test_the_edit_page_shows_each_exercises_superset_and_saving_it_unchanged_keeps_them()
+    {
+        $routine = Routine::factory()->create();
+        foreach ([null, 1, 1, 2, 2, 2] as $position => $superset) {
+            RoutineExercise::factory()->for($routine)->state(['superset' => $superset])->has(RoutineSet::factory(), 'sets')->create(['position' => $position]);
+        }
+
+        $page = $this->actingAs($routine->user)->get(route('routines.edit', $routine));
+
+        $page->assertInertia(fn (Assert $page) => $page
+            ->where('routine.exercises', fn ($exercises) => collect($exercises)->pluck('superset')->all() === [null, 1, 1, 2, 2, 2])
+        );
+
+        $this
+            ->put(route('routines.update', $routine), [
+                'name' => $routine->name,
+                'exercises' => collect($page->inertiaProps('routine.exercises'))->map(fn (array $planned) => [
+                    'exercise_id' => $planned['exercise']['id'],
+                    'superset' => $planned['superset'],
+                    'sets' => $planned['sets'],
+                ])->all(),
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame([null, 1, 1, 2, 2, 2], $this->supersets($routine->refresh()));
+    }
+
     public function test_create_page_defers_the_exercises_to_pick_from()
     {
         $exercise = Exercise::factory()->create(['name' => 'Squat']);
@@ -324,6 +420,32 @@ class RoutineManagementTest extends TestCase
                 ->where('exercises', fn ($exercises) => collect($exercises)->pluck('name')->all() === ['Squat'])
             )
         );
+    }
+
+    /**
+     * The given Exercises planned in order with one Set each, in the given Supersets.
+     *
+     * @param  list<Exercise>  $exercises
+     * @param  list<int|null>  $supersets
+     * @return list<array{exercise_id: int, superset: int|null, sets: list<array<string, mixed>>}>
+     */
+    private function plannedWithSupersets(array $exercises, array $supersets): array
+    {
+        return array_map(fn (Exercise $exercise, ?int $superset) => [
+            'exercise_id' => $exercise->id,
+            'superset' => $superset,
+            'sets' => [['target_reps' => 10, 'target_weight' => 20, 'kind' => 'working']],
+        ], $exercises, $supersets);
+    }
+
+    /**
+     * The Superset number of each of the Routine's Exercises, in order.
+     *
+     * @return list<int|null>
+     */
+    private function supersets(Routine $routine): array
+    {
+        return $routine->exercises()->pluck('superset')->all();
     }
 
     /**

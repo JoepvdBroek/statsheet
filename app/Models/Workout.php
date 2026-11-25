@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SetKind;
+use App\Support\Supersets;
 use Carbon\CarbonImmutable;
 use Database\Factories\WorkoutFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @property int $id
@@ -123,16 +125,18 @@ class Workout extends Model
     }
 
     /**
-     * The Workout's Exercises in order as a Routine plans them, each Set with what was lifted as its Target (its Actual when done,
-     * otherwise its Target) and its kind. Sets with neither are dropped, and so is an Exercise left without Sets.
+     * The Workout's Exercises in order as a Routine plans them, with their Supersets, each Set with what was lifted as its Target (its Actual
+     * when done, otherwise its Target) and its kind. Sets with neither are dropped, and so is an Exercise left without Sets; the Supersets
+     * are then normalised again, so one left with a single member is dissolved.
      *
-     * @return list<array{exercise_id: int, sets: list<array{target_reps: int, target_weight: string, kind: SetKind}>}>
+     * @return list<array{exercise_id: int, superset: int|null, sets: list<array{target_reps: int, target_weight: string, kind: SetKind}>}>
      */
     public function plannedExercises(): array
     {
         $planned = $this->exercises()->with('sets')->get()
             ->map(fn (WorkoutExercise $performed) => [
                 'exercise_id' => $performed->exercise_id,
+                'superset' => $performed->superset,
                 'sets' => array_values($performed->sets
                     ->map(fn (WorkoutSet $set) => ($target = $set->carriedOverTarget()) === null ? null : [
                         'target_reps' => $target['reps'],
@@ -143,24 +147,53 @@ class Workout extends Model
                     ->all()),
             ])
             ->filter(fn (array $planned) => $planned['sets'] !== [])
+            ->values()
             ->all();
 
-        return array_values($planned);
+        $supersets = Supersets::normalise(array_column($planned, 'superset'));
+
+        return array_map(fn (array $exercise, ?int $superset) => [...$exercise, 'superset' => $superset], $planned, $supersets);
     }
 
     /**
-     * Add an Exercise after the others, with one Set to log.
+     * Add an Exercise after the others, outside any Superset, with one Set to log.
      */
     public function addExercise(Exercise $exercise): WorkoutExercise
     {
         $workoutExercise = $this->exercises()->create([
             'exercise_id' => $exercise->id,
             'position' => ($this->exercises()->max('position') ?? -1) + 1,
+            'superset' => null,
         ]);
 
         $workoutExercise->addSet();
 
         return $workoutExercise;
+    }
+
+    /**
+     * Remove an Exercise and its Sets. A Superset left with a single member is dissolved, and the others are numbered again.
+     */
+    public function removeExercise(WorkoutExercise $removed): void
+    {
+        DB::transaction(function () use ($removed) {
+            $removed->delete();
+            $this->normaliseSupersets();
+        });
+    }
+
+    /**
+     * Number the Supersets 1, 2, … in order again and dissolve a Superset with a single member.
+     */
+    public function normaliseSupersets(): void
+    {
+        $exercises = array_values($this->exercises()->get()->all());
+        $supersets = Supersets::normalise(array_map(fn (WorkoutExercise $performed) => $performed->superset, $exercises));
+
+        foreach ($exercises as $index => $performed) {
+            $performed->superset = $supersets[$index];
+            $performed->save();
+        }
     }
 
     /**

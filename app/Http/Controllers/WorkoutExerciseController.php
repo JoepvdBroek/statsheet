@@ -45,12 +45,12 @@ class WorkoutExerciseController extends Controller
     }
 
     /**
-     * Remove an Exercise and its Sets from the Workout.
+     * Remove an Exercise and its Sets from the Workout, dissolving a Superset it leaves with a single member.
      */
     #[Authorize('update', 'workout')]
     public function destroy(Workout $workout, WorkoutExercise $exercise): RedirectResponse
     {
-        $exercise->delete();
+        $workout->removeExercise($exercise);
 
         return to_route('workouts.show', $workout);
     }
