@@ -50,6 +50,7 @@ class WorkoutStructureTest extends TestCase
         $added = $workout->exercises()->get()->last();
         $this->assertSame($squat->id, $added->exercise_id);
         $this->assertSame(1, $added->position);
+        $this->assertNull($added->superset);
 
         $set = $added->sets()->sole();
         $this->assertNull($set->target_reps);
@@ -112,41 +113,177 @@ class WorkoutStructureTest extends TestCase
         $this->assertDatabaseCount('workout_sets', 3);
     }
 
-    public function test_moving_an_exercise_changes_the_order()
+    public function test_removing_an_exercise_from_a_pair_dissolves_the_superset_and_numbers_the_others_again()
+    {
+        $workout = Workout::factory()->create();
+        $exercises = collect([1, 1, null, 2, 2, 2])->map(fn (?int $superset, int $position) => WorkoutExercise::factory()
+            ->for($workout)
+            ->state(['superset' => $superset])
+            ->create(['position' => $position]));
+
+        $response = $this
+            ->actingAs($workout->user)
+            ->delete(route('workouts.exercises.destroy', [$workout, $exercises[0]]));
+
+        $response->assertRedirect(route('workouts.show', $workout));
+
+        $this->assertSame([null, null, 1, 1, 1], $workout->exercises()->pluck('superset')->all());
+    }
+
+    public function test_removing_an_exercise_from_a_larger_superset_keeps_it()
+    {
+        $workout = Workout::factory()->create();
+        $exercises = collect([1, 1, 1])->map(fn (int $superset, int $position) => WorkoutExercise::factory()
+            ->for($workout)
+            ->inSuperset($superset)
+            ->create(['position' => $position]));
+
+        $this->actingAs($workout->user)->delete(route('workouts.exercises.destroy', [$workout, $exercises[1]]));
+
+        $this->assertSame([1, 1], $workout->exercises()->pluck('superset')->all());
+    }
+
+    public function test_arranging_the_exercises_changes_the_order()
     {
         $workout = Workout::factory()->withExercises(3, 1)->create();
         [$first, $second, $third] = $workout->exercises;
 
         $response = $this
             ->actingAs($workout->user)
-            ->put(route('workouts.exercises.move', [$workout, $third]), ['position' => 0]);
+            ->put(route('workouts.exercises.arrange', $workout), ['exercises' => [
+                ['id' => $third->id, 'superset' => null],
+                ['id' => $first->id, 'superset' => null],
+                ['id' => $second->id, 'superset' => null],
+            ]]);
 
-        $response->assertRedirect(route('workouts.show', $workout));
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('workouts.show', $workout));
 
         $this->assertSame([$third->id, $first->id, $second->id], $workout->exercises()->pluck('id')->all());
+        $this->assertSame([0, 1, 2], $workout->exercises()->pluck('position')->all());
     }
 
-    public function test_moving_past_the_end_moves_to_the_end()
+    public function test_arranging_the_exercises_groups_them_into_supersets_numbered_in_order()
+    {
+        $workout = Workout::factory()->withExercises(4, 1)->create();
+        [$first, $second, $third, $fourth] = $workout->exercises;
+
+        $this
+            ->actingAs($workout->user)
+            ->put(route('workouts.exercises.arrange', $workout), ['exercises' => [
+                ['id' => $first->id, 'superset' => 5],
+                ['id' => $second->id, 'superset' => 5],
+                ['id' => $third->id, 'superset' => 2],
+                ['id' => $fourth->id, 'superset' => 2],
+            ]])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame([1, 1, 2, 2], $workout->exercises()->pluck('superset')->all());
+    }
+
+    public function test_arranging_the_exercises_takes_them_out_of_a_superset()
+    {
+        $workout = Workout::factory()->create();
+        $exercises = collect([0, 1])->map(fn (int $position) => WorkoutExercise::factory()
+            ->for($workout)
+            ->inSuperset(1)
+            ->create(['position' => $position]));
+
+        $this
+            ->actingAs($workout->user)
+            ->put(route('workouts.exercises.arrange', $workout), ['exercises' => [
+                ['id' => $exercises[0]->id, 'superset' => null],
+                ['id' => $exercises[1]->id, 'superset' => null],
+            ]])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame([null, null], $workout->exercises()->pluck('superset')->all());
+    }
+
+    public function test_a_superset_arranged_with_a_single_member_is_dissolved()
     {
         $workout = Workout::factory()->withExercises(3, 1)->create();
         [$first, $second, $third] = $workout->exercises;
 
         $this
             ->actingAs($workout->user)
-            ->put(route('workouts.exercises.move', [$workout, $first]), ['position' => 10]);
+            ->put(route('workouts.exercises.arrange', $workout), ['exercises' => [
+                ['id' => $first->id, 'superset' => 1],
+                ['id' => $second->id, 'superset' => 2],
+                ['id' => $third->id, 'superset' => 2],
+            ]])
+            ->assertSessionHasNoErrors();
 
-        $this->assertSame([$second->id, $third->id, $first->id], $workout->exercises()->pluck('id')->all());
+        $this->assertSame([null, 1, 1], $workout->exercises()->pluck('superset')->all());
     }
 
-    public function test_a_position_must_be_zero_or_more()
+    public function test_a_superset_arranged_apart_is_rejected()
     {
-        $workout = Workout::factory()->withExercises(2, 1)->create();
+        $workout = Workout::factory()->withExercises(3, 1)->create();
+        [$first, $second, $third] = $workout->exercises;
 
         $response = $this
             ->actingAs($workout->user)
-            ->put(route('workouts.exercises.move', [$workout, $workout->exercises[1]]), ['position' => -1]);
+            ->put(route('workouts.exercises.arrange', $workout), ['exercises' => [
+                ['id' => $first->id, 'superset' => 1],
+                ['id' => $second->id, 'superset' => null],
+                ['id' => $third->id, 'superset' => 1],
+            ]]);
 
-        $response->assertSessionHasErrors(['position' => 'The position field must be at least 0.']);
+        $response->assertSessionHasErrors(['exercises' => 'The Exercises of a Superset must be next to each other.']);
+        $this->assertSame([null, null, null], $workout->exercises()->pluck('superset')->all());
+    }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function arrangementsNotOfTheWorkout(): array
+    {
+        return [
+            'one missing' => ['missing'],
+            'one of another Workout' => ['foreign'],
+        ];
+    }
+
+    #[DataProvider('arrangementsNotOfTheWorkout')]
+    public function test_an_arrangement_must_list_exactly_the_workouts_exercises(string $case)
+    {
+        $workout = Workout::factory()->withExercises(2, 1)->create();
+        [$first, $second] = $workout->exercises;
+        $otherExercise = Workout::factory()->for($workout->user)->finished()->withExercises(1, 1)->create()->exercises[0];
+        $arrangement = match ($case) {
+            'missing' => [['id' => $second->id, 'superset' => null]],
+            'foreign' => [
+                ['id' => $second->id, 'superset' => null],
+                ['id' => $first->id, 'superset' => null],
+                ['id' => $otherExercise->id, 'superset' => null],
+            ],
+        };
+
+        $response = $this
+            ->actingAs($workout->user)
+            ->put(route('workouts.exercises.arrange', $workout), ['exercises' => $arrangement]);
+
+        $response->assertSessionHasErrors(['exercises' => 'Arrange every Exercise of the Workout, and only those.']);
+        $this->assertSame([$first->id, $second->id], $workout->exercises()->pluck('id')->all());
+        $this->assertSame(0, $otherExercise->refresh()->position);
+    }
+
+    public function test_an_exercise_cannot_be_arranged_twice()
+    {
+        $workout = Workout::factory()->withExercises(2, 1)->create();
+        [$first, $second] = $workout->exercises;
+
+        $response = $this
+            ->actingAs($workout->user)
+            ->put(route('workouts.exercises.arrange', $workout), ['exercises' => [
+                ['id' => $first->id, 'superset' => null],
+                ['id' => $first->id, 'superset' => null],
+                ['id' => $second->id, 'superset' => null],
+            ]]);
+
+        $response->assertSessionHasErrors(['exercises.0.id' => 'The Exercise field has a duplicate value.']);
     }
 
     /**

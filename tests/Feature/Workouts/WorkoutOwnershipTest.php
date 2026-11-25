@@ -32,7 +32,7 @@ class WorkoutOwnershipTest extends TestCase
             'delete' => ['delete', 'workouts.destroy', null],
             'update routine' => ['put', 'workouts.routine.update', null],
             'add exercise' => ['post', 'workouts.exercises.store', null],
-            'move exercise' => ['put', 'workouts.exercises.move', 'exercise'],
+            'arrange exercises' => ['put', 'workouts.exercises.arrange', null],
             'remove exercise' => ['delete', 'workouts.exercises.destroy', 'exercise'],
             'swap exercise' => ['post', 'workouts.exercises.swap', 'exercise'],
             'add set' => ['post', 'workouts.sets.store', 'exercise'],
@@ -61,6 +61,10 @@ class WorkoutOwnershipTest extends TestCase
             ->{$method}(route($routeName, $parameters), [
                 'note' => 'Theirs',
                 'position' => 0,
+                'exercises' => [
+                    ['id' => $workout->exercises[1]->id, 'superset' => 1],
+                    ['id' => $workout->exercises[0]->id, 'superset' => 1],
+                ],
                 'actual_reps' => 5,
                 'actual_weight' => 50,
                 'kind' => 'warm_up',
@@ -72,6 +76,7 @@ class WorkoutOwnershipTest extends TestCase
         $this->assertSame('Mine', $workout->note);
         $this->assertNull($workout->finished_at);
         $this->assertSame([0, 1], $workout->exercises()->pluck('position')->all());
+        $this->assertSame([null, null], $workout->exercises()->pluck('superset')->all());
         $this->assertDatabaseCount('workout_sets', 4);
         $this->assertSame(1, $set->refresh()->position);
         $this->assertFalse($set->isDone());

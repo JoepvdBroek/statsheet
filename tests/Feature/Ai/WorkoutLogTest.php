@@ -36,6 +36,7 @@ class WorkoutLogTest extends TestCase
             WorkoutSet::factory()->state(['target_reps' => 5, 'target_weight' => '100.00'])->notDone(),
         ]);
         $this->perform($sundayNight, $dip, [$this->doneSet(8, '10.00')]);
+        $sundayNight->exercises()->update(['superset' => 1]);
         $inProgress = Workout::factory()->for($owner)->create(['started_at' => '2026-09-29 12:00:00']);
         $this->perform($inProgress, $benchPress, [WorkoutSet::factory()->state(['target_reps' => null, 'target_weight' => null])->state(['actual_reps' => 3, 'actual_weight' => '105.00'])]);
         $theirs = Workout::factory()->finished()->create(['started_at' => '2026-09-16 12:00:00', 'note' => 'Not yours.']);
@@ -53,12 +54,12 @@ class WorkoutLogTest extends TestCase
                 'bodyweight' => 80,
                 'note' => 'Bad sleep.',
                 'exercises' => [
-                    ['exercise' => 'Bench press', 'bodyweight_exercise' => false, 'sets' => [
+                    ['exercise' => 'Bench press', 'bodyweight_exercise' => false, 'superset' => 'A', 'sets' => [
                         ['target_reps' => 10, 'target_weight' => 60, 'actual_reps' => 10, 'actual_weight' => 60, 'kind' => 'warm_up'],
                         ['target_reps' => 5, 'target_weight' => 100, 'actual_reps' => 5, 'actual_weight' => 100, 'kind' => 'working'],
                         ['target_reps' => 5, 'target_weight' => 100, 'actual_reps' => null, 'actual_weight' => null, 'kind' => 'working'],
                     ]],
-                    ['exercise' => 'Dip', 'bodyweight_exercise' => true, 'sets' => [
+                    ['exercise' => 'Dip', 'bodyweight_exercise' => true, 'superset' => 'A', 'sets' => [
                         ['target_reps' => 8, 'target_weight' => 10, 'actual_reps' => 8, 'actual_weight' => 10, 'kind' => 'working'],
                     ]],
                 ],
@@ -71,7 +72,7 @@ class WorkoutLogTest extends TestCase
                 'bodyweight' => null,
                 'note' => null,
                 'exercises' => [
-                    ['exercise' => 'Bench press', 'bodyweight_exercise' => false, 'sets' => [
+                    ['exercise' => 'Bench press', 'bodyweight_exercise' => false, 'superset' => null, 'sets' => [
                         ['target_reps' => null, 'target_weight' => null, 'actual_reps' => 3, 'actual_weight' => 105, 'kind' => 'working'],
                     ]],
                 ],

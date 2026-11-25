@@ -15,8 +15,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $routine_id
  * @property int $exercise_id
  * @property int $position 0-based place in the Routine's order
+ * @property int|null $superset The number of the Superset it belongs to within the Routine, numbered 1, 2, … in order; null when in none
  */
-#[Fillable(['exercise_id', 'position'])]
+#[Fillable(['exercise_id', 'position', 'superset'])]
 #[WithoutTimestamps]
 class RoutineExercise extends Model
 {

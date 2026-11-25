@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SetKind;
+use App\Support\Supersets;
 use Carbon\CarbonImmutable;
 use Database\Factories\RoutineFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -126,18 +127,22 @@ class Routine extends Model
     }
 
     /**
-     * Replace the planned Exercises and their Sets, keeping the given order.
+     * Replace the planned Exercises and their Sets, keeping the given order. The Supersets are normalised: numbered 1, 2, … in order,
+     * and a Superset with a single member is dissolved.
      *
-     * @param  list<array{exercise_id: int, sets: list<array{target_reps: int, target_weight: string, kind: SetKind}>}>  $exercises
+     * @param  list<array{exercise_id: int, superset: int|null, sets: list<array{target_reps: int, target_weight: string, kind: SetKind}>}>  $exercises
      */
     public function syncExercises(array $exercises): void
     {
         $this->exercises()->delete();
 
+        $supersets = Supersets::normalise(array_column($exercises, 'superset'));
+
         foreach ($exercises as $exercisePosition => $planned) {
             $routineExercise = $this->exercises()->create([
                 'exercise_id' => $planned['exercise_id'],
                 'position' => $exercisePosition,
+                'superset' => $supersets[$exercisePosition],
             ]);
 
             foreach ($planned['sets'] as $setPosition => $set) {

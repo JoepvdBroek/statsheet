@@ -11,7 +11,7 @@ A reusable, named plan of exercises, each with per-set targets (reps and weight)
 _Avoid_: Template, workout plan, program
 
 **Workout**:
-One dated performance of training. It is started from a Routine (whose exercises and targets are copied into it at that moment) or started empty. It never changes when its Routine changes later.
+One dated performance of training. It is started from a Routine (whose exercises, Supersets and targets are copied into it at that moment) or started empty. It never changes when its Routine changes later.
 _Avoid_: Session, workout session, training
 
 **Workout Note**:
@@ -34,8 +34,12 @@ The reps × weight a set aims for. In a Routine it is the plan; in a Workout it 
 **Actual**:
 The reps × weight actually performed in a set of a Workout. A set *meets its target* when both its reps and its weight are at or above the Target.
 
+**Superset**:
+Two or more Exercises of a Routine or Workout, next to each other in the order, done alternately Set by Set. Each Exercise keeps its own Sets. Supersets are labelled by letter in order (A, B, …) and their Exercises numbered within them (A1, A2). Removing an Exercise dissolves a Superset it leaves with a single Exercise. A Superset changes nothing in Volume, Goals, Personal Records or Pre-fill. It is unrelated to a Drop Set, which is about the Sets of one Exercise.
+_Avoid_: Circuit, giant set, tri-set
+
 **Swap**:
-Replacing an Exercise in a Workout with another in the same place. The new Exercise keeps the number of Sets and is Pre-filled with the swapped-out Sets as its plan; Actuals already logged are discarded, so all its Sets start not done. The Workout does not remember the Exercise swapped out.
+Replacing an Exercise in a Workout with another in the same place and Superset. The new Exercise keeps the number of Sets and is Pre-filled with the swapped-out Sets as its plan; Actuals already logged are discarded, so all its Sets start not done. The Workout does not remember the Exercise swapped out.
 _Avoid_: Replace, substitute
 
 **Pre-fill**:

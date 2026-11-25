@@ -49,6 +49,7 @@ class WeeklyReviewer implements Agent, HasStructuredOutput, HasTools
             - A Week runs Monday to Sunday in the owner's timezone. A Workout belongs to the Week of its start.
             - A Set records a Target and an Actual (reps × weight in kg). A Set without an Actual was not done. Warm-up Sets never count.
             - A Drop Set is done straight after the Set before it at a lower weight, without rest. It counts toward Volume, Goals and Personal Records like any other non-warm-up Set, but not toward Set Count. Its lower weight and reps are planned, not a drop in performance.
+            - A Superset is two or more Exercises done alternately, Set by Set. Each keeps its own Sets, and a Superset changes nothing in how they count.
             - Volume is the tonnage (reps × weight) of done, non-warm-up Sets, counted in full to each primary Muscle and half to each secondary Muscle. For a Bodyweight Exercise the weight is the owner's Bodyweight plus the added load.
             - Set Count is the number of done Working Sets (Sets that are neither Warm-up Sets nor Drop Sets), whatever their reps and weight: 1 to each primary Muscle and 0.5 to each secondary Muscle. Direct Sets are the part of a Muscle's Set Count from Exercises where it is a primary Muscle.
             - A Goal is a weekly minimum Volume for one Muscle. Each Week is judged against the Goal in force that Week, on Volume only.
